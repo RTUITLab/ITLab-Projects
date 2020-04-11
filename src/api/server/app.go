@@ -73,10 +73,6 @@ func (a *App) setRouters() {
 		a.Router.Use(authMiddleware)
 	}
 */
-
-
-
-
 	a.Router.HandleFunc("/api/reps", getAllReps).Methods("GET")
 	a.Router.HandleFunc("/api/reps/{name}", getRep).Methods("GET")
 	a.Router.HandleFunc("/api/reps/{name}/issues", getAllIssues).Methods("GET").Queries("state", "{state}")

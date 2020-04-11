@@ -11,6 +11,7 @@ import (
 func getAllReps(w http.ResponseWriter, r *http.Request) {
 	reps := make([]models.Repos, 0)
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	resp, err := http.Get("https://api.github.com/orgs/RTUITLab/repos")
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -52,6 +53,7 @@ func getAllIssues(w http.ResponseWriter, r *http.Request) {
 	var url string
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	data := mux.Vars(r)
 	switch data["state"] {
 	case "opened":
