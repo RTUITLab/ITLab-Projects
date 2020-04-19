@@ -23,6 +23,24 @@ type AuthConfig struct {
 	Audience	string		`json:"audience"`
 	Issuer		string		`json:"issuer"`
 	Scope		string		`json:"scope"`
+	Github		Github		`json:"Github"`
+	Gitlab		Gitlab		`json:"Gitlab"`
+}
+type Github struct {
+	AppID		int64		`json:"appID"`
+	PathToPem	string		`json:"pathToPem"`
+	Installation string		`json:"installation"`
+	AccessToken   string	`json:"accessToken"`
+}
+type Installation struct {
+	ID			int64		`json:"id"`
+	Account     Account		`json:"account"`
+}
+type Account struct {
+	Login 		string		`json:"login"`
+}
+type Gitlab struct {
+	AccessToken   string	`json:"accessToken"`
 }
 type AppConfig struct {
 	AppPort		string	`json:"appPort"`

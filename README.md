@@ -12,7 +12,12 @@ File ```src/ITLabReports/api/auth_config.json``` must contain next content:
     "keyUrl": "https://examplesite/files/jwks.json", //url to jwks.json
     "audience": "example_audience", //audince for JWT
     "issuer" : "https://exampleissuersite.com", //issuer for JWT
-    "scope" : "my_scope" //required scope for JWT
+    "scope" : "my_scope", //required scope for JWT
+    "Github": {
+          "accessToken" : "github_access_token"
+    },
+    "Gitlab": {
+          "accessToken" : "gitlab_access_token"
+    }
   }
 }
-

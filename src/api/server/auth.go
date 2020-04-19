@@ -2,8 +2,6 @@ package server
 
 import (
 	"ITLab-Projects/logging"
-	"errors"
-	"fmt"
 	"github.com/auth0-community/go-auth0"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/square/go-jose.v2"
@@ -56,8 +54,9 @@ func authMiddleware(next http.Handler) http.Handler {
 			w.Write([]byte("Invalid scope"))
 			return
 		}
-
 		sw := logging.NewStatusWriter(w)
+		sw.Header().Set("Content-Type", "application/json")
+		sw.Header().Set("Access-Control-Allow-Origin", "*")
 		next.ServeHTTP(sw, r)
 		logging.LogHandler(sw, r)
 	})
@@ -82,12 +81,14 @@ func testAuthMiddleware(next http.Handler) http.Handler {
 			w.Write([]byte(err.Error()))
 			return
 		}
-
 		sw := logging.NewStatusWriter(w)
+		sw.Header().Set("Content-Type", "application/json")
+		sw.Header().Set("Access-Control-Allow-Origin", "*")
 		next.ServeHTTP(sw, r)
 		logging.LogHandler(sw, r)
 	})
 }
+
 
 func checkScope(scopeStr string, claims map[string]interface{}) bool {
 	var hasScope = false
@@ -99,28 +100,3 @@ func checkScope(scopeStr string, claims map[string]interface{}) bool {
 	return hasScope
 }
 
-func getClaim(r *http.Request, claim string) (string, error) {
-	token, err := validator.ValidateRequest(r)
-	if err != nil {
-		return "", err
-	}
-	claims := map[string]interface{}{}
-	err = validator.Claims(r, token, &claims)
-
-	switch claim {
-	case "sub":
-		if _, ok := claims["sub"]; ok {
-			return fmt.Sprintf("%v", claims["sub"]), nil
-		} else {
-			return "", errors.New("there is no Sub claim in token")
-		}
-	case "role":
-		if _, ok := claims["role"]; ok {
-			return fmt.Sprintf("%v", claims["role"]), nil
-		} else {
-			return "", errors.New("there is no Role claim in token")
-		}
-	default:
-		return "", errors.New("requested claim is invalid")
-	}
-}

@@ -21,6 +21,7 @@ var cfg *config.Config
 
 func (a *App) Init(config *config.Config) {
 	cfg = config
+	jwtInit()
 	log.Info("ITLab-Projects is starting up!")
 	DBUri := "mongodb://" + cfg.DB.Host + ":" + cfg.DB.DBPort
 	log.WithField("dburi", DBUri).Info("Current database URI: ")
@@ -34,7 +35,6 @@ func (a *App) Init(config *config.Config) {
 		).Fatal("Failed to create new MongoDB client")
 	}
 
-	// Create db connect
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	err = client.Connect(ctx)
 	if err != nil {
@@ -44,7 +44,6 @@ func (a *App) Init(config *config.Config) {
 		).Fatal("Failed to connect to MongoDB")
 	}
 
-	// Check the connection
 	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
 	err = client.Ping(ctx, nil)
 	if err != nil {
@@ -67,16 +66,17 @@ func (a *App) Init(config *config.Config) {
 }
 
 func (a *App) setRouters() {
-	/*if cfg.App.TestMode {
+	if cfg.App.TestMode {
 		a.Router.Use(testAuthMiddleware)
 	} else {
 		a.Router.Use(authMiddleware)
 	}
-*/
+
 	a.Router.HandleFunc("/api/reps", getAllReps).Methods("GET")
-	a.Router.HandleFunc("/api/reps/{name}", getRep).Methods("GET")
-	a.Router.HandleFunc("/api/reps/{name}/issues", getAllIssues).Methods("GET").Queries("state", "{state}")
-	a.Router.HandleFunc("/api/reps/{name}/issues/{number}", getIssue).Methods("GET")
+	a.Router.HandleFunc("/api/reps/{id}", getRep).Methods("GET").Queries("platform", "{platform}")
+	a.Router.HandleFunc("/api/reps/{id}/issues", getAllIssues).Methods("GET").Queries("platform", "{platform}", "state", "{state}")
+	a.Router.HandleFunc("/api/reps/{id}/issues/{number}", getIssue).Methods("GET").Queries("platform", "{platform}")
+	a.Router.HandleFunc("/graphql", graphQL)
 
 }
 
