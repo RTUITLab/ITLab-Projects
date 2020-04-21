@@ -5,24 +5,28 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"net/http"
+	"strconv"
 )
 
 func getAllReps(w http.ResponseWriter, r *http.Request) {
-	//reps := make([]models.Repos, 0)
+	pageCount := 0
+	reps := make([]models.Repos, 0)
+	c := make(chan models.Response)
+	result := make([]models.Response, 2)
+
 	data := mux.Vars(r)
-	tempReps, _ := getRepsFromGithub(data["page"])
-	/*reps = append(reps, tempReps...)
+	go getRepsFromGithub(data["page"], c)
+	go getRepsFromGitlab(data["page"], c)
 
-	tempReps, gitlabPagesCount :=  getRepsFromGitlab(data["page"])
-	reps = append(reps, tempReps...)
-
-	if githubPagesCount > gitlabPagesCount {
-		w.Header().Set("X-Total-Pages", strconv.Itoa(githubPagesCount))
-	} else {
-		w.Header().Set("X-Total-Pages", strconv.Itoa(gitlabPagesCount))
+	for i, _ := range result {
+		result[i] = <-c
+		reps = append(reps, result[i].Repositories...)
+		if result[i].PageCount > pageCount {
+			pageCount = result[i].PageCount
+		}
 	}
-*/
-	json.NewEncoder(w).Encode(tempReps)
+	w.Header().Set("X-Total-Pages", strconv.Itoa(pageCount))
+	json.NewEncoder(w).Encode(reps)
 }
 
 func getRep(w http.ResponseWriter, r *http.Request) {

@@ -20,12 +20,14 @@ type Issue struct {
 	ID        			uint64     	`json:"id"`
 	Number    			uint64     	`json:"number"`
 	GitLabNumber       	*uint64     `json:"iid,omitempty"`
+	Description 		string		`json:"body"`
+	GitlabDescription	string		`json:"description,omitempty"`
 	Title     			string     	`json:"title"`
 	User      			User       	`json:"user"`
 	GitlabUser 			*GitlabUser `json:"author,omitempty"`
 	State     			string     	`json:"state"`
 	Assignees 			[]Assignee 	`json:"assignees"`
-	Milestone 			*Milestone  	`json:"milestone,omitempty"`
+	Milestone 			*Milestone  `json:"milestone,omitempty"`
 	CreatedAt 			string     	`json:"created_at"`
 	UpdatedAt 			string     	`json:"updated_at"`
 	ClosedAt  			string     	`json:"closed_at"`
@@ -60,7 +62,7 @@ type Milestone struct {
 	State     			string     	`json:"state"`
 	Title     			string     	`json:"title"`
 	Description 		string 		`json:"description"`
-	Creator      		User    `json:"creator"`
+	Creator      		User    	`json:"creator"`
 }
 
 type Response struct {
