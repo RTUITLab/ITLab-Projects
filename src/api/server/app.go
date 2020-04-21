@@ -18,10 +18,12 @@ type App struct {
 
 var collection *mongo.Collection
 var cfg *config.Config
+var httpClient *http.Client
 
 func (a *App) Init(config *config.Config) {
 	cfg = config
 	jwtInit()
+	httpClient = createHTTPClient()
 	log.Info("ITLab-Projects is starting up!")
 	DBUri := "mongodb://" + cfg.DB.Host + ":" + cfg.DB.DBPort
 	log.WithField("dburi", DBUri).Info("Current database URI: ")
@@ -61,7 +63,7 @@ func (a *App) Init(config *config.Config) {
 
 	collection = client.Database(cfg.DB.DBName).Collection(cfg.DB.CollectionName)
 
-	a.Router = mux.NewRouter()
+	a.Router = mux.NewRouter().UseEncodedPath()
 	a.setRouters()
 }
 
@@ -72,12 +74,11 @@ func (a *App) setRouters() {
 		a.Router.Use(authMiddleware)
 	}
 
-	a.Router.HandleFunc("/api/reps", getAllReps).Methods("GET")
+	a.Router.HandleFunc("/api/reps", getAllReps).Methods("GET").Queries("page","{page}")
 	a.Router.HandleFunc("/api/reps/{id}", getRep).Methods("GET").Queries("platform", "{platform}")
 	a.Router.HandleFunc("/api/reps/{id}/issues", getAllIssues).Methods("GET").Queries("platform", "{platform}", "state", "{state}")
 	a.Router.HandleFunc("/api/reps/{id}/issues/{number}", getIssue).Methods("GET").Queries("platform", "{platform}")
 	a.Router.HandleFunc("/graphql", graphQL)
-
 }
 
 func (a *App) Run(addr string) {
@@ -97,4 +98,14 @@ func init() {
 	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp: true,
 	})
+}
+
+func createHTTPClient() *http.Client {
+	client := &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConnsPerHost: 20,
+		},
+		Timeout: time.Duration(10) * time.Second,
+	}
+	return client
 }

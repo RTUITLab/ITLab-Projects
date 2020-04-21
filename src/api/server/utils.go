@@ -5,19 +5,23 @@ import (
 	"encoding/json"
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
 )
 
 //TODO: implement gitlab projects paging (it's limited by 20 projects)
 
 
-func getRepsFromGithub() []models.Repos{
-	tempReps := make([]models.Repos, 0)
-	URL := "https://api.github.com/orgs/RTUITLab/repos"
 
-	client := &http.Client{}
+func getRepsFromGithub(page string) ([]models.Repos, int) {
+	tempReps := make([]models.Repos, 0)
+
+	URL := "https://api.github.com/orgs/RTUITLab/repos?page=" + page
+
 	req, err := http.NewRequest("GET", URL, nil)
 	req.Header.Set("Authorization", "Bearer " + cfg.Auth.Github.AccessToken)
-	resp, err := client.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"function" : "http.Get",
@@ -26,7 +30,7 @@ func getRepsFromGithub() []models.Repos{
 			"error"	:	err,
 		},
 		).Warn("Can't reach API!")
-		return nil
+		return nil, 0
 	}
 	defer resp.Body.Close()
 
@@ -34,18 +38,27 @@ func getRepsFromGithub() []models.Repos{
 
 	for i := range tempReps {
 		tempReps[i].Platform = "github"
+		tempReps[i].Path = tempReps[i].Name
 	}
-	return tempReps
+
+	linkHeader := resp.Header.Get("Link")
+	lastPage := strings.LastIndex(linkHeader, "page=")
+	linkHeader = linkHeader[lastPage:]
+	linkHeader = strings.TrimLeft(linkHeader, "page=")
+	linkHeader = strings.TrimRight(linkHeader, ">; rel=\"last\"")
+	pageCount, _ := strconv.Atoi(linkHeader)
+	return tempReps, pageCount
 }
 
-func getRepsFromGitlab() []models.Repos {
+func getRepsFromGitlab(page string) ([]models.Repos, int) {
 	tempReps := make([]models.Repos, 0)
 
-	URL := "https://gitlab.com/api/v4/groups/6526027/projects?include_subgroups=true"
+	URL := "https://gitlab.com/api/v4/groups/6526027/projects?include_subgroups=true&page="+page
 
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", URL, nil)
 	req.Header.Set("Authorization", "Bearer " + cfg.Auth.Gitlab.AccessToken)
+	req.Header.Set("Connection", "keep-alive")
 	resp, err := client.Do(req)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -55,19 +68,23 @@ func getRepsFromGitlab() []models.Repos {
 			"error"	:	err,
 		},
 		).Warn("Can't reach API!")
-		return nil
+		return nil, 0
 	}
 	defer resp.Body.Close()
 
 	json.NewDecoder(resp.Body).Decode(&tempReps)
-	for i, repos := range tempReps {
+	for i := range tempReps {
 		tempReps[i].Platform = "gitlab"
-		tempReps[i].HTMLUrl = repos.GitLabHTMLUrl
-		tempReps[i].UpdatedAt = repos.GitLabUpdatedAt
+		tempReps[i].Path = url.QueryEscape(tempReps[i].Path)
+		tempReps[i].HTMLUrl = tempReps[i].GitLabHTMLUrl
+		tempReps[i].UpdatedAt = tempReps[i].GitLabUpdatedAt
 		tempReps[i].GitLabHTMLUrl = ""
 		tempReps[i].GitLabUpdatedAt = ""
 	}
-	return tempReps
+
+	pageCountHeader := resp.Header.Get("X-Total-Pages")
+	pageCount, _ := strconv.Atoi(pageCountHeader)
+	return tempReps, pageCount
 }
 
 func getRepFromGithub(id string) models.Repos {
@@ -93,6 +110,7 @@ func getRepFromGithub(id string) models.Repos {
 	json.NewDecoder(resp.Body).Decode(&tempRep)
 
 	tempRep.Platform = "github"
+	tempRep.Path = tempRep.Name
 
 	return tempRep
 }
@@ -119,6 +137,7 @@ func getRepFromGitlab(id string) models.Repos {
 
 	json.NewDecoder(resp.Body).Decode(&tempRep)
 	tempRep.Platform = "gitlab"
+	tempRep.Path = url.QueryEscape(tempRep.Path)
 	tempRep.HTMLUrl = tempRep.GitLabHTMLUrl
 	tempRep.UpdatedAt = tempRep.GitLabUpdatedAt
 	tempRep.GitLabHTMLUrl = ""

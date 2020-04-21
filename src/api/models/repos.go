@@ -4,6 +4,7 @@ type Repos struct {
 	ID          		uint64 		`json:"id"`
 	Platform			string		`json:"platform,omitempty"`
 	Name        		string 		`json:"name"`
+	Path				string		`json:"path_with_namespace,omitempty"`
 	HTMLUrl     		string 		`json:"html_url"`
 	GitLabHTMLUrl     	string 		`json:"web_url,omitempty"`
 	Description 		string 		`json:"description"`
@@ -24,7 +25,7 @@ type Issue struct {
 	GitlabUser 			*GitlabUser `json:"author,omitempty"`
 	State     			string     	`json:"state"`
 	Assignees 			[]Assignee 	`json:"assignees"`
-	Milestone 			Milestone  	`json:"milestone"`
+	Milestone 			*Milestone  	`json:"milestone,omitempty"`
 	CreatedAt 			string     	`json:"created_at"`
 	UpdatedAt 			string     	`json:"updated_at"`
 	ClosedAt  			string     	`json:"closed_at"`
@@ -60,4 +61,9 @@ type Milestone struct {
 	Title     			string     	`json:"title"`
 	Description 		string 		`json:"description"`
 	Creator      		User    `json:"creator"`
+}
+
+type Response struct {
+	Repositories []Repos
+	PageCount	int
 }

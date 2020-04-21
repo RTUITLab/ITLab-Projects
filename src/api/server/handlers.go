@@ -8,14 +8,21 @@ import (
 )
 
 func getAllReps(w http.ResponseWriter, r *http.Request) {
-	reps := make([]models.Repos, 0)
-	tempReps := getRepsFromGithub()
+	//reps := make([]models.Repos, 0)
+	data := mux.Vars(r)
+	tempReps, _ := getRepsFromGithub(data["page"])
+	/*reps = append(reps, tempReps...)
+
+	tempReps, gitlabPagesCount :=  getRepsFromGitlab(data["page"])
 	reps = append(reps, tempReps...)
 
-	tempReps = getRepsFromGitlab()
-	reps = append(reps, tempReps...)
-
-	json.NewEncoder(w).Encode(reps)
+	if githubPagesCount > gitlabPagesCount {
+		w.Header().Set("X-Total-Pages", strconv.Itoa(githubPagesCount))
+	} else {
+		w.Header().Set("X-Total-Pages", strconv.Itoa(gitlabPagesCount))
+	}
+*/
+	json.NewEncoder(w).Encode(tempReps)
 }
 
 func getRep(w http.ResponseWriter, r *http.Request) {
