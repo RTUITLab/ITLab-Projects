@@ -29,6 +29,16 @@ func getAllReps(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(reps)
 }
 
+func getAllRepsFromGithub(w http.ResponseWriter, r *http.Request) {
+	c := make(chan models.Response)
+	data := mux.Vars(r)
+	go getRepsFromGithub(data["page"], c)
+	result := <-c
+	pageCount := result.PageCount
+	w.Header().Set("X-Total-Pages", strconv.Itoa(pageCount))
+	json.NewEncoder(w).Encode(result.Repositories)
+}
+
 func getRep(w http.ResponseWriter, r *http.Request) {
 	var rep models.Repos
 
@@ -73,4 +83,3 @@ func getIssue(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(issue)
 }
-

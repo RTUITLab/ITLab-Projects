@@ -77,7 +77,7 @@ func (a *App) setRouters() {
 		a.Router.Use(authMiddleware)
 	}
 
-	a.Router.HandleFunc("/api/reps", getAllReps).Methods("GET").Queries("page","{page}")
+	a.Router.HandleFunc("/api/reps", getAllRepsFromGithub).Methods("GET").Queries("page","{page}")
 	a.Router.HandleFunc("/api/reps/{id}", getRep).Methods("GET").Queries("platform", "{platform}")
 	a.Router.HandleFunc("/api/reps/{id}/issues", getAllIssues).Methods("GET").Queries("platform", "{platform}", "state", "{state}")
 	a.Router.HandleFunc("/api/reps/{id}/issues/{number}", getIssue).Methods("GET").Queries("platform", "{platform}")
