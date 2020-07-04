@@ -29,7 +29,7 @@ func getAllReps(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(reps)
 }
 
-func getAllRepsFromGithub(w http.ResponseWriter, r *http.Request) {
+func getPageRepsFromGithub(w http.ResponseWriter, r *http.Request) {
 	c := make(chan models.Response)
 	data := mux.Vars(r)
 	go getRepsFromGithub(data["page"], c)
@@ -82,4 +82,20 @@ func getIssue(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(issue)
+}
+
+func updateProjects(w http.ResponseWriter, r *http.Request) {
+	cGithub := make(chan models.Response)
+	cProjects := make(chan models.Project)
+	var projects []models.Project
+
+	go getRepsFromGithub("all", cGithub)
+	result := <-cGithub
+	for _, rep := range result.Repositories {
+		go getProjectInfoFile(rep.Path, cProjects)
+	}
+	for i:= 0; i< len(result.Repositories); i++  {
+		projects = append(projects, <-cProjects)
+	}
+	json.NewEncoder(w).Encode(result.Repositories)
 }

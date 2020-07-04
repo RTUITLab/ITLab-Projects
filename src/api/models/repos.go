@@ -1,5 +1,12 @@
 package models
 
+type Project struct {
+	ID  				uint64 		`json:"id"`
+	Name 				string		`json:"name"`
+	Description 		string		`json:"description"`
+	Reps				[]string	`json:"reps"`
+}
+
 type Repos struct {
 	ID          		uint64 		`json:"id"`
 	Platform			string		`json:"platform,omitempty"`

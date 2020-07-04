@@ -12,10 +12,15 @@ import (
 )
 
 func getRepsFromGithub(page string, c chan models.Response) {
+	var URL string
 	tempReps := make([]models.Repos, 0)
 	pageCount := 0
 
-	URL := "https://api.github.com/orgs/RTUITLab/repos?page=" + page
+	if page == "all" {
+		URL = "https://api.github.com/orgs/RTUITLab/repos"
+	} else {
+		URL = "https://api.github.com/orgs/RTUITLab/repos?page=" + page
+	}
 
 	req, err := http.NewRequest("GET", URL, nil)
 	req.Header.Set("Authorization", "Bearer " + cfg.Auth.Github.AccessToken)
@@ -47,7 +52,6 @@ func getRepsFromGithub(page string, c chan models.Response) {
 		linkHeader = strings.TrimRight(linkHeader, ">; rel=\"last\"")
 		pageCount, _ = strconv.Atoi(linkHeader)
 	}
-
 
 	response := models.Response{tempReps, pageCount}
 	c <- response
@@ -320,4 +324,32 @@ func createHTTPClient() *http.Client {
 		Timeout: time.Duration(5) * time.Second,
 	}
 	return client
+}
+
+func getProjectInfoFile(repPath string, c chan models.Project) {
+	var project models.Project
+	fileUrl := "https://raw.githubusercontent.com/RTUITLab/" + repPath + "/master/project_info.json"
+
+	req, err := http.NewRequest("GET", fileUrl, nil)
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function": "http.Get",
+			"handler":  "getProjectInfoFile",
+			"url":      fileUrl,
+			"error":    err,
+		},
+		).Warn("Something went wrong")
+		c <- models.Project{}
+		return
+	}
+	defer resp.Body.Close()
+
+	log.Info(fileUrl)
+	if resp.StatusCode == 200 {
+		json.NewDecoder(resp.Body).Decode(&project)
+		c <- project
+	} else {
+		c <- models.Project{}
+	}
 }
