@@ -15,12 +15,13 @@ func getRepsFromGithub(page string, c chan models.Response) {
 	var URL string
 	tempReps := make([]models.Repos, 0)
 	pageCount := 0
+	all := false
 
 	if page == "all" {
-		URL = "https://api.github.com/orgs/RTUITLab/repos"
-	} else {
-		URL = "https://api.github.com/orgs/RTUITLab/repos?page=" + page
+		all = true
+		page = "1"
 	}
+	URL = "https://api.github.com/orgs/RTUITLab/repos?page=" + page
 
 	req, err := http.NewRequest("GET", URL, nil)
 	req.Header.Set("Authorization", "Bearer " + cfg.Auth.Github.AccessToken)
@@ -52,7 +53,16 @@ func getRepsFromGithub(page string, c chan models.Response) {
 		linkHeader = strings.TrimRight(linkHeader, ">; rel=\"last\"")
 		pageCount, _ = strconv.Atoi(linkHeader)
 	}
-
+	if all {
+		cGithub := make(chan models.Response)
+		for i:=2; i<=pageCount;i++ {
+			go getRepsFromGithub(strconv.Itoa(i), cGithub)
+		}
+		for i:=2; i<=pageCount;i++ {
+			repPage := <-cGithub
+			tempReps = append(tempReps, repPage.Repositories...)
+		}
+	}
 	response := models.Response{tempReps, pageCount}
 	c <- response
 }
