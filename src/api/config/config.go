@@ -16,7 +16,6 @@ type DBConfig struct {
 	Host 		string		`json:"host"`
 	DBPort 		string		`json:"dbPort"`
 	DBName 		string		`json:"dbName"`
-	CollectionName 	string 	`json:"collectionName"`
 }
 type AuthConfig struct {
 	KeyURL		string		`json:"keyUrl"`

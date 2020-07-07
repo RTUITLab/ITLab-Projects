@@ -84,18 +84,22 @@ func getIssue(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(issue)
 }
 
-func updateProjects(w http.ResponseWriter, r *http.Request) {
+func getRelevantInfo(w http.ResponseWriter, r *http.Request) {
 	cGithub := make(chan models.Response)
-	cProjects := make(chan models.Project)
-	var projects []models.Project
+	cProjects := make(chan models.ProjectInfo)
+	var projects []models.ProjectInfo
 
 	go getRepsFromGithub("all", cGithub)
 	result := <-cGithub
+	saveReposToDB(result.Repositories)
 	for _, rep := range result.Repositories {
 		go getProjectInfoFile(rep.Path, cProjects)
 	}
 	for i:= 0; i< len(result.Repositories); i++  {
-		projects = append(projects, <-cProjects)
+		project := <-cProjects
+		if project.Project.Path != "" {
+			projects = append(projects, project)
+		}
 	}
-	json.NewEncoder(w).Encode(result.Repositories)
+	json.NewEncoder(w).Encode(projects)
 }

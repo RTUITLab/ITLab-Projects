@@ -16,7 +16,8 @@ type App struct {
 	DB *mongo.Client
 }
 
-var collection *mongo.Collection
+var projectsCollection *mongo.Collection
+var reposCollection *mongo.Collection
 var cfg *config.Config
 var httpClient *http.Client
 
@@ -60,11 +61,11 @@ func (a *App) Init(config *config.Config) {
 	log.Info("Connected to MongoDB!")
 	log.WithFields(log.Fields{
 		"db_name" : cfg.DB.DBName,
-		"collection_name" : cfg.DB.CollectionName,
 	}).Info("Database information: ")
 	log.WithField("testMode", cfg.App.TestMode).Info("Let's check if test mode is on...")
 
-	collection = client.Database(cfg.DB.DBName).Collection(cfg.DB.CollectionName)
+	projectsCollection = client.Database(cfg.DB.DBName).Collection("projects")
+	reposCollection = client.Database(cfg.DB.DBName).Collection("repos")
 
 	a.Router = mux.NewRouter().UseEncodedPath()
 	a.setRouters()
@@ -77,7 +78,7 @@ func (a *App) setRouters() {
 		a.Router.Use(authMiddleware)
 	}
 
-	a.Router.HandleFunc("/api/test", updateProjects).Methods("GET")
+	a.Router.HandleFunc("/api/test", getRelevantInfo).Methods("GET")
 
 	a.Router.HandleFunc("/api/reps", getPageRepsFromGithub).Methods("GET").Queries("page","{page}")
 	a.Router.HandleFunc("/api/reps/{id}", getRep).Methods("GET").Queries("platform", "{platform}")

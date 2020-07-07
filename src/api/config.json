@@ -3,7 +3,8 @@
     "host": "localhost",
     "dbPort": "27017",
     "dbName" : "ITLabProjects",
-    "collectionName" : "projects"
+    "projectsCollectionName" : "projects",
+    "reposCollectionName" : "repos"
   },
   "AppOptions": {
     "appPort": "8080",

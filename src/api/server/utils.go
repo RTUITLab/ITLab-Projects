@@ -2,8 +2,11 @@ package server
 
 import (
 	"ITLab-Projects/models"
+	"context"
 	"encoding/json"
 	log "github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -336,9 +339,9 @@ func createHTTPClient() *http.Client {
 	return client
 }
 
-func getProjectInfoFile(repPath string, c chan models.Project) {
-	var project models.Project
-	fileUrl := "https://raw.githubusercontent.com/RTUITLab/" + repPath + "/master/project_info.json"
+func getProjectInfoFile(repPath string, c chan models.ProjectInfo) {
+	var projectInfo models.ProjectInfo
+	fileUrl := "https://raw.githubusercontent.com/RTUITLab/" + repPath + "/develop/project_info.json"
 
 	req, err := http.NewRequest("GET", fileUrl, nil)
 	resp, err := httpClient.Do(req)
@@ -350,16 +353,60 @@ func getProjectInfoFile(repPath string, c chan models.Project) {
 			"error":    err,
 		},
 		).Warn("Something went wrong")
-		c <- models.Project{}
+		c <- models.ProjectInfo{}
 		return
 	}
 	defer resp.Body.Close()
 
-	log.Info(fileUrl)
 	if resp.StatusCode == 200 {
-		json.NewDecoder(resp.Body).Decode(&project)
-		c <- project
+		json.NewDecoder(resp.Body).Decode(&projectInfo)
+		saveProjectToDB(projectInfo)
+		c <- projectInfo
 	} else {
-		c <- models.Project{}
+		c <- models.ProjectInfo{}
+	}
+}
+
+func saveProjectToDB(projectInfo models.ProjectInfo) {
+	opts := options.Update().SetUpsert(true)
+	filter := bson.M{"path": projectInfo.Project.Path}
+	update := bson.M{
+		"$set" : bson.M{
+			"humanName" : projectInfo.Project.HumanName,
+			"description" : projectInfo.Project.Description,
+	},
+		"$addToSet" : bson.M{
+			"reps" : projectInfo.Repos.Path,
+		},
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	_, err := projectsCollection.UpdateOne(ctx, filter, update, opts)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function": "mongodb.UpdateOne",
+			"handler":  "saveProjectToDB",
+			"project":  projectInfo.Project.Path,
+			"error":    err,
+		},
+		).Warn("Project update failed!")
+	}
+}
+
+func saveReposToDB(repos []models.Repos) {
+	for _, rep := range repos {
+		opts := options.Replace().SetUpsert(true)
+		filter := bson.M{"id": rep.ID}
+
+		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+		_, err := reposCollection.ReplaceOne(ctx, filter, rep, opts)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"function": "mongodb.UpdateOne",
+				"handler":  "saveReposToDB",
+				"rep":  rep.Path,
+				"error":    err,
+			},
+			).Warn("Project update failed!")
+		}
 	}
 }
