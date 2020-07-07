@@ -2,10 +2,14 @@ package server
 
 import (
 	"ITLab-Projects/models"
+	"context"
 	"encoding/json"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func getAllReps(w http.ResponseWriter, r *http.Request) {
@@ -84,6 +88,38 @@ func getIssue(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(issue)
 }
 
+func getAllProjects(w http.ResponseWriter, r *http.Request) {
+	projects := make([]models.Project, 0)
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	cur, err := projectsCollection.Find(ctx, bson.M{})
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.Find",
+			"handler" : "getAllProjects",
+			"error"	:	err,
+		},
+		).Fatal("DB interaction resulted in error, shutting down...")
+	}
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cur.Close(ctx)
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	err = cur.All(ctx, &projects)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.All",
+			"handler" : "getAllProjects",
+			"error"	:	err,
+		},
+		).Fatal("DB interaction resulted in error, shutting down...")
+	}
+	json.NewEncoder(w).Encode(projects)
+}
+
+func getRepoActions(w http.ResponseWriter, r *http.Request) {
+	data := mux.Vars(r)
+	getActionsFromGithub(data["id"])
+}
+
 func getRelevantInfo(w http.ResponseWriter, r *http.Request) {
 	cGithub := make(chan models.Response)
 	cProjects := make(chan models.ProjectInfo)
@@ -101,5 +137,5 @@ func getRelevantInfo(w http.ResponseWriter, r *http.Request) {
 			projects = append(projects, project)
 		}
 	}
-	json.NewEncoder(w).Encode(projects)
+	w.WriteHeader(200)
 }
