@@ -8,7 +8,16 @@ import (
 	"net/http"
 )
 var validator *auth0.JWTValidator
-
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sw := logging.NewStatusWriter(w)
+		sw.Header().Set("Content-Type", "application/json")
+		sw.Header().Set("Access-Control-Allow-Origin", "*")
+		sw.Header().Set("Access-Control-Expose-Headers", "X-Total-Pages")
+		next.ServeHTTP(sw, r)
+		logging.LogHandler(sw, r)
+	})
+}
 func authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		client := auth0.NewJWKClient(auth0.JWKClientOptions{URI: cfg.Auth.KeyURL}, nil)

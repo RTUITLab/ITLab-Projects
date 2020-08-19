@@ -1,31 +1,16 @@
 package server
 
-import (
+/*import (
 	"ITLab-Projects/config"
 	"encoding/json"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
 	"net/http"
 	"time"
 )
 type InstallToken struct {
 	Token 	string 	`json:"token"`
-}
-
-var pem []byte
-
-func jwtInit() {
-	var err error
-	pem, err = ioutil.ReadFile(cfg.Auth.Github.PathToPem)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"function" : "init",
-			"error"	:	err,
-		},
-		).Fatal("Can't reach PEM file!")
-	}
 }
 
 func generateTokenForGithub() string{
@@ -88,4 +73,4 @@ func getInstallationTokenFor(login string) string {
 	json.NewDecoder(resp.Body).Decode(&installToken)
 	resp.Body.Close()
 	return installToken.Token
-}
+}*/

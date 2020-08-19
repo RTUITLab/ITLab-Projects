@@ -17,7 +17,7 @@ type App struct {
 }
 
 var projectsCollection *mongo.Collection
-var reposCollection *mongo.Collection
+var repsCollection *mongo.Collection
 var cfg *config.Config
 var httpClient *http.Client
 
@@ -26,7 +26,6 @@ func (a *App) Init(config *config.Config) {
 		FullTimestamp: true,
 	})
 	cfg = config
-	jwtInit()
 	httpClient = createHTTPClient()
 	log.Info("ITLab-Projects is starting up!")
 	DBUri := "mongodb://" + cfg.DB.Host + ":" + cfg.DB.DBPort
@@ -65,7 +64,7 @@ func (a *App) Init(config *config.Config) {
 	log.WithField("testMode", cfg.App.TestMode).Info("Let's check if test mode is on...")
 
 	projectsCollection = client.Database(cfg.DB.DBName).Collection("projects")
-	reposCollection = client.Database(cfg.DB.DBName).Collection("repos")
+	repsCollection = client.Database(cfg.DB.DBName).Collection("repos")
 
 	a.Router = mux.NewRouter().UseEncodedPath()
 	a.setRouters()
@@ -73,14 +72,16 @@ func (a *App) Init(config *config.Config) {
 
 func (a *App) setRouters() {
 	if cfg.App.TestMode {
-		a.Router.Use(testAuthMiddleware)
+		a.Router.Use(loggingMiddleware)
 	} else {
 		a.Router.Use(authMiddleware)
 	}
 
 	a.Router.HandleFunc("/api/update", getRelevantInfo).Methods("GET")
 
+	a.Router.HandleFunc("/api/projects/{path}", getProjectReps).Methods("GET").Queries("page","{page}")
 	a.Router.HandleFunc("/api/projects", getAllProjects).Methods("GET")
+	a.Router.HandleFunc("/api/reps", getFilteredReps).Methods("GET").Queries("filter","{filter}")
 	a.Router.HandleFunc("/api/reps", getPageRepsFromGithub).Methods("GET").Queries("page","{page}")
 	a.Router.HandleFunc("/api/reps/{id}", getRep).Methods("GET").Queries("platform", "{platform}")
 	a.Router.HandleFunc("/api/reps/{path}", getRepoActions).Methods("GET")

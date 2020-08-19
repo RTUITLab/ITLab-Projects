@@ -4,9 +4,12 @@ import (
 	"ITLab-Projects/models"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
 	"strconv"
 	"time"
@@ -33,28 +36,137 @@ func getAllReps(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(reps)
 }
 
-func getPageRepsFromGithub(w http.ResponseWriter, r *http.Request) {
-	c := make(chan models.Response)
+func getProjectReps(w http.ResponseWriter, r *http.Request) {
+	var project models.Project
+	var reps []models.Repos
 	data := mux.Vars(r)
-	go getRepsFromGithub(data["page"], c)
-	result := <-c
-	pageCount := result.PageCount
-	w.Header().Set("X-Total-Pages", strconv.Itoa(pageCount))
-	json.NewEncoder(w).Encode(result.Repositories)
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	filter := bson.M{"path" : data["path"]}
+	err := projectsCollection.FindOne(ctx, filter).Decode(&project)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.FindOne",
+			"handler" : "getProjectReps",
+			"error"	:	err,
+		},
+		).Warn("DB interaction resulted in error, shutting down...")
+		w.WriteHeader(404)
+		return
+	}
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	filter = bson.M{"path" : bson.M{"$in" : project.Reps}}
+	findOptions := options.Find()
+	findOptions.SetSort(bson.M{"path": 1})
+	cur, err := repsCollection.Find(ctx, filter, findOptions)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.Find",
+			"handler" : "getProjectReps",
+			"error"	:	err,
+		},
+		).Warn("DB interaction resulted in error, shutting down...")
+		w.WriteHeader(404)
+		return
+	}
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cur.Close(ctx)
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	err = cur.All(ctx, &reps)
+	w.Header().Set("X-Total-Pages", "1")
+	json.NewEncoder(w).Encode(reps)
+}
+
+func getPageRepsFromGithub(w http.ResponseWriter, r *http.Request) {
+	reps := make([]models.Repos, 0)
+	data := mux.Vars(r)
+	pageNum, err := strconv.Atoi(data["page"])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	repsTotal, err := repsCollection.CountDocuments(ctx, bson.M{})
+	pageTotal := calcPageTotal(repsTotal)
+
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	opts := options.Find()
+	opts.SetLimit(int64(cfg.App.ElemsPerPage))
+	opts.SetSort(bson.M{"path" : 1})
+	opts.SetSkip(int64((pageNum-1) * cfg.App.ElemsPerPage))
+	cur, err := repsCollection.Find(ctx, bson.M{}, opts)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.Find",
+			"handler" : "getPageRepsFromGithub",
+			"error"	:	err,
+		},
+		).Fatal("DB interaction resulted in error, shutting down...")
+	}
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cur.Close(ctx)
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	err = cur.All(ctx, &reps)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.All",
+			"handler" : "getPageRepsFromGithub",
+			"error"	:	err,
+		},
+		).Fatal("DB interaction resulted in error, shutting down...")
+	}
+
+	w.Header().Set("X-Total-Pages", strconv.Itoa(pageTotal))
+	json.NewEncoder(w).Encode(reps)
+}
+
+func getFilteredReps(w http.ResponseWriter, r *http.Request) {
+	reps := make([]models.Repos, 0)
+	data := mux.Vars(r)
+	filterTag := data["filter"]
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+
+	opts := options.Find()
+	opts.SetSort(bson.M{"path" : 1})
+	filter := bson.M{"path" : bson.M{"$regex" : primitive.Regex{Pattern: filterTag, Options: "i"}}}
+	cur, err := repsCollection.Find(ctx, filter, opts)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.Find",
+			"handler" : "getPageRepsFromGithub",
+			"error"	:	err,
+		},
+		).Fatal("DB interaction resulted in error, shutting down...")
+	}
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cur.Close(ctx)
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	err = cur.All(ctx, &reps)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.All",
+			"handler" : "getPageRepsFromGithub",
+			"error"	:	err,
+		},
+		).Fatal("DB interaction resulted in error, shutting down...")
+	}
+
+	json.NewEncoder(w).Encode(reps)
 }
 
 func getRep(w http.ResponseWriter, r *http.Request) {
 	var rep models.Repos
-
 	data := mux.Vars(r)
-	platform := data["platform"]
-
-	switch platform {
-	case "github":
-		rep = getRepFromGithub(data["id"])
-	case "gitlab":
-		rep = getRepFromGitlab(data["id"])
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	filter := bson.M{"path" : data["id"]}
+	err := repsCollection.FindOne(ctx, filter).Decode(&rep)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.FindOne",
+			"handler" : "getRep",
+			"error"	:	err,
+		},
+		).Fatal("DB interaction resulted in error, shutting down...")
 	}
+	fmt.Println(rep.Meta.Description)
 	json.NewEncoder(w).Encode(rep)
 }
 
@@ -116,8 +228,8 @@ func getAllProjects(w http.ResponseWriter, r *http.Request) {
 }
 
 func getRepoActions(w http.ResponseWriter, r *http.Request) {
-	data := mux.Vars(r)
-	getActionsFromGithub(data["id"])
+	//data := mux.Vars(r)
+	//getActionsFromGithub(data["id"])
 }
 
 func getRelevantInfo(w http.ResponseWriter, r *http.Request) {
@@ -127,15 +239,15 @@ func getRelevantInfo(w http.ResponseWriter, r *http.Request) {
 
 	go getRepsFromGithub("all", cGithub)
 	result := <-cGithub
-	saveReposToDB(result.Repositories)
-	for _, rep := range result.Repositories {
-		go getProjectInfoFile(rep.Path, cProjects)
+	for i, _ := range result.Repositories {
+		go getProjectInfoFile(&result.Repositories[i], cProjects)
 	}
-	for i:= 0; i< len(result.Repositories); i++  {
+	for i := 0; i< len(result.Repositories); i++  {
 		project := <-cProjects
 		if project.Project.Path != "" {
 			projects = append(projects, project)
 		}
 	}
+	saveReposToDB(result.Repositories)
 	w.WriteHeader(200)
 }

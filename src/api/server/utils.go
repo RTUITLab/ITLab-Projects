@@ -4,6 +4,7 @@ import (
 	"ITLab-Projects/models"
 	"context"
 	"encoding/json"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -11,12 +12,13 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
 func getRepsFromGithub(page string, c chan models.Response) {
-	var URL string
 	tempReps := make([]models.Repos, 0)
+	var wg sync.WaitGroup
 	pageCount := 0
 	all := false
 
@@ -24,8 +26,7 @@ func getRepsFromGithub(page string, c chan models.Response) {
 		all = true
 		page = "1"
 	}
-	URL = "https://api.github.com/orgs/RTUITLab/repos?page=" + page
-
+	URL := "https://api.github.com/orgs/RTUITLab/repos?sort=updated&direction=asc&page=" + page
 	req, err := http.NewRequest("GET", URL, nil)
 	req.Header.Set("Authorization", "Bearer " + cfg.Auth.Github.AccessToken)
 	resp, err := httpClient.Do(req)
@@ -41,13 +42,16 @@ func getRepsFromGithub(page string, c chan models.Response) {
 		return
 	}
 	defer resp.Body.Close()
-
 	json.NewDecoder(resp.Body).Decode(&tempReps)
 
 	for i := range tempReps {
+		wg.Add(2)
+		go getRepLanguages(&tempReps[i], &wg)
+		go getRepContributors(&tempReps[i], &wg)
 		tempReps[i].Platform = "github"
 		tempReps[i].Path = tempReps[i].Name
 	}
+	wg.Wait()
 	if len(tempReps) != 0 {
 		linkHeader := resp.Header.Get("Link")
 		lastPage := strings.LastIndex(linkHeader, "page=")
@@ -339,9 +343,9 @@ func createHTTPClient() *http.Client {
 	return client
 }
 
-func getProjectInfoFile(repPath string, c chan models.ProjectInfo) {
+func getProjectInfoFile(rep *models.Repos, c chan models.ProjectInfo) {
 	var projectInfo models.ProjectInfo
-	fileUrl := "https://raw.githubusercontent.com/RTUITLab/" + repPath + "/develop/project_info.json"
+	fileUrl := "https://raw.githubusercontent.com/RTUITLab/" + rep.Path + "/develop/project_info.json"
 
 	req, err := http.NewRequest("GET", fileUrl, nil)
 	resp, err := httpClient.Do(req)
@@ -360,6 +364,8 @@ func getProjectInfoFile(repPath string, c chan models.ProjectInfo) {
 
 	if resp.StatusCode == 200 {
 		json.NewDecoder(resp.Body).Decode(&projectInfo)
+		rep.Meta = projectInfo.Repos
+		projectInfo.Project.LastUpdated = rep.PushedAt
 		saveProjectToDB(projectInfo)
 		c <- projectInfo
 	} else {
@@ -370,13 +376,24 @@ func getProjectInfoFile(repPath string, c chan models.ProjectInfo) {
 func saveProjectToDB(projectInfo models.ProjectInfo) {
 	opts := options.Update().SetUpsert(true)
 	filter := bson.M{"path": projectInfo.Project.Path}
+	log.Info(projectInfo.Project.StackTags.Frameworks)
 	update := bson.M{
 		"$set" : bson.M{
 			"humanName" : projectInfo.Project.HumanName,
 			"description" : projectInfo.Project.Description,
+			"lastUpdated" : projectInfo.Project.LastUpdated,
 	},
 		"$addToSet" : bson.M{
 			"reps" : projectInfo.Repos.Path,
+			"stackTags.directions" : bson.M{
+				"$each" : projectInfo.Repos.StackTags.Directions,
+			},
+			"stackTags.frameworks" : bson.M{
+				"$each" : projectInfo.Repos.StackTags.Frameworks,
+			},
+			"stackTags.databases" : bson.M{
+				"$each" : projectInfo.Repos.StackTags.Databases,
+			},
 		},
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
@@ -398,7 +415,7 @@ func saveReposToDB(repos []models.Repos) {
 		filter := bson.M{"id": rep.ID}
 
 		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-		_, err := reposCollection.ReplaceOne(ctx, filter, rep, opts)
+		_, err := repsCollection.ReplaceOne(ctx, filter, rep, opts)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"function": "mongodb.UpdateOne",
@@ -408,5 +425,56 @@ func saveReposToDB(repos []models.Repos) {
 			},
 			).Warn("Project update failed!")
 		}
+	}
+}
+
+func getRepLanguages(rep *models.Repos, wg *sync.WaitGroup) {
+	var langs map[string]int
+	URL := fmt.Sprintf("https://api.github.com/repos/RTUITLab/%s/languages", rep.Name)
+	req, err := http.NewRequest("GET", URL, nil)
+	req.Header.Set("Authorization", "Bearer " + cfg.Auth.Github.AccessToken)
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "http.Get",
+			"handler" : "getLanugages",
+			"url"	: URL,
+			"error"	:	err,
+		},
+		).Warn("Can't reach API!")
+	}
+	defer resp.Body.Close()
+	json.NewDecoder(resp.Body).Decode(&langs)
+	rep.Languages = langs
+	wg.Done()
+}
+
+func getRepContributors(rep *models.Repos, wg *sync.WaitGroup) {
+	var contributors []models.User
+	URL := fmt.Sprintf("https://api.github.com/repos/RTUITLab/%s/contributors", rep.Name)
+	req, err := http.NewRequest("GET", URL, nil)
+	req.Header.Set("Authorization", "Bearer " + cfg.Auth.Github.AccessToken)
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "http.Get",
+			"handler" : "getLanugages",
+			"url"	: URL,
+			"error"	:	err,
+		},
+		).Warn("Can't reach API!")
+	}
+	defer resp.Body.Close()
+	json.NewDecoder(resp.Body).Decode(&contributors)
+	rep.Contributors = contributors
+	wg.Done()
+}
+
+func calcPageTotal(repsTotal int64) int {
+	pageTotal := int(repsTotal) / cfg.App.ElemsPerPage
+	if int(repsTotal) % cfg.App.ElemsPerPage == 0 {
+		return pageTotal
+	} else {
+		return pageTotal + 1
 	}
 }

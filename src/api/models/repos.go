@@ -4,16 +4,20 @@ type Repos struct {
 	ID          		uint64 		`json:"id"`
 	Platform			string		`json:"platform,omitempty"`
 	Name        		string 		`json:"name"`
+	Contributors		[]User		`json:"contributors"`
 	Path				string		`json:"path_with_namespace,omitempty"`
 	HTMLUrl     		string 		`json:"html_url"`
 	GitLabHTMLUrl     	string 		`json:"web_url,omitempty"`
 	Description 		string 		`json:"description"`
 	CreatedAt   		string 		`json:"created_at"`
 	UpdatedAt   		string 		`json:"updated_at"`
+	PushedAt			string		`json:"pushed_at"`
 	GitLabUpdatedAt   	string 		`json:"last_activity_at,omitempty"`
 	Language    		string 		`json:"language"`
+	Languages			map[string]int	`json:"languages"`
 	Archived    		bool   		`json:"archived"`
 	OpenIssues  		int			`json:"open_issues_count"`
+	Meta				Meta		`json:"meta"`
 }
 
 type Issue struct {
@@ -28,11 +32,13 @@ type Issue struct {
 	State     			string     	`json:"state"`
 	Assignees 			[]Assignee 	`json:"assignees"`
 	Milestone 			*Milestone  `json:"milestone,omitempty"`
+	Labels				[]Label     `json:"labels"`
 	CreatedAt 			string     	`json:"created_at"`
 	UpdatedAt 			string     	`json:"updated_at"`
 	ClosedAt  			string     	`json:"closed_at"`
 	HtmlUrl   			string     	`json:"html_url"`
 	GitLabHTMLUrl     	string 		`json:"web_url,omitempty"`
+	PullRequest			PullRequest `json:"pull_request"`
 }
 
 type User struct {
@@ -68,4 +74,20 @@ type Milestone struct {
 type Response struct {
 	Repositories []Repos
 	PageCount	int
+}
+
+type Label struct {
+	ID          int    `json:"id"`
+	NodeID      string `json:"node_id"`
+	URL         string `json:"url"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Color       string `json:"color"`
+}
+
+type PullRequest struct {
+	URL      string `json:"url"`
+	HTMLURL  string `json:"html_url"`
+	DiffURL  string `json:"diff_url"`
+	PatchURL string `json:"patch_url"`
 }

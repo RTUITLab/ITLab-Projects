@@ -44,6 +44,7 @@ type Gitlab struct {
 type AppConfig struct {
 	AppPort		string	`json:"appPort"`
 	TestMode	bool	`json:"testMode"`
+	ElemsPerPage int	`json:"elemsPerPage"`
 }
 
 func GetConfig() *Config {
