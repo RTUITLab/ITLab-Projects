@@ -72,11 +72,10 @@ func getProjectReps(w http.ResponseWriter, r *http.Request) {
 	defer cur.Close(ctx)
 	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
 	err = cur.All(ctx, &reps)
-	w.Header().Set("X-Total-Pages", "1")
 	json.NewEncoder(w).Encode(reps)
 }
 
-func getPageRepsFromGithub(w http.ResponseWriter, r *http.Request) {
+func getRepsPage(w http.ResponseWriter, r *http.Request) {
 	reps := make([]models.Repos, 0)
 	data := mux.Vars(r)
 	pageNum, err := strconv.Atoi(data["page"])
@@ -225,11 +224,6 @@ func getAllProjects(w http.ResponseWriter, r *http.Request) {
 		).Fatal("DB interaction resulted in error, shutting down...")
 	}
 	json.NewEncoder(w).Encode(projects)
-}
-
-func getRepoActions(w http.ResponseWriter, r *http.Request) {
-	//data := mux.Vars(r)
-	//getActionsFromGithub(data["id"])
 }
 
 func getRelevantInfo(w http.ResponseWriter, r *http.Request) {

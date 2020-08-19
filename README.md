@@ -1,7 +1,7 @@
 # ITLab-Projects
 Service for listing RTUITLab projects work
 
-REST API requests: https://www.getpostman.com/collections/a312d4a3f8da79bacc50
+REST API requests: https://www.postman.com/collections/a312d4a3f8da79bacc50
 ## Configuration
 
 File ```src/ITLabReports/api/auth_config.json``` must contain next content:
