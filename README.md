@@ -21,3 +21,22 @@ File ```src/ITLabReports/api/auth_config.json``` must contain next content:
     }
   }
 }
+```
+File ```src/ITLabReports/api/config.json``` must contain next content:
+
+```js
+{
+  "DbOptions": {
+    "host": "exampledb",
+    "dbPort": "27017",
+    "dbName" : "ITLabProjects",
+    "projectsCollectionName" : "projects",
+    "reposCollectionName" : "repos"
+  },
+  "AppOptions": {
+    "appPort": "8080",
+    "testMode": false,      //testMode=true disables jwt validation
+    "elemsPerPage" : 40     //content is displayed with pagination
+  }
+}
+```

@@ -7,15 +7,17 @@ import (
 )
 
 type Config struct {
-	DB *DBConfig	`json:"DbOptions"`
+	DB *DBConfig		`json:"DbOptions"`
 	Auth *AuthConfig	`json:"AuthOptions"`
 	App *AppConfig		`json:"AppOptions"`
 }
 
 type DBConfig struct {
-	Host 		string		`json:"host"`
-	DBPort 		string		`json:"dbPort"`
-	DBName 		string		`json:"dbName"`
+	Host 					string		`json:"host"`
+	DBPort 					string		`json:"dbPort"`
+	DBName 					string		`json:"dbName"`
+	ProjectsCollectionName	string		`json:"projectsCollectionName"`
+	ReposCollectionName		string		`json:"reposCollectionName"`
 }
 type AuthConfig struct {
 	KeyURL		string		`json:"keyUrl"`

@@ -63,8 +63,8 @@ func (a *App) Init(config *config.Config) {
 	}).Info("Database information: ")
 	log.WithField("testMode", cfg.App.TestMode).Info("Let's check if test mode is on...")
 
-	projectsCollection = client.Database(cfg.DB.DBName).Collection("projects")
-	repsCollection = client.Database(cfg.DB.DBName).Collection("repos")
+	projectsCollection = client.Database(cfg.DB.DBName).Collection(cfg.DB.ProjectsCollectionName)
+	repsCollection = client.Database(cfg.DB.DBName).Collection(cfg.DB.ReposCollectionName)
 
 	a.Router = mux.NewRouter().UseEncodedPath()
 	a.setRouters()
