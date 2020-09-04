@@ -346,7 +346,6 @@ func createHTTPClient() *http.Client {
 func getProjectInfoFile(rep *models.Repos, c chan models.ProjectInfo) {
 	var projectInfo models.ProjectInfo
 	fileUrl := "https://raw.githubusercontent.com/RTUITLab/" + rep.Path + "/" + cfg.App.ProjectFileBranch + "/project_info.json"
-	log.Info(fileUrl)
 	req, err := http.NewRequest("GET", fileUrl, nil)
 	resp, err := httpClient.Do(req)
 	if err != nil {
@@ -376,7 +375,6 @@ func getProjectInfoFile(rep *models.Repos, c chan models.ProjectInfo) {
 func saveProjectToDB(projectInfo models.ProjectInfo) {
 	opts := options.Update().SetUpsert(true)
 	filter := bson.M{"path": projectInfo.Project.Path}
-	log.Info(projectInfo.Project.Path)
 	update := bson.M{
 		"$set" : bson.M{
 			"humanName" : projectInfo.Project.HumanName,
