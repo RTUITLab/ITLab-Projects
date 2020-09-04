@@ -9,6 +9,7 @@
   "AppOptions": {
     "appPort": "8080",
     "testMode": true,
+    "projectFileBranch" : "develop",
     "elemsPerPage" : 40
   }
 }

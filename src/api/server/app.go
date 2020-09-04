@@ -77,7 +77,7 @@ func (a *App) setRouters() {
 		a.Router.Use(authMiddleware)
 	}
 
-	a.Router.HandleFunc("/api/update", getRelevantInfo).Methods("GET")
+	a.Router.HandleFunc("/api/update", getRelevantInfo).Methods("POST")
 	a.Router.HandleFunc("/api/projects", getAllProjects).Methods("GET")
 	a.Router.HandleFunc("/api/projects/{path}", getProjectReps).Methods("GET")
 	a.Router.HandleFunc("/api/reps", getFilteredReps).Methods("GET").Queries("filter","{filter}")
