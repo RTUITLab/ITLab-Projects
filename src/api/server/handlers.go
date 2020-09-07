@@ -79,8 +79,9 @@ func getRepsPage(w http.ResponseWriter, r *http.Request) {
 	reps := make([]models.Repos, 0)
 	data := mux.Vars(r)
 	pageNum, err := strconv.Atoi(data["page"])
-	if err != nil {
+	if err != nil || pageNum < 1 {
 		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	repsTotal, err := repsCollection.CountDocuments(ctx, bson.M{})
