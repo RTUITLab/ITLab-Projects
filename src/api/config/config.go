@@ -18,6 +18,7 @@ type DBConfig struct {
 	DBName 					string		`json:"dbName"`
 	ProjectsCollectionName	string		`json:"projectsCollectionName"`
 	ReposCollectionName		string		`json:"reposCollectionName"`
+	LabelsCollectionName	string		`json:"labelsCollectionName"`
 }
 type AuthConfig struct {
 	KeyURL		string		`json:"keyUrl"`

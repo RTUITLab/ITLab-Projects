@@ -426,6 +426,46 @@ func saveReposToDB(repos []models.Repos) {
 	}
 }
 
+func saveLabelsToDB(repos []models.Repos) {
+	labelsSet := make(map[string]bool)
+	var labelsSlice []string
+	var labelsDocument models.Labels
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	labelsCollection.Drop(ctx)
+
+	for _, rep := range repos {
+		for _, label := range rep.Meta.StackTags.Databases {
+			if !labelsSet[label] {
+				labelsSet[label] = true
+			}
+		}
+		for _, label := range rep.Meta.StackTags.Frameworks {
+			if !labelsSet[label] {
+				labelsSet[label] = true
+			}
+		}
+		for _, label := range rep.Meta.StackTags.Directions {
+			if !labelsSet[label] {
+				labelsSet[label] = true
+			}
+		}
+	}
+	for key := range labelsSet {
+		labelsSlice = append(labelsSlice, key)
+	}
+	labelsDocument.Labels = labelsSlice
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	_ , err := labelsCollection.InsertOne(ctx, labelsDocument)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function": "mongodb.InsertOne",
+			"handler":  "saveLabelsToDB",
+			"error":    err,
+		},
+		).Warn("Project update failed!")
+	}
+}
+
 func getRepLanguages(rep *models.Repos, wg *sync.WaitGroup) {
 	var langs map[string]int
 	URL := fmt.Sprintf("https://api.github.com/repos/RTUITLab/%s/languages", rep.Name)

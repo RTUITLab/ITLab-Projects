@@ -243,5 +243,21 @@ func getRelevantInfo(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	saveReposToDB(result.Repositories)
+	saveLabelsToDB(result.Repositories)
 	w.WriteHeader(200)
+}
+
+func getAllLabels(w http.ResponseWriter, r *http.Request) {
+	var labels models.Labels
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	err := labelsCollection.FindOne(ctx, bson.M{}).Decode(&labels)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.FindOne",
+			"handler" : "getAllLabels",
+			"error"	:	err,
+		},
+		).Fatal("DB interaction resulted in error, shutting down...")
+	}
+	json.NewEncoder(w).Encode(labels)
 }
