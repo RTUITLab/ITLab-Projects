@@ -36,6 +36,7 @@ File ```src/ITLabReports/api/config.json``` must contain next content:
   "AppOptions": {
     "appPort": "8080",
     "testMode": false,      //testMode=true disables jwt validation
+    "projectFileBranch": "develop", //on which branch project_info.json is situated
     "elemsPerPage" : 40     //content is displayed with pagination
   }
 }

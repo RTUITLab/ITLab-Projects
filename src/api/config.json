@@ -4,11 +4,13 @@
     "dbPort": "27017",
     "dbName" : "ITLabProjects",
     "projectsCollectionName" : "projects",
-    "reposCollectionName" : "repos"
+    "reposCollectionName" : "repos",
+    "labelsCollectionName" : "labels"
   },
   "AppOptions": {
     "appPort": "8080",
     "testMode": true,
+    "projectFileBranch" : "develop",
     "elemsPerPage" : 40
   }
 }

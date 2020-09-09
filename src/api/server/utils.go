@@ -345,8 +345,7 @@ func createHTTPClient() *http.Client {
 
 func getProjectInfoFile(rep *models.Repos, c chan models.ProjectInfo) {
 	var projectInfo models.ProjectInfo
-	fileUrl := "https://raw.githubusercontent.com/RTUITLab/" + rep.Path + "/develop/project_info.json"
-
+	fileUrl := "https://raw.githubusercontent.com/RTUITLab/" + rep.Path + "/" + cfg.App.ProjectFileBranch + "/project_info.json"
 	req, err := http.NewRequest("GET", fileUrl, nil)
 	resp, err := httpClient.Do(req)
 	if err != nil {
@@ -376,7 +375,6 @@ func getProjectInfoFile(rep *models.Repos, c chan models.ProjectInfo) {
 func saveProjectToDB(projectInfo models.ProjectInfo) {
 	opts := options.Update().SetUpsert(true)
 	filter := bson.M{"path": projectInfo.Project.Path}
-	log.Info(projectInfo.Project.StackTags.Frameworks)
 	update := bson.M{
 		"$set" : bson.M{
 			"humanName" : projectInfo.Project.HumanName,
@@ -425,6 +423,46 @@ func saveReposToDB(repos []models.Repos) {
 			},
 			).Warn("Project update failed!")
 		}
+	}
+}
+
+func saveLabelsToDB(repos []models.Repos) {
+	labelsSet := make(map[string]bool)
+	var labelsSlice []string
+	var labelsDocument models.Labels
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	labelsCollection.Drop(ctx)
+
+	for _, rep := range repos {
+		for _, label := range rep.Meta.StackTags.Databases {
+			if !labelsSet[label] {
+				labelsSet[label] = true
+			}
+		}
+		for _, label := range rep.Meta.StackTags.Frameworks {
+			if !labelsSet[label] {
+				labelsSet[label] = true
+			}
+		}
+		for _, label := range rep.Meta.StackTags.Directions {
+			if !labelsSet[label] {
+				labelsSet[label] = true
+			}
+		}
+	}
+	for key := range labelsSet {
+		labelsSlice = append(labelsSlice, key)
+	}
+	labelsDocument.Labels = labelsSlice
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	_ , err := labelsCollection.InsertOne(ctx, labelsDocument)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function": "mongodb.InsertOne",
+			"handler":  "saveLabelsToDB",
+			"error":    err,
+		},
+		).Warn("Project update failed!")
 	}
 }
 
