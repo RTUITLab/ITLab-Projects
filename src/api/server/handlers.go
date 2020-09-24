@@ -133,8 +133,6 @@ func getFilteredProjects(w http.ResponseWriter, r *http.Request) {
 
 	filter := bson.M{"path" : bson.M{"$regex" : primitive.Regex{Pattern: filterTag, Options: "i"}}}
 	if data["labels"] != "" {
-		log.Info(filterTag)
-		log.Info(labelsFilter)
 		filter = bson.M{"path" : bson.M{"$regex" : primitive.Regex{Pattern: filterTag, Options: "i"}},
 			"labels.name" : bson.M{"$all" : labelsFilter}}
 	}

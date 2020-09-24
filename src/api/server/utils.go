@@ -449,10 +449,31 @@ func saveIssuesToDB(issues []models.Issue) {
 		}
 	}
 }
+func saveIssueLabelsToDB(issues []models.Issue) {
+	for _, issue := range issues {
+		for _, label := range issue.Labels {
+			label.Type = "rep"
+			opts := options.Replace().SetUpsert(true)
+			filter := bson.M{"name": label.Name}
+
+			ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+			_, err := labelsCollection.ReplaceOne(ctx, filter, label, opts)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"function": "mongodb.UpdateOne",
+					"handler":  "saveIssueLabelsToDB",
+					"error":    err,
+				},
+				).Warn("Issue Labels update failed!")
+			}
+		}
+	}
+}
+
 
 func saveLabelsToDB(repos []models.Repos) {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	labelsCollection.Drop(ctx)
+	//ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	//labelsCollection.Drop(ctx)
 
 	for _, rep := range repos {
 		for _, label := range rep.Meta.Labels {
@@ -538,6 +559,7 @@ func getRepIssues(rep *models.Repos, projectInfo models.ProjectInfo) {
 		issues[i].ProjectPath = projectInfo.Project.Path
 		issues[i].Labels = append(issues[i].Labels, projectInfo.Repos.Labels...)
 	}
+	saveIssueLabelsToDB(issues)
 	saveIssuesToDB(issues)
 }
 
