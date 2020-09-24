@@ -82,13 +82,17 @@ func (a *App) setRouters() {
 	}
 
 	a.Router.HandleFunc("/api/projects/update", getRelevantInfo).Methods("POST")
+	a.Router.HandleFunc("/api/projects/projects", getFilteredProjects).Methods("GET").Queries("filter","{filter}", "labels", "{labels}")
+	a.Router.HandleFunc("/api/projects/projects", getFilteredProjects).Methods("GET").Queries("labels", "{labels}")
+	a.Router.HandleFunc("/api/projects/projects", getFilteredProjects).Methods("GET").Queries("filter","{filter}")
 	a.Router.HandleFunc("/api/projects/projects", getAllProjects).Methods("GET")
 	a.Router.HandleFunc("/api/projects/projects/{path}", getProjectReps).Methods("GET")
 	a.Router.HandleFunc("/api/projects/labels", getAllLabels).Methods("GET")
-	a.Router.HandleFunc("/api/projects/reps", getFilteredReps).Methods("GET").Queries("filter","{filter}")
 	a.Router.HandleFunc("/api/projects/reps", getRepsPage).Methods("GET").Queries("page","{page}")
 	a.Router.HandleFunc("/api/projects/reps/{id}", getRep).Methods("GET").Queries("platform", "{platform}")
 	a.Router.HandleFunc("/api/projects/reps/{id}/issues", getAllIssuesForRep).Methods("GET").Queries("platform", "{platform}", "state", "{state}")
+	a.Router.HandleFunc("/api/projects/issues", getFilteredIssues).Methods("GET").Queries("filter","{filter}", "labels", "{labels}")
+	a.Router.HandleFunc("/api/projects/issues", getFilteredIssues).Methods("GET").Queries("labels", "{labels}")
 	a.Router.HandleFunc("/api/projects/issues", getFilteredIssues).Methods("GET").Queries("filter","{filter}")
 	a.Router.HandleFunc("/api/projects/issues", getAllOpenedIssues).Methods("GET")
 	a.Router.HandleFunc("/api/projects/issues/{reppath}", getProjectIssues).Methods("GET")

@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -120,20 +121,29 @@ func getRepsPage(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(reps)
 }
 
-func getFilteredReps(w http.ResponseWriter, r *http.Request) {
-	reps := make([]models.Repos, 0)
+func getFilteredProjects(w http.ResponseWriter, r *http.Request) {
+	projects := make([]models.Project, 0)
 	data := mux.Vars(r)
 	filterTag := data["filter"]
+	labelsFilter := strings.Split(data["labels"], "&")
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
 	opts := options.Find()
 	opts.SetSort(bson.M{"path" : 1})
+
 	filter := bson.M{"path" : bson.M{"$regex" : primitive.Regex{Pattern: filterTag, Options: "i"}}}
-	cur, err := repsCollection.Find(ctx, filter, opts)
+	if data["labels"] != "" {
+		log.Info(filterTag)
+		log.Info(labelsFilter)
+		filter = bson.M{"path" : bson.M{"$regex" : primitive.Regex{Pattern: filterTag, Options: "i"}},
+			"labels.name" : bson.M{"$all" : labelsFilter}}
+	}
+
+	cur, err := projectsCollection.Find(ctx, filter, opts)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"function" : "mongo.Find",
-			"handler" : "getFilteredReps",
+			"handler" : "getFilteredProjects",
 			"error"	:	err,
 		},
 		).Warn("DB interaction resulted in error")
@@ -142,29 +152,38 @@ func getFilteredReps(w http.ResponseWriter, r *http.Request) {
 	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cur.Close(ctx)
 	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
-	err = cur.All(ctx, &reps)
+	err = cur.All(ctx, &projects)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"function" : "mongo.All",
-			"handler" : "getFilteredReps",
+			"handler" : "getFilteredProjects",
 			"error"	:	err,
 		},
 		).Warn("DB interaction resulted in error")
 		w.WriteHeader(500)
 	}
-
-	json.NewEncoder(w).Encode(reps)
+	json.NewEncoder(w).Encode(projects)
 }
 
 func getFilteredIssues(w http.ResponseWriter, r *http.Request) {
 	issues := make([]models.Issue, 0)
 	data := mux.Vars(r)
 	filterTag := data["filter"]
+	labelsFilter := strings.Split(data["labels"], "&")
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
 	opts := options.Find()
 	opts.SetSort(bson.M{"title" : 1})
-	filter := bson.M{"title" : bson.M{"$regex" : primitive.Regex{Pattern: filterTag, Options: "i"}}}
+
+	filter := bson.M{"title" : bson.M{"$regex" : primitive.Regex{Pattern: filterTag, Options: "i"}},
+		"pullrequest.url": "", "state": "open"}
+	if data["labels"] != "" {
+		log.Info(filterTag)
+		log.Info(labelsFilter)
+		filter = bson.M{"title" : bson.M{"$regex" : primitive.Regex{Pattern: filterTag, Options: "i"}},
+			"labels.name" : bson.M{"$all" : labelsFilter}, "pullrequest.url": "", "state": "open"}
+	}
+
 	cur, err := issuesCollection.Find(ctx, filter, opts)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -196,10 +215,7 @@ func getAllOpenedIssues(w http.ResponseWriter, r *http.Request) {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	findOptions := options.Find()
 	findOptions.SetSort(bson.M{"updatedat": -1})
-	filter := bson.M{"$and" : []bson.M{
-		{"pullrequest.url": ""},
-		{"state": "open"},
-	}}
+	filter := bson.M{"pullrequest.url": "", "state": "open"}
 	cur, err := issuesCollection.Find(ctx, filter, findOptions)
 	if err != nil {
 		log.WithFields(log.Fields{
