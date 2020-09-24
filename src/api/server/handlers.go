@@ -99,7 +99,8 @@ func getRepsPage(w http.ResponseWriter, r *http.Request) {
 			"handler" : "getPageRepsFromGithub",
 			"error"	:	err,
 		},
-		).Fatal("DB interaction resulted in error, shutting down...")
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
 	}
 	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cur.Close(ctx)
@@ -111,7 +112,8 @@ func getRepsPage(w http.ResponseWriter, r *http.Request) {
 			"handler" : "getPageRepsFromGithub",
 			"error"	:	err,
 		},
-		).Fatal("DB interaction resulted in error, shutting down...")
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
 	}
 
 	w.Header().Set("X-Total-Pages", strconv.Itoa(pageTotal))
@@ -131,10 +133,11 @@ func getFilteredReps(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.WithFields(log.Fields{
 			"function" : "mongo.Find",
-			"handler" : "getPageRepsFromGithub",
+			"handler" : "getFilteredReps",
 			"error"	:	err,
 		},
-		).Fatal("DB interaction resulted in error, shutting down...")
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
 	}
 	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cur.Close(ctx)
@@ -143,15 +146,121 @@ func getFilteredReps(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.WithFields(log.Fields{
 			"function" : "mongo.All",
-			"handler" : "getPageRepsFromGithub",
+			"handler" : "getFilteredReps",
 			"error"	:	err,
 		},
-		).Fatal("DB interaction resulted in error, shutting down...")
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
 	}
 
 	json.NewEncoder(w).Encode(reps)
 }
 
+func getFilteredIssues(w http.ResponseWriter, r *http.Request) {
+	issues := make([]models.Issue, 0)
+	data := mux.Vars(r)
+	filterTag := data["filter"]
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+
+	opts := options.Find()
+	opts.SetSort(bson.M{"title" : 1})
+	filter := bson.M{"title" : bson.M{"$regex" : primitive.Regex{Pattern: filterTag, Options: "i"}}}
+	cur, err := issuesCollection.Find(ctx, filter, opts)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.Find",
+			"handler" : "getFilteredIssues",
+			"error"	:	err,
+		},
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
+	}
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cur.Close(ctx)
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	err = cur.All(ctx, &issues)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.All",
+			"handler" : "getFilteredIssues",
+			"error"	:	err,
+		},
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
+	}
+	json.NewEncoder(w).Encode(issues)
+}
+
+func getAllOpenedIssues(w http.ResponseWriter, r *http.Request) {
+	issues := make([]models.Issue, 0)
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	findOptions := options.Find()
+	findOptions.SetSort(bson.M{"updatedat": -1})
+	filter := bson.M{"$and" : []bson.M{
+		{"pullrequest.url": ""},
+		{"state": "open"},
+	}}
+	cur, err := issuesCollection.Find(ctx, filter, findOptions)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.Find",
+			"handler" : "getAllIssues",
+			"error"	:	err,
+		},
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
+	}
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cur.Close(ctx)
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	err = cur.All(ctx, &issues)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.All",
+			"handler" : "getAllIssues",
+			"error"	:	err,
+		},
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
+	}
+	json.NewEncoder(w).Encode(issues)
+}
+
+func getProjectIssues(w http.ResponseWriter, r *http.Request) {
+	issues := make([]models.Issue, 0)
+	data := mux.Vars(r)
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	findOptions := options.Find()
+	findOptions.SetSort(bson.M{"updatedat": -1})
+	filter := bson.M{"$and" : []bson.M{
+		{"pullrequest.url": ""},
+		{"projectpath": data["reppath"]},
+	}}
+	cur, err := issuesCollection.Find(ctx, filter, findOptions)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.Find",
+			"handler" : "getProjectIssues",
+			"error"	:	err,
+		},
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
+	}
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cur.Close(ctx)
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	err = cur.All(ctx, &issues)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.All",
+			"handler" : "getProjectIssues",
+			"error"	:	err,
+		},
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
+	}
+	json.NewEncoder(w).Encode(issues)
+}
 func getRep(w http.ResponseWriter, r *http.Request) {
 	var rep models.Repos
 	data := mux.Vars(r)
@@ -164,13 +273,14 @@ func getRep(w http.ResponseWriter, r *http.Request) {
 			"handler" : "getRep",
 			"error"	:	err,
 		},
-		).Fatal("DB interaction resulted in error, shutting down...")
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
 	}
 	fmt.Println(rep.Meta.Description)
 	json.NewEncoder(w).Encode(rep)
 }
 
-func getAllIssues(w http.ResponseWriter, r *http.Request) {
+func getAllIssuesForRep(w http.ResponseWriter, r *http.Request) {
 	var issues []models.Issue
 	data := mux.Vars(r)
 	platform := data["platform"]
@@ -203,14 +313,17 @@ func getIssue(w http.ResponseWriter, r *http.Request) {
 func getAllProjects(w http.ResponseWriter, r *http.Request) {
 	projects := make([]models.Project, 0)
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	cur, err := projectsCollection.Find(ctx, bson.M{})
+	findOptions := options.Find()
+	findOptions.SetSort(bson.M{"lastUpdated": -1})
+	cur, err := projectsCollection.Find(ctx, bson.M{}, findOptions)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"function" : "mongo.Find",
 			"handler" : "getAllProjects",
 			"error"	:	err,
 		},
-		).Fatal("DB interaction resulted in error, shutting down...")
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
 	}
 	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cur.Close(ctx)
@@ -222,7 +335,8 @@ func getAllProjects(w http.ResponseWriter, r *http.Request) {
 			"handler" : "getAllProjects",
 			"error"	:	err,
 		},
-		).Fatal("DB interaction resulted in error, shutting down...")
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
 	}
 	json.NewEncoder(w).Encode(projects)
 }
@@ -249,16 +363,32 @@ func getRelevantInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func getAllLabels(w http.ResponseWriter, r *http.Request) {
-	var labels models.Labels
+	labels := make([]models.Label, 0)
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	err := labelsCollection.FindOne(ctx, bson.M{}).Decode(&labels)
+	findOptions := options.Find()
+	findOptions.SetSort(bson.M{"type": 1})
+	cur, err := labelsCollection.Find(ctx, bson.M{}, findOptions)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"function" : "mongo.FindOne",
+			"function" : "mongo.Find",
 			"handler" : "getAllLabels",
 			"error"	:	err,
 		},
-		).Fatal("DB interaction resulted in error, shutting down...")
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
+	}
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cur.Close(ctx)
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	err = cur.All(ctx, &labels)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.All",
+			"handler" : "getAllLabels",
+			"error"	:	err,
+		},
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
 	}
 	json.NewEncoder(w).Encode(labels)
 }

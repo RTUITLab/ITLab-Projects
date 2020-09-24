@@ -4,7 +4,7 @@ Service for listing RTUITLab projects work
 REST API requests: https://www.postman.com/collections/a312d4a3f8da79bacc50
 ## Configuration
 
-File ```src/ITLabReports/api/auth_config.json``` must contain next content:
+File ```src/api/auth_config.json``` must contain next content:
 
 ```js
 {
@@ -22,7 +22,7 @@ File ```src/ITLabReports/api/auth_config.json``` must contain next content:
   }
 }
 ```
-File ```src/ITLabReports/api/config.json``` must contain next content:
+File ```src/api/config.json``` must contain next content:
 
 ```js
 {
@@ -31,7 +31,9 @@ File ```src/ITLabReports/api/config.json``` must contain next content:
     "dbPort": "27017",
     "dbName" : "ITLabProjects",
     "projectsCollectionName" : "projects",
-    "reposCollectionName" : "repos"
+    "reposCollectionName" : "repos",
+    "labelsCollectionName" : "labels",
+    "issuesCollectionName" : "issues"
   },
   "AppOptions": {
     "appPort": "8080",
@@ -41,3 +43,11 @@ File ```src/ITLabReports/api/config.json``` must contain next content:
   }
 }
 ```
+
+## Installation using Docker
+Install Docker and in ```src``` directory write this code:
+```
+docker-compose up -d
+```
+If you’re using Docker natively on Linux, Docker Desktop for Mac, or Docker Desktop for Windows, then the server will be running on
+```http://localhost:8080```

@@ -33,6 +33,8 @@ type Issue struct {
 	Assignees 			[]Assignee 	`json:"assignees"`
 	Milestone 			*Milestone  `json:"milestone,omitempty"`
 	Labels				[]Label     `json:"labels"`
+	RepPath				string     `json:"reppath"`
+	ProjectPath			string     `json:"project_path"`
 	CreatedAt 			string     	`json:"created_at"`
 	UpdatedAt 			string     	`json:"updated_at"`
 	ClosedAt  			string     	`json:"closed_at"`
@@ -77,12 +79,13 @@ type Response struct {
 }
 
 type Label struct {
-	ID          int    `json:"id"`
-	NodeID      string `json:"node_id"`
-	URL         string `json:"url"`
+	ID          int    `json:"id,omitempty"`
+	NodeID      string `json:"node_id,omitempty"`
+	URL         string `json:"url,omitempty"`
 	Name        string `json:"name"`
-	Description string `json:"description"`
-	Color       string `json:"color"`
+	Type		string	`json:"type"`
+	Description string `json:"description,omitempty"`
+	Color       string `json:"color,omitempty"`
 }
 
 type PullRequest struct {

@@ -5,7 +5,8 @@
     "dbName" : "ITLabProjects",
     "projectsCollectionName" : "projects",
     "reposCollectionName" : "repos",
-    "labelsCollectionName" : "labels"
+    "labelsCollectionName" : "labels",
+    "issuesCollectionName" : "issues"
   },
   "AppOptions": {
     "appPort": "8080",

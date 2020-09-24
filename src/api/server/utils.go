@@ -2,6 +2,7 @@ package server
 
 import (
 	"ITLab-Projects/models"
+	"ITLab-Projects/server/utils"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -344,7 +345,7 @@ func createHTTPClient() *http.Client {
 }
 
 func getProjectInfoFile(rep *models.Repos, c chan models.ProjectInfo) {
-	var projectInfo models.ProjectInfo
+	projectInfo := models.NewProjectInfo()
 	fileUrl := "https://raw.githubusercontent.com/RTUITLab/" + rep.Path + "/" + cfg.App.ProjectFileBranch + "/project_info.json"
 	req, err := http.NewRequest("GET", fileUrl, nil)
 	resp, err := httpClient.Do(req)
@@ -365,11 +366,22 @@ func getProjectInfoFile(rep *models.Repos, c chan models.ProjectInfo) {
 		json.NewDecoder(resp.Body).Decode(&projectInfo)
 		rep.Meta = projectInfo.Repos
 		projectInfo.Project.LastUpdated = rep.PushedAt
-		saveProjectToDB(projectInfo)
-		c <- projectInfo
+		for i := range projectInfo.Repos.Labels {
+			projectInfo.Repos.Labels[i].Color = utils.MakeLabelColor(projectInfo.Repos.Labels[i].Name)
+		}
 	} else {
-		c <- models.ProjectInfo{}
+		projectInfo.Project.Path = rep.Path
+		projectInfo.Project.LastUpdated = rep.PushedAt
+		projectInfo.Project.Description = rep.Description
+		projectInfo.Project.Reps = append(projectInfo.Project.Reps, rep.Path)
+
+		projectInfo.Repos.Path = rep.Path
+		projectInfo.Repos.HumanName = rep.Path
+		projectInfo.Repos.Description = rep.Description
 	}
+	saveProjectToDB(projectInfo)
+	getRepIssues(rep, projectInfo)
+	c <- projectInfo
 }
 
 func saveProjectToDB(projectInfo models.ProjectInfo) {
@@ -380,17 +392,11 @@ func saveProjectToDB(projectInfo models.ProjectInfo) {
 			"humanName" : projectInfo.Project.HumanName,
 			"description" : projectInfo.Project.Description,
 			"lastUpdated" : projectInfo.Project.LastUpdated,
-	},
+		},
 		"$addToSet" : bson.M{
 			"reps" : projectInfo.Repos.Path,
-			"stackTags.directions" : bson.M{
-				"$each" : projectInfo.Repos.StackTags.Directions,
-			},
-			"stackTags.frameworks" : bson.M{
-				"$each" : projectInfo.Repos.StackTags.Frameworks,
-			},
-			"stackTags.databases" : bson.M{
-				"$each" : projectInfo.Repos.StackTags.Databases,
+			"labels" : bson.M{
+				"$each" : projectInfo.Repos.Labels,
 			},
 		},
 	}
@@ -416,7 +422,7 @@ func saveReposToDB(repos []models.Repos) {
 		_, err := repsCollection.ReplaceOne(ctx, filter, rep, opts)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"function": "mongodb.UpdateOne",
+				"function": "mongodb.ReplaceOne",
 				"handler":  "saveReposToDB",
 				"rep":  rep.Path,
 				"error":    err,
@@ -426,43 +432,45 @@ func saveReposToDB(repos []models.Repos) {
 	}
 }
 
+func saveIssuesToDB(issues []models.Issue) {
+	for _, issue := range issues {
+		opts := options.Replace().SetUpsert(true)
+		filter := bson.M{"id": issue.ID}
+
+		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+		_, err := issuesCollection.ReplaceOne(ctx, filter, issue, opts)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"function": "mongodb.UpdateOne",
+				"handler":  "saveIssuesToDB",
+				"error":    err,
+			},
+			).Warn("Issues update failed!")
+		}
+	}
+}
+
 func saveLabelsToDB(repos []models.Repos) {
-	labelsSet := make(map[string]bool)
-	var labelsSlice []string
-	var labelsDocument models.Labels
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	labelsCollection.Drop(ctx)
 
 	for _, rep := range repos {
-		for _, label := range rep.Meta.StackTags.Databases {
-			if !labelsSet[label] {
-				labelsSet[label] = true
+		for _, label := range rep.Meta.Labels {
+			opts := options.Replace().SetUpsert(true)
+			filter := bson.M{"name": label.Name}
+
+			ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+			_, err := labelsCollection.ReplaceOne(ctx, filter, label, opts)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"function": "mongodb.UpdateOne",
+					"handler":  "saveLabelsToDB",
+					"rep":  rep.Path,
+					"error":    err,
+				},
+				).Warn("Project update failed!")
 			}
 		}
-		for _, label := range rep.Meta.StackTags.Frameworks {
-			if !labelsSet[label] {
-				labelsSet[label] = true
-			}
-		}
-		for _, label := range rep.Meta.StackTags.Directions {
-			if !labelsSet[label] {
-				labelsSet[label] = true
-			}
-		}
-	}
-	for key := range labelsSet {
-		labelsSlice = append(labelsSlice, key)
-	}
-	labelsDocument.Labels = labelsSlice
-	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
-	_ , err := labelsCollection.InsertOne(ctx, labelsDocument)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"function": "mongodb.InsertOne",
-			"handler":  "saveLabelsToDB",
-			"error":    err,
-		},
-		).Warn("Project update failed!")
 	}
 }
 
@@ -506,6 +514,31 @@ func getRepContributors(rep *models.Repos, wg *sync.WaitGroup) {
 	json.NewDecoder(resp.Body).Decode(&contributors)
 	rep.Contributors = contributors
 	wg.Done()
+}
+
+func getRepIssues(rep *models.Repos, projectInfo models.ProjectInfo) {
+	var issues []models.Issue
+	URL := fmt.Sprintf("https://api.github.com/repos/RTUITLab/%s/issues?state=all", rep.Name)
+	req, err := http.NewRequest("GET", URL, nil)
+	req.Header.Set("Authorization", "Bearer " + cfg.Auth.Github.AccessToken)
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "http.Get",
+			"handler" : "getRepIssues",
+			"url"	: URL,
+			"error"	:	err,
+		},
+		).Warn("Can't reach API!")
+	}
+	defer resp.Body.Close()
+	json.NewDecoder(resp.Body).Decode(&issues)
+	for i := range issues {
+		issues[i].RepPath = rep.Path
+		issues[i].ProjectPath = projectInfo.Project.Path
+		issues[i].Labels = append(issues[i].Labels, projectInfo.Repos.Labels...)
+	}
+	saveIssuesToDB(issues)
 }
 
 func calcPageTotal(repsTotal int64) int {

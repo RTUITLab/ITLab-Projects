@@ -19,6 +19,7 @@ type App struct {
 var projectsCollection *mongo.Collection
 var repsCollection *mongo.Collection
 var labelsCollection *mongo.Collection
+var issuesCollection *mongo.Collection
 var cfg *config.Config
 var httpClient *http.Client
 
@@ -38,7 +39,7 @@ func (a *App) Init(config *config.Config) {
 			"error"	:	err,
 			"db_uri":	DBUri,
 		},
-		).Fatal("Failed to create new MongoDB client")
+		).Warn("Failed to create new MongoDB client")
 	}
 
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
@@ -47,7 +48,7 @@ func (a *App) Init(config *config.Config) {
 		log.WithFields(log.Fields{
 			"function" : "mongo.Connect",
 			"error"	:	err},
-		).Fatal("Failed to connect to MongoDB")
+		).Warn("Failed to connect to MongoDB")
 	}
 
 	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
@@ -56,7 +57,7 @@ func (a *App) Init(config *config.Config) {
 		log.WithFields(log.Fields{
 			"function" : "mongo.Ping",
 			"error"	:	err},
-		).Fatal("Failed to ping MongoDB")
+		).Warn("Failed to ping MongoDB")
 	}
 	log.Info("Connected to MongoDB!")
 	log.WithFields(log.Fields{
@@ -67,6 +68,7 @@ func (a *App) Init(config *config.Config) {
 	projectsCollection = client.Database(cfg.DB.DBName).Collection(cfg.DB.ProjectsCollectionName)
 	repsCollection = client.Database(cfg.DB.DBName).Collection(cfg.DB.ReposCollectionName)
 	labelsCollection = client.Database(cfg.DB.DBName).Collection(cfg.DB.LabelsCollectionName)
+	issuesCollection = client.Database(cfg.DB.DBName).Collection(cfg.DB.IssuesCollectionName)
 
 	a.Router = mux.NewRouter().UseEncodedPath()
 	a.setRouters()
@@ -86,7 +88,10 @@ func (a *App) setRouters() {
 	a.Router.HandleFunc("/api/projects/reps", getFilteredReps).Methods("GET").Queries("filter","{filter}")
 	a.Router.HandleFunc("/api/projects/reps", getRepsPage).Methods("GET").Queries("page","{page}")
 	a.Router.HandleFunc("/api/projects/reps/{id}", getRep).Methods("GET").Queries("platform", "{platform}")
-	a.Router.HandleFunc("/api/projects/reps/{id}/issues", getAllIssues).Methods("GET").Queries("platform", "{platform}", "state", "{state}")
+	a.Router.HandleFunc("/api/projects/reps/{id}/issues", getAllIssuesForRep).Methods("GET").Queries("platform", "{platform}", "state", "{state}")
+	a.Router.HandleFunc("/api/projects/issues", getFilteredIssues).Methods("GET").Queries("filter","{filter}")
+	a.Router.HandleFunc("/api/projects/issues", getAllOpenedIssues).Methods("GET")
+	a.Router.HandleFunc("/api/projects/issues/{reppath}", getProjectIssues).Methods("GET")
 	a.Router.HandleFunc("/api/projects/reps/{id}/issues/{number}", getIssue).Methods("GET").Queries("platform", "{platform}")
 }
 
