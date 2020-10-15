@@ -9,12 +9,12 @@ File ```src/api/auth_config.json``` must contain next content:
 ```js
 {
   "AuthOptions": {
-    "keyUrl": "https://examplesite/files/jwks.json", //url to jwks.json
-    "audience": "example_audience", //audince for JWT
-    "issuer" : "https://exampleissuersite.com", //issuer for JWT
-    "scope" : "my_scope", //required scope for JWT
+    "keyUrl": "https://examplesite/files/jwks.json", //url to jwks.json | env: ITLABPROJ_KEYURL
+    "audience": "example_audience", //audince for JWT | env: ITLABPROJ_AUDIENCE
+    "issuer" : "https://exampleissuersite.com", //issuer for JWT | env: ITLABPROJ_ISSUER
+    "scope" : "my_scope", //required scope for JWT | env: ITLABPROJ_SCOPE
     "Github": {
-          "accessToken" : "github_access_token"
+          "accessToken" : "github_access_token" // | env: ITLABPROJ_GHACCESSTOKEN
     },
     "Gitlab": {
           "accessToken" : "gitlab_access_token"
@@ -27,19 +27,19 @@ File ```src/api/config.json``` must contain next content:
 ```js
 {
   "DbOptions": {
-    "host": "exampledb",
-    "dbPort": "27017",
-    "dbName" : "ITLabProjects",
-    "projectsCollectionName" : "projects",
-    "reposCollectionName" : "repos",
-    "labelsCollectionName" : "labels",
-    "issuesCollectionName" : "issues"
+    "host": "exampledb",    // env: ITLABPROJ_HOST
+    "dbPort": "27017", // env: ITLABPROJ_DBPORT
+    "dbName" : "ITLabProjects", // env: ITLABPROJ_DBNAME
+    "projectsCollectionName" : "projects", // env: ITLABPROJ_PROJCOLNAME
+    "reposCollectionName" : "repos", // env: ITLABPROJ_REPSCOLNAME
+    "labelsCollectionName" : "labels", // env: ITLABPROJ_LABSCOLNAME
+    "issuesCollectionName" : "issues" // env: ITLABPROJ_ISSSCOLNAME
   },
   "AppOptions": {
-    "appPort": "8080",
-    "testMode": false,      //testMode=true disables jwt validation
-    "projectFileBranch": "develop", //on which branch project_info.json is situated
-    "elemsPerPage" : 40     //content is displayed with pagination
+    "appPort": "8080", // env: ITLABPROJ_APPPORT
+    "testMode": false,      //testMode=true disables jwt validation | env: ITLABPROJ_TESTMODE
+    "projectFileBranch": "develop", //on which branch project_info.json is situated | env: ITLABPROJ_ELEMSPERPAGE
+    "elemsPerPage" : 40     //content is displayed with pagination | env: ITLABPROJ_PROJFILEBRANCH
   }
 }
 ```
