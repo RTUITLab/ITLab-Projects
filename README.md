@@ -38,8 +38,8 @@ File ```src/api/config.json``` must contain next content:
   "AppOptions": {
     "appPort": "8080", // env: ITLABPROJ_APPPORT
     "testMode": false,      //testMode=true disables jwt validation | env: ITLABPROJ_TESTMODE
-    "projectFileBranch": "develop", //on which branch project_info.json is situated | env: ITLABPROJ_ELEMSPERPAGE
-    "elemsPerPage" : 40     //content is displayed with pagination | env: ITLABPROJ_PROJFILEBRANCH
+    "projectFileBranch": "develop", //on which branch project_info.json is situated | env: ITLABPROJ_PROJFILEBRANCH
+    "elemsPerPage" : 40     //content is displayed with pagination | env: ITLABPROJ_ELEMSPERPAGE
   }
 }
 ```

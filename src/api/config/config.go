@@ -69,7 +69,7 @@ func GetConfig() *Config {
 			"function" : "GetConfig.Unmarshal",
 			"error"	:	err,
 		},
-		).Fatal("Can't correctly parse json from config.json, shutting down...")
+		).Warning("Can't correctly parse json from config.json, shutting down...")
 	}
 
 	data, err = ioutil.ReadFile("auth_config.json")
@@ -78,7 +78,7 @@ func GetConfig() *Config {
 			"function" : "GetConfig.ReadFile",
 			"error"	:	err,
 		},
-		).Fatal("Can't read auth_config.json file, shutting down...")
+		).Warning("Can't read auth_config.json file, shutting down...")
 	}
 	err = json.Unmarshal(data, &config)
 	if err != nil {
@@ -86,7 +86,7 @@ func GetConfig() *Config {
 			"function" : "GetConfig.Unmarshal",
 			"error"	:	err,
 		},
-		).Fatal("Can't correctly parse json from auth_config.json, shutting down...")
+		).Warning("Can't correctly parse json from auth_config.json, shutting down...")
 	}
 
 	err = envconfig.Process("itlabproj", &config)
