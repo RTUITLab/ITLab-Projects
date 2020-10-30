@@ -22,6 +22,7 @@ File ```src/api/auth_config.json``` must contain next content:
   }
 }
 ```
+
 File ```src/api/config.json``` must contain next content:
 
 ```js
@@ -44,7 +45,17 @@ File ```src/api/config.json``` must contain next content:
 }
 ```
 
-## Installation using Docker
+## Build 
+### Requirements
+- Go 1.12+
+
+In ```src``` directory:
+```
+go build main.go
+./main
+```
+## Build using Docker
+
 Install Docker and in ```src``` directory write this code:
 ```
 docker-compose up -d
