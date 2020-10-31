@@ -47,7 +47,7 @@ File ```src/api/config.json``` must contain next content:
 
 ## Build 
 ### Requirements
-- Go 1.12+
+- Go 1.13.8+
 
 In ```src``` directory:
 ```
