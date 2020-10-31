@@ -16,27 +16,6 @@ import (
 	"time"
 )
 
-func getAllReps(w http.ResponseWriter, r *http.Request) {
-	pageCount := 0
-	reps := make([]models.Repos, 0)
-	c := make(chan models.Response)
-	result := make([]models.Response, 2)
-
-	data := mux.Vars(r)
-	go getRepsFromGithub(data["page"], c)
-	go getRepsFromGitlab(data["page"], c)
-
-	for i, _ := range result {
-		result[i] = <-c
-		reps = append(reps, result[i].Repositories...)
-		if result[i].PageCount > pageCount {
-			pageCount = result[i].PageCount
-		}
-	}
-	w.Header().Set("X-Total-Pages", strconv.Itoa(pageCount))
-	json.NewEncoder(w).Encode(reps)
-}
-
 func getProjectReps(w http.ResponseWriter, r *http.Request) {
 	var project models.Project
 	var reps []models.Repos
@@ -355,7 +334,7 @@ func getAllProjects(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(projects)
 }
 
-func getRelevantInfo(w http.ResponseWriter, r *http.Request) {
+func forceUpdateInfo(w http.ResponseWriter, r *http.Request) {
 	cGithub := make(chan models.Response)
 	cProjects := make(chan models.ProjectInfo)
 	var projects []models.ProjectInfo
@@ -373,6 +352,7 @@ func getRelevantInfo(w http.ResponseWriter, r *http.Request) {
 	}
 	saveReposToDB(result.Repositories)
 	saveLabelsToDB(result.Repositories)
+	log.Info("Performed data update!!! ")
 	w.WriteHeader(200)
 }
 
@@ -405,4 +385,20 @@ func getAllLabels(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(500)
 	}
 	json.NewEncoder(w).Encode(labels)
+}
+
+func updateInfo(w http.ResponseWriter, r *http.Request) {
+	var payload	models.WebhookPayload
+	json.NewDecoder(r.Body).Decode(&payload)
+	switch {
+	case payload.Issue.ID != 0:
+		saveIssueToDB(payload.Issue)
+	case payload.Label.ID != 0:
+		saveLabelToDB(payload.Label)
+	case payload.Repository.ID != 0 || payload.Ref != "":
+		saveRepToDB(payload.Repository)
+	default:
+		w.WriteHeader(404)
+	}
+	w.WriteHeader(200)
 }

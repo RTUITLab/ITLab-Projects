@@ -10,7 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -73,114 +72,6 @@ func getRepsFromGithub(page string, c chan models.Response) {
 	}
 	response := models.Response{tempReps, pageCount}
 	c <- response
-}
-
-func getRepsFromGitlab(page string, c chan models.Response) {
-	tempReps := make([]models.Repos, 0)
-	pageCount := 0
-
-	URL := "https://gitlab.com/api/v4/groups/6526027/projects?include_subgroups=true&page="+page
-
-	
-	req, err := http.NewRequest("GET", URL, nil)
-	req.Header.Set("Authorization", "Bearer " + cfg.Auth.Gitlab.AccessToken)
-	req.Header.Set("Connection", "keep-alive")
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"function" : "http.Get",
-			"handler" : "getRepsFrom",
-			"url"	: URL,
-			"error"	:	err,
-		},
-		).Warn("Can't reach API!")
-		c <- models.Response{}
-		return
-	}
-	defer resp.Body.Close()
-
-	json.NewDecoder(resp.Body).Decode(&tempReps)
-	for i := range tempReps {
-		tempReps[i].Platform = "gitlab"
-		tempReps[i].Path = url.QueryEscape(tempReps[i].Path)
-		tempReps[i].HTMLUrl = tempReps[i].GitLabHTMLUrl
-		tempReps[i].UpdatedAt = tempReps[i].GitLabUpdatedAt
-		tempReps[i].GitLabHTMLUrl = ""
-		tempReps[i].GitLabUpdatedAt = ""
-	}
-
-	pageCountHeader := resp.Header.Get("X-Total-Pages")
-	pageCount, err = strconv.Atoi(pageCountHeader)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"function" : "strconv.Atoi",
-			"handler" : "getRepsFromGitlab",
-			"url"	: URL,
-			"error"	:	err,
-		},
-		).Warn("Can't get pages count!")
-	}
-
-	response := models.Response{tempReps, pageCount}
-	c <- response
-}
-
-func getRepFromGithub(id string) models.Repos {
-	var tempRep models.Repos
-	URL := "https://api.github.com/repos/RTUITLab/" + id
-
-	
-	req, err := http.NewRequest("GET", URL, nil)
-	req.Header.Set("Authorization", "Bearer " + cfg.Auth.Github.AccessToken)
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"function" : "http.Get",
-			"handler" : "getRepFromGithub",
-			"url"	: URL,
-			"error"	:	err,
-		},
-		).Warn("Can't reach API!")
-		return models.Repos{}
-	}
-	defer resp.Body.Close()
-
-	json.NewDecoder(resp.Body).Decode(&tempRep)
-
-	tempRep.Platform = "github"
-	tempRep.Path = tempRep.Name
-
-	return tempRep
-}
-
-func getRepFromGitlab(id string) models.Repos {
-	var tempRep models.Repos
-	URL := "https://gitlab.com/api/v4/projects/" + id
-
-	
-	req, err := http.NewRequest("GET", URL, nil)
-	req.Header.Set("Authorization", "Bearer " + cfg.Auth.Gitlab.AccessToken)
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"function" : "http.Get",
-			"handler" : "getRepsFrom",
-			"url"	: URL,
-			"error"	:	err,
-		},
-		).Warn("Can't reach API!")
-		return models.Repos{}
-	}
-	defer resp.Body.Close()
-
-	json.NewDecoder(resp.Body).Decode(&tempRep)
-	tempRep.Platform = "gitlab"
-	tempRep.Path = url.QueryEscape(tempRep.Path)
-	tempRep.HTMLUrl = tempRep.GitLabHTMLUrl
-	tempRep.UpdatedAt = tempRep.GitLabUpdatedAt
-	tempRep.GitLabHTMLUrl = ""
-	tempRep.GitLabUpdatedAt = ""
-	return tempRep
 }
 
 func getIssuesForGithub(id string, state string) []models.Issue {
@@ -432,6 +323,23 @@ func saveReposToDB(repos []models.Repos) {
 	}
 }
 
+func saveRepToDB(rep models.Repos) {
+	opts := options.Replace().SetUpsert(true)
+	filter := bson.M{"id": rep.ID}
+
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	_, err := repsCollection.ReplaceOne(ctx, filter, rep, opts)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function": "mongodb.ReplaceOne",
+			"handler":  "saveReposToDB",
+			"rep":  rep.Path,
+			"error":    err,
+		},
+		).Warn("Repository save failed!")
+	}
+}
+
 func saveIssuesToDB(issues []models.Issue) {
 	for _, issue := range issues {
 		opts := options.Replace().SetUpsert(true)
@@ -449,6 +357,22 @@ func saveIssuesToDB(issues []models.Issue) {
 		}
 	}
 }
+
+func saveIssueToDB(issue models.Issue) {
+	opts := options.Replace().SetUpsert(true)
+	filter := bson.M{"id": issue.ID}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	_, err := issuesCollection.ReplaceOne(ctx, filter, issue, opts)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function": "mongodb.UpdateOne",
+			"handler":  "saveIssuesToDB",
+			"error":    err,
+		},
+		).Warn("Issue save failed!")
+	}
+}
+
 func saveIssueLabelsToDB(issues []models.Issue) {
 	for _, issue := range issues {
 		for _, label := range issue.Labels {
@@ -472,9 +396,6 @@ func saveIssueLabelsToDB(issues []models.Issue) {
 
 
 func saveLabelsToDB(repos []models.Repos) {
-	//ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	//labelsCollection.Drop(ctx)
-
 	for _, rep := range repos {
 		for _, label := range rep.Meta.Labels {
 			opts := options.Replace().SetUpsert(true)
@@ -492,6 +413,24 @@ func saveLabelsToDB(repos []models.Repos) {
 				).Warn("Project update failed!")
 			}
 		}
+	}
+}
+
+func saveLabelToDB(label models.Label) {
+	opts := options.Replace().SetUpsert(true)
+	filter := bson.M{"name": label.Name}
+	label.Type = "rep"
+
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	_, err := labelsCollection.ReplaceOne(ctx, filter, label, opts)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function": "mongodb.UpdateOne",
+			"handler":  "saveLabelsToDB",
+			"label":  label.Name,
+			"error":    err,
+		},
+		).Warn("Label save failed!")
 	}
 }
 
