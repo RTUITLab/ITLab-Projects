@@ -392,11 +392,11 @@ func updateInfo(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&payload)
 	switch {
 	case payload.Issue.ID != 0:
-		saveIssueToDB(payload.Issue)
+		saveToDB(payload.Issue)
 	case payload.Label.ID != 0:
 		saveLabelToDB(payload.Label)
 	case payload.Repository.ID != 0 || payload.Ref != "":
-		saveRepToDB(payload.Repository)
+		saveToDB(payload.Repository)
 	default:
 		w.WriteHeader(404)
 	}

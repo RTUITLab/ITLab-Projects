@@ -8,8 +8,10 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 	"sync"
@@ -323,23 +325,6 @@ func saveReposToDB(repos []models.Repos) {
 	}
 }
 
-func saveRepToDB(rep models.Repos) {
-	opts := options.Replace().SetUpsert(true)
-	filter := bson.M{"id": rep.ID}
-
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	_, err := repsCollection.ReplaceOne(ctx, filter, rep, opts)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"function": "mongodb.ReplaceOne",
-			"handler":  "saveReposToDB",
-			"rep":  rep.Path,
-			"error":    err,
-		},
-		).Warn("Repository save failed!")
-	}
-}
-
 func saveIssuesToDB(issues []models.Issue) {
 	for _, issue := range issues {
 		opts := options.Replace().SetUpsert(true)
@@ -355,21 +340,6 @@ func saveIssuesToDB(issues []models.Issue) {
 			},
 			).Warn("Issues update failed!")
 		}
-	}
-}
-
-func saveIssueToDB(issue models.Issue) {
-	opts := options.Replace().SetUpsert(true)
-	filter := bson.M{"id": issue.ID}
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	_, err := issuesCollection.ReplaceOne(ctx, filter, issue, opts)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"function": "mongodb.UpdateOne",
-			"handler":  "saveIssuesToDB",
-			"error":    err,
-		},
-		).Warn("Issue save failed!")
 	}
 }
 
@@ -509,4 +479,36 @@ func calcPageTotal(repsTotal int64) int {
 	} else {
 		return pageTotal + 1
 	}
+}
+
+func saveToDB(data interface{}) {
+	var collection *mongo.Collection
+	var dataSlice []interface{}
+
+	switch e := data.(type) {
+	case models.Issue, []models.Issue:
+		collection = issuesCollection
+	case models.Repos, []models.Repos:
+		collection = repsCollection
+	default:
+		fmt.Printf("I don't know about type %T!\n", e)
+		return
+	}
+
+	dataSlice = append(dataSlice, data)
+	for _, elem := range dataSlice {
+		opts := options.Replace().SetUpsert(true)
+		filter := bson.M{"id": reflect.ValueOf(elem).FieldByName("ID").Uint()}
+		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+		_, err := collection.ReplaceOne(ctx, filter, elem, opts)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"function": "mongodb.ReplaceOne",
+				"handler": "saveToDB",
+				"error": err,
+			},
+			).Warn("Data save failed!")
+		}
+	}
+
 }
