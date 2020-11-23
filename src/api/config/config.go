@@ -14,8 +14,7 @@ type Config struct {
 }
 
 type DBConfig struct {
-	Host 					string		`envconfig:"ITLABPROJ_HOST",json:"host"`
-	DBPort 					string		`envconfig:"ITLABPROJ_DBPORT",json:"dbPort"`
+	URI 					string		`envconfig:"ITLABPROJ_URI",json:"uri"`
 	DBName 					string		`envconfig:"ITLABPROJ_DBNAME",json:"dbName"`
 	ProjectsCollectionName	string		`envconfig:"ITLABPROJ_PROJCOLNAME",json:"projectsCollectionName"`
 	ReposCollectionName		string		`envconfig:"ITLABPROJ_REPSCOLNAME",json:"reposCollectionName"`
@@ -61,7 +60,7 @@ func GetConfig() *Config {
 			"function" : "GetConfig.ReadFile",
 			"error"	:	err,
 		},
-		).Fatal("Can't read config.json file, shutting down...")
+		).Warning("Can't read config.json file, shutting down...")
 	}
 	err = json.Unmarshal(data, &config)
 	if err != nil {

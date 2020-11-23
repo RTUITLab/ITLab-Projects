@@ -28,8 +28,7 @@ File ```src/api/config.json``` must contain next content:
 ```js
 {
   "DbOptions": {
-    "host": "exampledb",    // env: ITLABPROJ_HOST
-    "dbPort": "27017", // env: ITLABPROJ_DBPORT
+    "uri": "mongodb://user:password@localhost:27017",    // env: ITLABPROJ_URI
     "dbName" : "ITLabProjects", // env: ITLABPROJ_DBNAME
     "projectsCollectionName" : "projects", // env: ITLABPROJ_PROJCOLNAME
     "reposCollectionName" : "repos", // env: ITLABPROJ_REPSCOLNAME
