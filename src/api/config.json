@@ -1,11 +1,6 @@
 {
   "DbOptions": {
-    "uri": "mongodb://localhost:27017",
-    "dbName" : "ITLabProjects",
-    "projectsCollectionName" : "projects",
-    "reposCollectionName" : "repos",
-    "labelsCollectionName" : "labels",
-    "issuesCollectionName" : "issues"
+    "uri": "mongodb://localhost:27017/ITLabProjects"
   },
   "AppOptions": {
     "appPort": "8080",

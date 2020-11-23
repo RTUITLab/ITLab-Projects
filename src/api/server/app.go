@@ -2,6 +2,7 @@ package server
 
 import (
 	"ITLab-Projects/config"
+	"ITLab-Projects/server/utils"
 	"context"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -40,7 +41,6 @@ func (a *App) Init(config *config.Config) {
 		},
 		).Warn("Failed to create new MongoDB client")
 	}
-
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	err = client.Connect(ctx)
 	if err != nil {
@@ -59,15 +59,17 @@ func (a *App) Init(config *config.Config) {
 		).Warn("Failed to ping MongoDB")
 	}
 	log.Info("Connected to MongoDB!")
+
+	dbName := utils.GetDbName(cfg.DB.URI)
 	log.WithFields(log.Fields{
-		"db_name" : cfg.DB.DBName,
+		"db_name" : dbName,
 	}).Info("Database information: ")
 	log.WithField("testMode", cfg.App.TestMode).Info("Let's check if test mode is on...")
 
-	projectsCollection = client.Database(cfg.DB.DBName).Collection(cfg.DB.ProjectsCollectionName)
-	repsCollection = client.Database(cfg.DB.DBName).Collection(cfg.DB.ReposCollectionName)
-	labelsCollection = client.Database(cfg.DB.DBName).Collection(cfg.DB.LabelsCollectionName)
-	issuesCollection = client.Database(cfg.DB.DBName).Collection(cfg.DB.IssuesCollectionName)
+	projectsCollection = client.Database(dbName).Collection("projects")
+	repsCollection = client.Database(dbName).Collection("repos")
+	labelsCollection = client.Database(dbName).Collection("labels")
+	issuesCollection = client.Database(dbName).Collection("issues")
 
 	a.Router = mux.NewRouter().UseEncodedPath()
 	a.setRouters()

@@ -15,11 +15,6 @@ type Config struct {
 
 type DBConfig struct {
 	URI 					string		`envconfig:"ITLABPROJ_URI",json:"uri"`
-	DBName 					string		`envconfig:"ITLABPROJ_DBNAME",json:"dbName"`
-	ProjectsCollectionName	string		`envconfig:"ITLABPROJ_PROJCOLNAME",json:"projectsCollectionName"`
-	ReposCollectionName		string		`envconfig:"ITLABPROJ_REPSCOLNAME",json:"reposCollectionName"`
-	LabelsCollectionName	string		`envconfig:"ITLABPROJ_LABSCOLNAME",json:"labelsCollectionName"`
-	IssuesCollectionName	string		`envconfig:"ITLABPROJ_ISSSCOLNAME",json:"issuesCollectionName"`
 }
 type AuthConfig struct {
 	KeyURL		string		`envconfig:"ITLABPROJ_KEYURL",json:"keyUrl"`
