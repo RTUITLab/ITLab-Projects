@@ -77,29 +77,33 @@ func (a *App) Init(config *config.Config) {
 }
 
 func (a *App) setRouters() {
+	// TODO calc hash from secret and payload
+	github := a.Router.PathPrefix("/api/projects").Subrouter()
+	github.HandleFunc("/update", updateInfo).Methods("POST")
+
+	private := a.Router.PathPrefix("/api/projects").Subrouter()
 	if cfg.App.TestMode {
-		a.Router.Use(loggingMiddleware)
+		private.Use(loggingMiddleware)
 	} else {
-		a.Router.Use(authMiddleware)
+		private.Use(authMiddleware)
 	}
 
-	a.Router.HandleFunc("/api/projects/forceupdate", forceUpdateInfo).Methods("POST")
-	a.Router.HandleFunc("/api/projects/update", updateInfo).Methods("POST")
-	a.Router.HandleFunc("/api/projects/projects", getFilteredProjects).Methods("GET").Queries("filter", "{filter}", "labels", "{labels}")
-	a.Router.HandleFunc("/api/projects/projects", getFilteredProjects).Methods("GET").Queries("labels", "{labels}")
-	a.Router.HandleFunc("/api/projects/projects", getFilteredProjects).Methods("GET").Queries("filter", "{filter}")
-	a.Router.HandleFunc("/api/projects/projects", getAllProjects).Methods("GET")
-	a.Router.HandleFunc("/api/projects/projects/{path}", getProjectReps).Methods("GET")
-	a.Router.HandleFunc("/api/projects/labels", getAllLabels).Methods("GET")
-	a.Router.HandleFunc("/api/projects/reps", getRepsPage).Methods("GET").Queries("page", "{page}")
-	a.Router.HandleFunc("/api/projects/reps/{id}", getRep).Methods("GET").Queries("platform", "{platform}")
-	a.Router.HandleFunc("/api/projects/reps/{id}/issues", getAllIssuesForRep).Methods("GET").Queries("platform", "{platform}", "state", "{state}")
-	a.Router.HandleFunc("/api/projects/issues", getFilteredIssues).Methods("GET").Queries("filter", "{filter}", "labels", "{labels}")
-	a.Router.HandleFunc("/api/projects/issues", getFilteredIssues).Methods("GET").Queries("labels", "{labels}")
-	a.Router.HandleFunc("/api/projects/issues", getFilteredIssues).Methods("GET").Queries("filter", "{filter}")
-	a.Router.HandleFunc("/api/projects/issues", getAllOpenedIssues).Methods("GET")
-	a.Router.HandleFunc("/api/projects/issues/{reppath}", getProjectIssues).Methods("GET")
-	a.Router.HandleFunc("/api/projects/reps/{id}/issues/{number}", getIssue).Methods("GET").Queries("platform", "{platform}")
+	private.HandleFunc("/forceupdate", forceUpdateInfo).Methods("POST")
+	private.HandleFunc("/projects", getFilteredProjects).Methods("GET").Queries("filter", "{filter}", "labels", "{labels}")
+	private.HandleFunc("/projects", getFilteredProjects).Methods("GET").Queries("labels", "{labels}")
+	private.HandleFunc("/projects", getFilteredProjects).Methods("GET").Queries("filter", "{filter}")
+	private.HandleFunc("/projects", getAllProjects).Methods("GET")
+	private.HandleFunc("/projects/{path}", getProjectReps).Methods("GET")
+	private.HandleFunc("/labels", getAllLabels).Methods("GET")
+	private.HandleFunc("/reps", getRepsPage).Methods("GET").Queries("page", "{page}")
+	private.HandleFunc("/reps/{id}", getRep).Methods("GET").Queries("platform", "{platform}")
+	private.HandleFunc("/reps/{id}/issues", getAllIssuesForRep).Methods("GET").Queries("platform", "{platform}", "state", "{state}")
+	private.HandleFunc("/issues", getFilteredIssues).Methods("GET").Queries("filter", "{filter}", "labels", "{labels}")
+	private.HandleFunc("/issues", getFilteredIssues).Methods("GET").Queries("labels", "{labels}")
+	private.HandleFunc("/issues", getFilteredIssues).Methods("GET").Queries("filter", "{filter}")
+	private.HandleFunc("/issues", getAllOpenedIssues).Methods("GET")
+	private.HandleFunc("/issues/{reppath}", getProjectIssues).Methods("GET")
+	private.HandleFunc("/reps/{id}/issues/{number}", getIssue).Methods("GET").Queries("platform", "{platform}")
 }
 
 func (a *App) Run(addr string) {
