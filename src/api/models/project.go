@@ -6,7 +6,7 @@ type Project struct {
 	Description 	string			`json:"description"`
 	LastUpdated		string			`json:"lastUpdated"`
 	Reps			[]string		`json:"reps"`
-	StackTags		StackTags		`json:"stackTags"`
+	Labels			[]Label			`json:"labels"`
 }
 
 type ProjectInfo struct {
@@ -18,12 +18,11 @@ type Meta struct {
 	Path			string			`json:"path"`
 	HumanName		string			`json:"humanName"`
 	Description 	string			`json:"description"`
-	StackTags		StackTags		`json:"stackTags"`
+	Labels			[]Label			`json:"labels"`
 }
-
-type StackTags struct {
-	Directions		[]string		`json:"directions"`
-	Databases		[]string		`json:"databases"`
-	Frameworks		[]string		`json:"frameworks"`
-
+func NewProjectInfo() ProjectInfo {
+	projectInfo := ProjectInfo{}
+	projectInfo.Repos.Labels = make([]Label, 0)
+	projectInfo.Project.Labels = make([]Label, 0)
+	return projectInfo
 }

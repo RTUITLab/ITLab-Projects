@@ -1,21 +1,15 @@
-FROM golang:1.13 as build
+FROM golang:1.13 AS builder
 
 WORKDIR /app
 
 COPY . .
 RUN CGO_ENABLED=0 go build main.go
 
-FROM alpine
+RUN CGO_ENABLED=0 GOOS=linux go build main.go
+RUN chmod +x main
 
-RUN apk update \
-        && apk upgrade \
-        && apk add --no-cache \
-        ca-certificates \
-        && update-ca-certificates 2>/dev/null || true
-
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
 WORKDIR /app
-COPY --from=build /app/main /app/main
-
-RUN chmod +x /app/main
-
-CMD [ "./main" ]
+COPY --from=builder /app/main /app/main
+CMD ["./main"]  

@@ -12,29 +12,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
-
-func getAllReps(w http.ResponseWriter, r *http.Request) {
-	pageCount := 0
-	reps := make([]models.Repos, 0)
-	c := make(chan models.Response)
-	result := make([]models.Response, 2)
-
-	data := mux.Vars(r)
-	go getRepsFromGithub(data["page"], c)
-	go getRepsFromGitlab(data["page"], c)
-
-	for i, _ := range result {
-		result[i] = <-c
-		reps = append(reps, result[i].Repositories...)
-		if result[i].PageCount > pageCount {
-			pageCount = result[i].PageCount
-		}
-	}
-	w.Header().Set("X-Total-Pages", strconv.Itoa(pageCount))
-	json.NewEncoder(w).Encode(reps)
-}
 
 func getProjectReps(w http.ResponseWriter, r *http.Request) {
 	var project models.Project
@@ -99,7 +79,8 @@ func getRepsPage(w http.ResponseWriter, r *http.Request) {
 			"handler" : "getPageRepsFromGithub",
 			"error"	:	err,
 		},
-		).Fatal("DB interaction resulted in error, shutting down...")
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
 	}
 	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cur.Close(ctx)
@@ -111,47 +92,168 @@ func getRepsPage(w http.ResponseWriter, r *http.Request) {
 			"handler" : "getPageRepsFromGithub",
 			"error"	:	err,
 		},
-		).Fatal("DB interaction resulted in error, shutting down...")
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
 	}
 
 	w.Header().Set("X-Total-Pages", strconv.Itoa(pageTotal))
 	json.NewEncoder(w).Encode(reps)
 }
 
-func getFilteredReps(w http.ResponseWriter, r *http.Request) {
-	reps := make([]models.Repos, 0)
+func getFilteredProjects(w http.ResponseWriter, r *http.Request) {
+	projects := make([]models.Project, 0)
 	data := mux.Vars(r)
 	filterTag := data["filter"]
+	labelsFilter := strings.Split(data["labels"], "&")
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
 	opts := options.Find()
 	opts.SetSort(bson.M{"path" : 1})
+
 	filter := bson.M{"path" : bson.M{"$regex" : primitive.Regex{Pattern: filterTag, Options: "i"}}}
-	cur, err := repsCollection.Find(ctx, filter, opts)
+	if data["labels"] != "" {
+		filter = bson.M{"path" : bson.M{"$regex" : primitive.Regex{Pattern: filterTag, Options: "i"}},
+			"labels.name" : bson.M{"$all" : labelsFilter}}
+	}
+
+	cur, err := projectsCollection.Find(ctx, filter, opts)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"function" : "mongo.Find",
-			"handler" : "getPageRepsFromGithub",
+			"handler" : "getFilteredProjects",
 			"error"	:	err,
 		},
-		).Fatal("DB interaction resulted in error, shutting down...")
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
 	}
 	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cur.Close(ctx)
 	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
-	err = cur.All(ctx, &reps)
+	err = cur.All(ctx, &projects)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"function" : "mongo.All",
-			"handler" : "getPageRepsFromGithub",
+			"handler" : "getFilteredProjects",
 			"error"	:	err,
 		},
-		).Fatal("DB interaction resulted in error, shutting down...")
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
 	}
-
-	json.NewEncoder(w).Encode(reps)
+	json.NewEncoder(w).Encode(projects)
 }
 
+func getFilteredIssues(w http.ResponseWriter, r *http.Request) {
+	issues := make([]models.Issue, 0)
+	data := mux.Vars(r)
+	filterTag := data["filter"]
+	labelsFilter := strings.Split(data["labels"], "&")
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+
+	opts := options.Find()
+	opts.SetSort(bson.M{"title" : 1})
+
+	filter := bson.M{"title" : bson.M{"$regex" : primitive.Regex{Pattern: filterTag, Options: "i"}},
+		"pullrequest.url": "", "state": "open"}
+	if data["labels"] != "" {
+		log.Info(filterTag)
+		log.Info(labelsFilter)
+		filter = bson.M{"title" : bson.M{"$regex" : primitive.Regex{Pattern: filterTag, Options: "i"}},
+			"labels.name" : bson.M{"$all" : labelsFilter}, "pullrequest.url": "", "state": "open"}
+	}
+
+	cur, err := issuesCollection.Find(ctx, filter, opts)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.Find",
+			"handler" : "getFilteredIssues",
+			"error"	:	err,
+		},
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
+	}
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cur.Close(ctx)
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	err = cur.All(ctx, &issues)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.All",
+			"handler" : "getFilteredIssues",
+			"error"	:	err,
+		},
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
+	}
+	json.NewEncoder(w).Encode(issues)
+}
+
+func getAllOpenedIssues(w http.ResponseWriter, r *http.Request) {
+	issues := make([]models.Issue, 0)
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	findOptions := options.Find()
+	findOptions.SetSort(bson.M{"updatedat": -1})
+	filter := bson.M{"pullrequest.url": "", "state": "open"}
+	cur, err := issuesCollection.Find(ctx, filter, findOptions)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.Find",
+			"handler" : "getAllIssues",
+			"error"	:	err,
+		},
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
+	}
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cur.Close(ctx)
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	err = cur.All(ctx, &issues)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.All",
+			"handler" : "getAllIssues",
+			"error"	:	err,
+		},
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
+	}
+	json.NewEncoder(w).Encode(issues)
+}
+
+func getProjectIssues(w http.ResponseWriter, r *http.Request) {
+	issues := make([]models.Issue, 0)
+	data := mux.Vars(r)
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	findOptions := options.Find()
+	findOptions.SetSort(bson.M{"updatedat": -1})
+	filter := bson.M{"$and" : []bson.M{
+		{"pullrequest.url": ""},
+		{"projectpath": data["reppath"]},
+	}}
+	cur, err := issuesCollection.Find(ctx, filter, findOptions)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.Find",
+			"handler" : "getProjectIssues",
+			"error"	:	err,
+		},
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
+	}
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cur.Close(ctx)
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	err = cur.All(ctx, &issues)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.All",
+			"handler" : "getProjectIssues",
+			"error"	:	err,
+		},
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
+	}
+	json.NewEncoder(w).Encode(issues)
+}
 func getRep(w http.ResponseWriter, r *http.Request) {
 	var rep models.Repos
 	data := mux.Vars(r)
@@ -164,13 +266,14 @@ func getRep(w http.ResponseWriter, r *http.Request) {
 			"handler" : "getRep",
 			"error"	:	err,
 		},
-		).Fatal("DB interaction resulted in error, shutting down...")
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
 	}
 	fmt.Println(rep.Meta.Description)
 	json.NewEncoder(w).Encode(rep)
 }
 
-func getAllIssues(w http.ResponseWriter, r *http.Request) {
+func getAllIssuesForRep(w http.ResponseWriter, r *http.Request) {
 	var issues []models.Issue
 	data := mux.Vars(r)
 	platform := data["platform"]
@@ -203,14 +306,17 @@ func getIssue(w http.ResponseWriter, r *http.Request) {
 func getAllProjects(w http.ResponseWriter, r *http.Request) {
 	projects := make([]models.Project, 0)
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	cur, err := projectsCollection.Find(ctx, bson.M{})
+	findOptions := options.Find()
+	findOptions.SetSort(bson.M{"lastUpdated": -1})
+	cur, err := projectsCollection.Find(ctx, bson.M{}, findOptions)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"function" : "mongo.Find",
 			"handler" : "getAllProjects",
 			"error"	:	err,
 		},
-		).Fatal("DB interaction resulted in error, shutting down...")
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
 	}
 	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cur.Close(ctx)
@@ -222,12 +328,13 @@ func getAllProjects(w http.ResponseWriter, r *http.Request) {
 			"handler" : "getAllProjects",
 			"error"	:	err,
 		},
-		).Fatal("DB interaction resulted in error, shutting down...")
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
 	}
 	json.NewEncoder(w).Encode(projects)
 }
 
-func getRelevantInfo(w http.ResponseWriter, r *http.Request) {
+func forceUpdateInfo(w http.ResponseWriter, r *http.Request) {
 	cGithub := make(chan models.Response)
 	cProjects := make(chan models.ProjectInfo)
 	var projects []models.ProjectInfo
@@ -245,20 +352,53 @@ func getRelevantInfo(w http.ResponseWriter, r *http.Request) {
 	}
 	saveReposToDB(result.Repositories)
 	saveLabelsToDB(result.Repositories)
+	log.Info("Performed data update!!! ")
 	w.WriteHeader(200)
 }
 
 func getAllLabels(w http.ResponseWriter, r *http.Request) {
-	var labels models.Labels
+	labels := make([]models.Label, 0)
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	err := labelsCollection.FindOne(ctx, bson.M{}).Decode(&labels)
+	findOptions := options.Find()
+	findOptions.SetSort(bson.M{"type": 1})
+	cur, err := labelsCollection.Find(ctx, bson.M{}, findOptions)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"function" : "mongo.FindOne",
+			"function" : "mongo.Find",
 			"handler" : "getAllLabels",
 			"error"	:	err,
 		},
-		).Fatal("DB interaction resulted in error, shutting down...")
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
+	}
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cur.Close(ctx)
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	err = cur.All(ctx, &labels)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"function" : "mongo.All",
+			"handler" : "getAllLabels",
+			"error"	:	err,
+		},
+		).Warn("DB interaction resulted in error")
+		w.WriteHeader(500)
 	}
 	json.NewEncoder(w).Encode(labels)
+}
+
+func updateInfo(w http.ResponseWriter, r *http.Request) {
+	var payload	models.WebhookPayload
+	json.NewDecoder(r.Body).Decode(&payload)
+	switch {
+	case payload.Issue.ID != 0:
+		saveToDB(payload.Issue)
+	case payload.Label.ID != 0:
+		saveLabelToDB(payload.Label)
+	case payload.Repository.ID != 0 || payload.Ref != "":
+		saveToDB(payload.Repository)
+	default:
+		w.WriteHeader(404)
+	}
+	w.WriteHeader(200)
 }
