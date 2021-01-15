@@ -28,6 +28,7 @@ stages:
           $(tag)
           latest
 - stage: UpdateService
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   jobs:
   - deployment: Deploy
     pool:
