@@ -1,5 +1,8 @@
 package config
 
+// Package config need to configure DataBase connection
+// and to connect to github and some start up settings for main App
+
 import (
 	"encoding/json"
 	"io/ioutil"
@@ -8,13 +11,13 @@ import (
 )
 
 type Config struct {
-	DB *DBConfig		`json:"DbOptions"`
-	Auth *AuthConfig	`json:"AuthOptions"`
-	App *AppConfig		`json:"AppOptions"`
+	DB 		*DBConfig		`json:"DbOptions"`
+	Auth 	*AuthConfig		`json:"AuthOptions"`
+	App 	*AppConfig		`json:"AppOptions"`
 }
 
 type DBConfig struct {
-	URI 					string		`envconfig:"ITLABPROJ_URI",json:"uri"`
+	URI 		string		`envconfig:"ITLABPROJ_URI",json:"uri"`
 }
 type AuthConfig struct {
 	KeyURL		string		`envconfig:"ITLABPROJ_KEYURL",json:"keyUrl"`
@@ -58,8 +61,7 @@ func GetConfig() *Config {
 			},
 		).Warning("Can't read config.json file, shutting down...")
 	}
-	err = json.Unmarshal(data, &config)
-	if err != nil {
+	if err = json.Unmarshal(data, &config); err != nil {
 		log.WithFields(
 			log.Fields{
 				"function" : "GetConfig.Unmarshal",
@@ -77,8 +79,7 @@ func GetConfig() *Config {
 			},
 		).Warning("Can't read auth_config.json file, shutting down...")
 	}
-	err = json.Unmarshal(data, &config)
-	if err != nil {
+	if err = json.Unmarshal(data, &config); err != nil {
 		log.WithFields(
 			log.Fields{
 				"function" : "GetConfig.Unmarshal",
@@ -87,8 +88,7 @@ func GetConfig() *Config {
 		).Warning("Can't correctly parse json from auth_config.json, shutting down...")
 	}
 
-	err = envconfig.Process("itlabproj", &config)
-	if err != nil {
+	if err = envconfig.Process("itlabproj", &config); err != nil {
 		log.WithFields(
 			log.Fields{
 				"function" : "envconfig.Process",
