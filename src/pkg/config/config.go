@@ -17,13 +17,13 @@ type Config struct {
 }
 
 type DBConfig struct {
-	URI 		string		`envconfig:"ITLABPROJ_URI",json:"uri"`
+	URI 		string		`envconfig:"ITLABPROJ_URI" json:"uri"`
 }
 type AuthConfig struct {
-	KeyURL		string		`envconfig:"ITLABPROJ_KEYURL",json:"keyUrl"`
-	Audience	string		`envconfig:"ITLABPROJ_AUDIENCE",json:"audience"`
-	Issuer		string		`envconfig:"ITLABPROJ_ISSUER",json:"issuer"`
-	Scope		string		`envconfig:"ITLABPROJ_SCOPE",json:"scope"`
+	KeyURL		string		`envconfig:"ITLABPROJ_KEYURL" json:"keyUrl"`
+	Audience	string		`envconfig:"ITLABPROJ_AUDIENCE" json:"audience"`
+	Issuer		string		`envconfig:"ITLABPROJ_ISSUER" json:"issuer"`
+	Scope		string		`envconfig:"ITLABPROJ_SCOPE" json:"scope"`
 	Github		Github		`json:"Github"`
 	Gitlab		Gitlab		`json:"Gitlab"`
 }
@@ -31,7 +31,7 @@ type Github struct {
 	AppID			int64		`json:"appID"`
 	PathToPem		string		`json:"pathToPem"`
 	Installation 	string		`json:"installation"`
-	AccessToken   	string		`envconfig:"ITLABPROJ_GHACCESSTOKEN",json:"accessToken"`
+	AccessToken   	string		`envconfig:"ITLABPROJ_GHACCESSTOKEN" json:"accessToken"`
 }
 type Installation struct {
 	ID				int64		`json:"id"`
@@ -44,10 +44,10 @@ type Gitlab struct {
 	AccessToken   	string	`json:"accessToken"`
 }
 type AppConfig struct {
-	AppPort				string	`envconfig:"ITLABPROJ_APPPORT",json:"appPort"`
-	TestMode			bool	`envconfig:"ITLABPROJ_TESTMODE",json:"testMode"`
-	ElemsPerPage 		int		`envconfig:"ITLABPROJ_ELEMSPERPAGE",json:"elemsPerPage"`
-	ProjectFileBranch 	string	`envconfig:"ITLABPROJ_PROJFILEBRANCH",json:"projectFileBranch"`
+	AppPort				string	`envconfig:"ITLABPROJ_APPPORT" json:"appPort"`
+	TestMode			bool	`envconfig:"ITLABPROJ_TESTMODE" json:"testMode"`
+	ElemsPerPage 		int		`envconfig:"ITLABPROJ_ELEMSPERPAGE" json:"elemsPerPage"`
+	ProjectFileBranch 	string	`envconfig:"ITLABPROJ_PROJFILEBRANCH" json:"projectFileBranch"`
 }
 
 func GetConfig() *Config {
