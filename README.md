@@ -1,6 +1,8 @@
 # ITLab-Projects
 Service for listing RTUITLab projects work
 
+[![Build Status](https://dev.azure.com/rtuitlab/RTU%20IT%20Lab/_apis/build/status/ITLab/ITLab-Projects?branchName=master)](https://dev.azure.com/rtuitlab/RTU%20IT%20Lab/_build/latest?definitionId=139&branchName=master)
+
 REST API requests: https://www.postman.com/collections/a312d4a3f8da79bacc50
 ## Configuration
 
