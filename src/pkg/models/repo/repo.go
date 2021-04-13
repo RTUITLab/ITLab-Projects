@@ -13,7 +13,7 @@ type Repo struct {
 	Path				string		`json:"path_with_namespace,omitempty"`
 	HTMLUrl     		string 		`json:"html_url"`
 
-	GitLabHTMLUrl     	string 		`json:"web_url,omitempty"`
+	// GitLabHTMLUrl     	string 		`json:"web_url,omitempty"`
 
 	Description 		string 		`json:"description"`
 	CreatedAt   		string 		`json:"created_at"`
