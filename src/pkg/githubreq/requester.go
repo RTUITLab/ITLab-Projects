@@ -1,9 +1,17 @@
 package githubreq
 
 import (
+	"github.com/ITLab-Projects/pkg/models/user"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"regexp"
+	"strconv"
+	"sync"
 	"time"
+
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/ITLab-Projects/pkg/models/repo"
 
@@ -34,11 +42,13 @@ func New(cfg *Config) *GHRequester {
 		baseUrl: url.URL{
 			Scheme: scheme,
 			Host: host,
-			Path: basepath,
 		},
 		accessToken: cfg.AccessToken,
 		client: &http.Client{
 			Timeout: 10 * time.Second,
+			Transport: &http.Transport{
+				MaxIdleConnsPerHost: 20,
+			},
 		},
 	}
 }
@@ -46,7 +56,7 @@ func New(cfg *Config) *GHRequester {
 const (
 	scheme = "https"
 	host = "api.github.com"
-	basepath = "orgs/RTUITLab"
+	orgName = "RTUITLab"
 )
 
 type GHRequester struct {
@@ -55,13 +65,15 @@ type GHRequester struct {
 	baseUrl 		url.URL
 
 	accessToken		string
+
+	maxRepsPage		int
 }
 
-// GetRepositories return repositories from GitHub
-func (r *GHRequester) GetRepositories(kv ...string) ([]repo.Repo, error) {
-	url := r.baseUrl
-	url.Path += "/repos"
 
+// GetRepositories return all repositories from GitHub
+func (r *GHRequester) getRepositories(kv ...string) ([]repo.RepoWithURLS, error) {
+	url := r.baseUrl
+	url.Path += fmt.Sprintf("orgs/%s/repos", orgName)
 	query := parseKeyValue(kv...)
 	url.RawQuery = query.Encode()
 
@@ -78,15 +90,158 @@ func (r *GHRequester) GetRepositories(kv ...string) ([]repo.Repo, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, UnexpectedCode
+		return nil, errors.Wrapf(UnexpectedCode, "%v", resp.StatusCode)
 	}
-	var repos []repo.Repo
 
+	var repos []repo.RepoWithURLS
 	if err := json.NewDecoder(resp.Body).Decode(&repos); err != nil {
 		return nil, err
 	}
 
 	return repos, nil
+}
+
+
+func (r *GHRequester) GetRepositories() ([]repo.Repo, error) {
+	if err := r.getMaxRepPage(); err != nil {
+		return nil, err
+	}
+
+	// Get All Repos
+	repoChan := make(chan []repo.RepoWithURLS, r.maxRepsPage)
+	{
+		var wg sync.WaitGroup
+		for i := 1; i <= r.maxRepsPage; i++ {
+			wg.Add(1)
+			go func(i int, wg *sync.WaitGroup){
+				defer wg.Done()
+				reps, err := r.getRepositories("page", fmt.Sprint(i), "sort", "updated", "direction", "asc")
+				if err != nil {
+					log.WithFields(
+						log.Fields{
+							"package": "githubreq",
+							"func": "GetRepositories",
+							"err": err,
+						},
+					).Warn("Failed to get repo")
+				} else {
+					repoChan <- reps
+				}
+
+			}(i, &wg)
+		}
+		wg.Wait()
+		close(repoChan)
+	}
+
+	var reps []repo.RepoWithURLS
+
+	for rep := range repoChan {
+		reps = append(reps, rep...)
+	}
+
+	// GetLangueages for each repo
+	var wg sync.WaitGroup
+	{
+		setLanguages := func(rep *repo.RepoWithURLS, wg *sync.WaitGroup) {
+			defer wg.Done()
+			langs, err := r.getRepoLanguagesByURL(rep.LangaugesURL)
+			if err != nil {
+				log.WithFields(
+					log.Fields{
+						"package": "githubreq",
+						"func": "GetRepositories",
+						"err": err,
+					},
+				).Warnf("Failed to load language for repo: %s", rep.Name)
+			} else {
+				rep.Languages = langs
+			}
+		}
+
+		setContributors := func(rep *repo.RepoWithURLS, wg *sync.WaitGroup) {
+			defer wg.Done()
+			users, err := r.getRepoContributorsByURL(rep.ContributorsURL)
+			if err != nil {
+				log.WithFields(
+					log.Fields{
+						"package": "githubreq",
+						"func": "GetRepositories",
+						"err": err,
+					},
+				).Warnf("Failed load contributors for repo %s", rep.Name)
+			} else {
+				rep.Contributors = users
+			}
+		}
+
+		for i, _ := range reps {
+			wg.Add(2)
+			go setLanguages(&reps[i], &wg)
+			go setContributors(&reps[i], &wg)
+		}
+	}
+	wg.Wait()
+
+	return repo.ToRepo(reps), nil
+}
+
+func (r *GHRequester) getRepoLanguages(repName string) (map[string]int, error) {
+	url := r.baseUrl
+	url.Path += fmt.Sprintf("repos/%s/%s/languages", orgName, repName)
+	
+	return r.getRepoLanguagesByURL(url.String())
+}
+
+func (r *GHRequester) getRepoLanguagesByURL(url string) (map[string]int, error) {
+	var langs map[string]int
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	r.prepareReqToGH(req)
+	resp, err := r.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.Wrapf(UnexpectedCode, "%v", resp.StatusCode)
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&langs); err != nil {
+		return nil, err
+	}
+
+	return langs, nil
+}
+
+func (r* GHRequester) getRepoContributorsByURL(url string) ([]user.User, error) {
+	var users []user.User
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	r.prepareReqToGH(req)
+
+	resp, err := r.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.Wrapf(UnexpectedCode, "status code: %v", resp.StatusCode)
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&users); err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }
 
 // prepareReqToGH set Authorization Header if them defined
@@ -95,6 +250,40 @@ func (r *GHRequester) prepareReqToGH(req *http.Request) {
 		// TODO read docs again and checkout of some new solution
 		req.Header.Set("Authorization", "Bearer " + r.accessToken)
 	}
+}
+
+// Resp should be from getting repos
+func (r *GHRequester) setMaxRepPage(resp *http.Response) error {
+	const pattern = `(?m)page=(\w+)>;\srel="last"`
+	link := resp.Header.Get("Link")
+	re := regexp.MustCompile(pattern)
+	all := re.FindStringSubmatch(link)
+	if len(all) != 2 {
+		return errors.New("Can't get last page")
+	}
+	maxPage, _ := strconv.ParseInt(all[1], 10, 64)
+	r.maxRepsPage = int(maxPage)
+	return nil
+}
+
+func (r *GHRequester) getMaxRepPage() error {
+	url := r.baseUrl
+	url.Path += fmt.Sprintf("orgs/%s/repos", orgName)
+	req, err := http.NewRequest("GET", url.String(), nil)
+	if err != nil {
+		return err
+	}
+	
+	resp, err := r.client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	if err := r.setMaxRepPage(resp); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // parseKeyValue parse slice of string to url.Values
