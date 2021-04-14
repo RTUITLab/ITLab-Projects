@@ -14,9 +14,6 @@ type ReposRepository struct {
 	repoCollection *mongo.Collection
 }
 
-type ReposRepositorier interface {
-	Save(repos []repo.Repo) error
-}
 
 func New(repoCollection *mongo.Collection) ReposRepositorier {
 	return &ReposRepository{
@@ -39,3 +36,8 @@ func (r *ReposRepository) Save(repos []repo.Repo) error {
 
 	return nil
 }
+
+// func (r *ReposRepository) Get() ([]repo.Repo, error) {
+	
+
+// }
