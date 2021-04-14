@@ -4,6 +4,8 @@ import (
 	. "github.com/ITLab-Projects/pkg/models/label"
 )
 
+// TODO think aboyt need this or not
+
 type Project struct {
 	Path			string			`json:"path"`
 	HumanName		string			`json:"humanName"`
