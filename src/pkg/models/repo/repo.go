@@ -28,3 +28,18 @@ type Repo struct {
 	OpenIssues  		int			`json:"open_issues_count"`
 	Meta				Meta		`json:"meta"`
 }
+
+type RepoWithURLS struct {
+	Repo
+	LangaugesURL 		string 	`json:"languages_url"`
+	ContributorsURL		string	`json:"contributors_url"`
+}
+
+func ToRepo(repos []RepoWithURLS) []Repo {
+	var reps []Repo
+	for _, rep := range repos {
+		reps = append(reps, rep.Repo)
+	}
+	
+	return reps
+}
