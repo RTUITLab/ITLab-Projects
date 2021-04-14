@@ -2,7 +2,10 @@ package githubreq_test
 
 import (
 	"net/url"
+	"os"
 	"testing"
+
+	"github.com/joho/godotenv"
 
 	"github.com/ITLab-Projects/pkg/githubreq"
 )
@@ -10,9 +13,19 @@ import (
 var requster *githubreq.GHRequester
 
 func init() {
+	// Strange path but okay
+	if err := godotenv.Load("../../.env"); err != nil {
+		panic(err)
+	}
+
+	token, find := os.LookupEnv("ITLAB_PROJECTS_ACCESSKEY")
+	if !find {
+		panic("Don't find token")
+	}
+
 	requster = githubreq.New(
 		&githubreq.Config{
-			AccessToken: "",
+			AccessToken: token,
 		},
 	)
 }
@@ -25,6 +38,10 @@ func TestFunc_GetRepositoris(t *testing.T) {
 	}
 
 	t.Logf("%v \n", repos)
+
+	for _, r := range repos {
+		t.Logf("name:%s langs: %v conts: %v\n", r.Name, r.Languages, r.Contributors)
+	}
 }
 
 func TestFunc_URL(t *testing.T) {
