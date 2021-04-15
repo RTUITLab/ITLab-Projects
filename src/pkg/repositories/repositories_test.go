@@ -1,8 +1,10 @@
 package repositories_test
 
 import (
-	"github.com/ITLab-Projects/pkg/githubreq"
 	"testing"
+
+	"github.com/ITLab-Projects/pkg/githubreq"
+	"github.com/ITLab-Projects/pkg/models/repo"
 
 	"github.com/ITLab-Projects/pkg/repositories"
 )
@@ -31,7 +33,7 @@ func TestFunc_Save(t *testing.T) {
 		t.FailNow()
 	}
 
-	if err := Repositories.Save(repos); err != nil {
+	if err := Repositories.Save(repo.ToRepo(repos)); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
