@@ -1,7 +1,6 @@
 package githubreq
 
 import (
-	"github.com/ITLab-Projects/pkg/models/user"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,6 +8,9 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/ITLab-Projects/pkg/models/milestone"
+	"github.com/ITLab-Projects/pkg/models/user"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -101,8 +103,75 @@ func (r *GHRequester) getRepositories(kv ...string) ([]repo.RepoWithURLS, error)
 	return repos, nil
 }
 
+func (r *GHRequester) GetMilestonesForRepo(repName string) ([]milestone.Milestone, error) {
+	issues, err := r.getAllIssues(repName)
+	if err != nil {
+		return nil, err
+	}
 
-func (r *GHRequester) GetRepositories() ([]repo.Repo, error) {
+	return r.getAllMilestones(issues), nil
+}
+
+// return buffer with resp body
+func (r *GHRequester) getAllIssues(repName string) ([]milestone.IssueFromGH, error) {
+	url := r.baseUrl
+	url.Path += fmt.Sprintf("repos/%s/%s/issues", orgName, repName)
+	req, err := http.NewRequest("GET", url.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	r.prepareReqToGH(req)
+
+	resp, err := r.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.Wrapf(UnexpectedCode, "%v", resp.StatusCode)
+	}
+
+	var issues []milestone.IssueFromGH
+
+	if err := json.NewDecoder(resp.Body).Decode(&issues); err != nil {
+		return nil, err
+	}
+
+	return issues, nil
+}
+
+func (r *GHRequester) getAllMilestones(issues []milestone.IssueFromGH) ([]milestone.Milestone) {
+	set := make(map[interface{}][]milestone.Issue)
+
+	for _, issue := range issues {
+		if _, find := set[issue.Milestone]; issue.Milestone != nil && !find {
+			set[issue.Milestone] = []milestone.Issue{issue.Issue}
+		} else if issue.Milestone != nil && find {
+			set[issue.Milestone] = append(set[issue.Milestone], issue.Issue)
+		}
+	}
+
+	var milestones []milestone.Milestone
+
+	for k, v := range set {
+		m := k.(*milestone.MilestoneFromGH)
+		milestones = append(milestones,  milestone.Milestone{MilestoneFromGH: *m, Issues: v})
+	}
+
+	return milestones
+}
+
+func (r *GHRequester) GetRepositoriesWithoutURL() ([]repo.Repo, error) {
+	reps, err := r.GetRepositories()
+	if err != nil {
+		return nil, err
+	}
+
+	return repo.ToRepo(reps), nil
+}
+
+func (r *GHRequester) GetRepositories() ([]repo.RepoWithURLS, error) {
 	if err := r.getMaxRepPage(); err != nil {
 		return nil, err
 	}
@@ -183,7 +252,7 @@ func (r *GHRequester) GetRepositories() ([]repo.Repo, error) {
 	}
 	wg.Wait()
 
-	return repo.ToRepo(reps), nil
+	return reps, nil
 }
 
 func (r *GHRequester) getRepoLanguages(repName string) (map[string]int, error) {
@@ -273,11 +342,13 @@ func (r *GHRequester) getMaxRepPage() error {
 	if err != nil {
 		return err
 	}
+	r.prepareReqToGH(req)
 	
 	resp, err := r.client.Do(req)
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 
 	if err := r.setMaxRepPage(resp); err != nil {
 		return err
