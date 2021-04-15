@@ -1,14 +1,50 @@
 package milestone
 
 import (
-	. "github.com/ITLab-Projects/pkg/models/user"
+	"github.com/ITLab-Projects/pkg/models/pullrequest"
+	"github.com/ITLab-Projects/pkg/models/label"
+	"github.com/ITLab-Projects/pkg/models/assignee"
+	"github.com/ITLab-Projects/pkg/models/user"
 )
 
-type Milestone struct {
+type MilestoneFromGH struct {
 	ID        			uint64     	`json:"id"`
 	Number    			uint64     	`json:"number"`
 	State     			string     	`json:"state"`
 	Title     			string     	`json:"title"`
 	Description 		string 		`json:"description"`
-	Creator      		User    	`json:"creator"`
+	Creator      		user.User    	`json:"creator"`
+}
+
+type Milestone struct {
+	MilestoneFromGH
+	Issues 			[]Issue	`json:"issues"`
+}
+
+type Issue struct {
+	ID        			uint64     				`json:"id"`
+	Number    			uint64     				`json:"number"`
+	Description 		string					`json:"body"`
+	Title     			string     				`json:"title"`
+	User      			user.User       		`json:"user"`
+	State     			string     				`json:"state"`
+	Assignees 			[]assignee.Assignee 	`json:"assignees"`
+	Labels				[]label.Label     		`json:"labels"`
+	RepPath				string     				`json:"reppath"`
+	ProjectPath			string     				`json:"project_path"`
+	CreatedAt 			string     				`json:"created_at"`
+	UpdatedAt 			string     				`json:"updated_at"`
+	ClosedAt  			string     				`json:"closed_at"`
+	HtmlUrl   			string     				`json:"html_url"`
+	PullRequest			pullrequest.PullRequest `json:"pull_request"`
+}
+
+type IssueFromGH struct {
+	Issue
+	Milestone *MilestoneFromGH 				`json:"milestone,omitempty"`
+}
+
+type IssueInRepo struct {
+	RepoID		uint64		`json:"rep_id"`
+	Issues		Issue
 }
