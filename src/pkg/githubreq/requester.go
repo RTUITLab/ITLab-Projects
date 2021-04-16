@@ -119,6 +119,21 @@ func (r *GHRequester) GetMilestonesForRepo(repName string) ([]milestone.Mileston
 	return r.getAllMilestones(issues), nil
 }
 
+func (r *GHRequester) GetMilestonesForRepoWithID(rep repo.Repo) ([]milestone.MilestoneInRepo, error) {
+	ms, err := r.GetMilestonesForRepo(rep.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	var milestones []milestone.MilestoneInRepo
+
+	for _, m := range ms {
+		milestones = append(milestones, milestone.MilestoneInRepo{Milestone: m, RepoID: rep.ID})
+	}
+
+	return milestones, nil
+}
+
 // return buffer with resp body
 func (r *GHRequester) getAllIssues(repName string) ([]milestone.IssueFromGH, error) {
 	url := r.baseUrl

@@ -11,7 +11,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/ITLab-Projects/pkg/githubreq"
-	"github.com/ITLab-Projects/pkg/models/milestone"
+	"github.com/ITLab-Projects/pkg/models/repo"
 )
 
 var requster *githubreq.GHRequester
@@ -43,14 +43,11 @@ func TestFunc_GetRepositoris(t *testing.T) {
 		t.FailNow()
 	}
 
-	// t.Logf("%v \n", repos)
+	t.Logf("%v \n", repos)
 
-	// for _, r := range repos {
-	// 	t.Logf("name:%s langs: %v conts: %v\n", r.Name, r.Languages, r.Contributors)
-	// }
-
-	r := repos[0]
-	t.Log(r.MilestonesURL)
+	for _, r := range repos {
+		t.Logf("name:%s langs: %v conts: %v\n", r.Name, r.Languages, r.Contributors)
+	}
 }
 
 func TestFunc_GetMilestones(t *testing.T) {
@@ -61,7 +58,6 @@ func TestFunc_GetMilestones(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	mChan := make(chan []milestone.Milestone)
 
 	for _, r := range repos {
 		wg.Add(1)
@@ -73,14 +69,38 @@ func TestFunc_GetMilestones(t *testing.T) {
 				t.Log(err)
 				return
 			}
-			// mChan <- m
 			logrus.Infof("name in channel: %s", name)
 		}(r.Name, &wg)
 	}
 	wg.Wait()
-	close(mChan)
+}
 
-	
+func TestFunc_GetMilestonesWithRepoID(t *testing.T) {
+	repos, err := requster.GetRepositories()
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	var wg sync.WaitGroup
+
+	for i, _ := range repos {
+		wg.Add(1)
+		go func(rep *repo.RepoWithURLS, wg *sync.WaitGroup) {
+			defer wg.Done()
+			logrus.Infof("Start  name: %s", rep.Name)
+			m, err := requster.GetMilestonesForRepoWithID(rep.Repo)
+			if err != nil {
+				t.Log(err)
+				return
+			}
+			logrus.Infof("name in channel: %s",rep.Name)
+			if len(m) > 0 {
+				logrus.Infof("repoId: %v, milestoneRepoId: %v", rep.ID, m[0].RepoID)
+			}
+		}(&repos[i], &wg)
+	}
+	wg.Wait()
 }
 
 func TestFunc_URL(t *testing.T) {
