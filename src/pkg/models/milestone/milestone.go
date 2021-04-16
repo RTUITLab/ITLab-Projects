@@ -13,12 +13,19 @@ type MilestoneFromGH struct {
 	State     			string     	`json:"state"`
 	Title     			string     	`json:"title"`
 	Description 		string 		`json:"description"`
-	Creator      		user.User    	`json:"creator"`
+	Creator      		user.User   `json:"creator"`
+	OpenIssues			uint64		`json:"open_issues"`
+	ClosedIssues		uint64		`json:"closed_issues"`
 }
 
 type Milestone struct {
-	MilestoneFromGH
+	MilestoneFromGH			`bson:",inline"`
 	Issues 			[]Issue	`json:"issues"`
+}
+
+type MilestoneInRepo struct {
+	RepoID				uint64		`json:"repo_id"`
+	Milestone						`bson:",inline"`
 }
 
 type Issue struct {
@@ -42,9 +49,4 @@ type Issue struct {
 type IssueFromGH struct {
 	Issue
 	Milestone *MilestoneFromGH 				`json:"milestone,omitempty"`
-}
-
-type IssueInRepo struct {
-	RepoID		uint64		`json:"rep_id"`
-	Issues		Issue
 }
