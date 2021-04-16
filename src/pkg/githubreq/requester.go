@@ -1,6 +1,7 @@
 package githubreq
 
 import (
+	"github.com/ITLab-Projects/pkg/clientwrapper"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -40,7 +41,7 @@ type Requester interface {
 
 // TODO return Requester
 func New(cfg *Config) *GHRequester {
-	return &GHRequester {
+	r :=  &GHRequester {
 		baseUrl: url.URL{
 			Scheme: scheme,
 			Host: host,
@@ -53,6 +54,11 @@ func New(cfg *Config) *GHRequester {
 			},
 		},
 	}
+
+	r.clientWithWrap = clientwrapper.New(r.client)
+	r.clientWithWrap.Wrap(r.prepareReqToGH)
+
+	return r
 }
 
 const (
@@ -69,6 +75,8 @@ type GHRequester struct {
 	accessToken		string
 
 	maxRepsPage		int
+
+	clientWithWrap	*clientwrapper.ClientWithWrap
 }
 
 
@@ -83,9 +91,8 @@ func (r *GHRequester) getRepositories(kv ...string) ([]repo.RepoWithURLS, error)
 	if err != nil {
 		return nil, err
 	}
-	r.prepareReqToGH(req)
 
-	resp, err := r.client.Do(req)
+	resp, err := r.clientWithWrap.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -120,9 +127,9 @@ func (r *GHRequester) getAllIssues(repName string) ([]milestone.IssueFromGH, err
 	if err != nil {
 		return nil, err
 	}
-	r.prepareReqToGH(req)
 
-	resp, err := r.client.Do(req)
+
+	resp, err := r.clientWithWrap.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -269,8 +276,7 @@ func (r *GHRequester) getRepoLanguagesByURL(url string) (map[string]int, error) 
 		return nil, err
 	}
 
-	r.prepareReqToGH(req)
-	resp, err := r.client.Do(req)
+	resp, err := r.clientWithWrap.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -294,9 +300,8 @@ func (r* GHRequester) getRepoContributorsByURL(url string) ([]user.User, error) 
 	if err != nil {
 		return nil, err
 	}
-	r.prepareReqToGH(req)
 
-	resp, err := r.client.Do(req)
+	resp, err := r.clientWithWrap.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -342,9 +347,8 @@ func (r *GHRequester) getMaxRepPage() error {
 	if err != nil {
 		return err
 	}
-	r.prepareReqToGH(req)
 	
-	resp, err := r.client.Do(req)
+	resp, err := r.clientWithWrap.Do(req)
 	if err != nil {
 		return err
 	}
