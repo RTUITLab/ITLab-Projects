@@ -1,9 +1,16 @@
 package repositories_test
 
 import (
+	"context"
 	"os"
 	"sync"
 	"testing"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"github.com/ITLab-Projects/pkg/models/realese"
 
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
@@ -108,4 +115,41 @@ func TestFunc_GetAllMilestones(t *testing.T) {
 	}
 
 	t.Log(len(ms))
+}
+
+func TestFunc_SaveRealese(t *testing.T) {
+	realse := realese.RealeseInRepo{
+		RepoID: 1,
+		Realese: realese.Realese{
+			ID: 2,
+			HTMLURL: "some_html_url",
+			URL: "some_url",
+		},
+	}
+
+	err := Repositories.Realeser.Save(realse)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+}
+
+func TestFunc_GetRealse(t *testing.T) {
+	opts := options.FindOne()
+	var rel realese.RealeseInRepo
+	err := Repositories.Realeser.GetOne(
+		context.Background(), 
+		bson.M{"repoid": 1}, 
+		func(sr *mongo.SingleResult) error {
+			return sr.Decode(&rel)
+		},
+		opts,
+	)
+
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	t.Log(rel)
 }
