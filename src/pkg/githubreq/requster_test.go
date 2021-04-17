@@ -94,7 +94,7 @@ func TestFunc_GetMilestonesWithRepoID(t *testing.T) {
 				t.Log(err)
 				return
 			}
-			logrus.Infof("name in channel: %s",rep.Name)
+			logrus.Infof("name in channel: %s", rep.Name)
 			if len(m) > 0 {
 				logrus.Infof("repoId: %v, milestoneRepoId: %v", rep.ID, m[0].RepoID)
 			}
@@ -106,13 +106,25 @@ func TestFunc_GetMilestonesWithRepoID(t *testing.T) {
 func TestFunc_URL(t *testing.T) {
 	baseUrl := url.URL{
 		Scheme: "https",
-		Host: "api.github.com",
-		Path: "orgs/RTUITLab",
+		Host:   "api.github.com",
+		Path:   "orgs/RTUITLab",
 	}
 
 	val := url.Values{}
-	val.Add("page", "10") 
+	val.Add("page", "10")
 	val.Add("count", "20")
 	baseUrl.RawQuery = val.Encode()
 	t.Log(baseUrl.String())
+}
+
+// TODO Сделать тестовый релиз потому что на гитхабе их нет
+func TestFunc_GetLastRealese(t *testing.T) {
+	repos, err := requster.GetRepositories()
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	rls := requster.GetLastsRealeseWithRepoID(repo.ToRepo(repos))
+	t.Log(rls)
 }

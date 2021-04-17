@@ -1,6 +1,7 @@
 package githubreq
 
 import (
+	"github.com/ITLab-Projects/pkg/models/realese"
 	"github.com/ITLab-Projects/pkg/clientwrapper"
 	"encoding/json"
 	"fmt"
@@ -191,6 +192,60 @@ func (r *GHRequester) GetRepositoriesWithoutURL() ([]repo.Repo, error) {
 	}
 
 	return repo.ToRepo(reps), nil
+}
+
+func (r *GHRequester) GetLastsRealeseWithRepoID(reps []repo.Repo) ([]realese.RealeseInRepo) {
+	var rls []realese.RealeseInRepo
+
+	var wg sync.WaitGroup
+	for i, _ := range reps {
+		wg.Add(1)
+		go func(rep repo.Repo, wg *sync.WaitGroup) {
+			defer wg.Done()
+			rl, err := r.GetLastRealeseWithRepoID(rep)
+			if err != nil {
+				log.WithFields(
+					log.Fields{
+						"package": "githubreq",
+						"func": "GetLastsRealeseWithRepoID",
+						"err": err,
+					},
+				).Warn("Failed to get last realese")
+				return
+			}
+			rls = append(rls, rl)
+		}(reps[i], &wg)
+	}
+	wg.Done()
+
+	return rls
+}
+
+func (r *GHRequester) GetLastRealeseWithRepoID(rep repo.Repo) (realese.RealeseInRepo, error) {
+	var real realese.RealeseInRepo
+
+	url := r.baseUrl
+	url.Path += fmt.Sprintf("/repos/%s/%s/releases/latest", orgName, rep.Name)
+
+	req, err := http.NewRequest("GET", url.String(), nil)
+	if err != nil {
+		return real, err
+	}
+
+	resp, err := r.clientWithWrap.Do(req)
+	if err != nil {
+		return real, err
+	}
+	defer resp.Body.Close()
+
+
+	if err := json.NewDecoder(resp.Body).Decode(&real); err != nil {
+		return real, err
+	}
+
+	real.RepoID = rep.ID
+
+	return real, nil
 }
 
 func (r *GHRequester) GetRepositories() ([]repo.RepoWithURLS, error) {
