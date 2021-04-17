@@ -8,17 +8,29 @@ import (
 )
 
 type Getter interface {
-	GetAllFiltered(
-		ctx context.Context, 
-		filter interface{}, 
-		f func(*mongo.Cursor) error, 
-		opts ...*options.FindOptions,
-	) error
+	GetOner
+	GetAller
+	GetAllerFiltered
+}
+
+type GetOner interface {
 	GetOne(
 		ctx context.Context, 
 		filter interface{}, 
 		f func(*mongo.SingleResult) error, 
 		opts ...*options.FindOneOptions,
 	) error
+}
+
+type GetAller interface {
 	GetAll(reps interface{}) error
+}
+
+type GetAllerFiltered interface {
+	GetAllFiltered(
+		ctx context.Context, 
+		filter interface{}, 
+		f func(*mongo.Cursor) error, 
+		opts ...*options.FindOptions,
+	) error
 }
