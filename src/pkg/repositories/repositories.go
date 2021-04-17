@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"github.com/ITLab-Projects/pkg/repositories/realeses"
 	"github.com/ITLab-Projects/pkg/repositories/milestones"
 	"errors"
 	"github.com/ITLab-Projects/pkg/repositories/repos"
@@ -15,6 +16,7 @@ import (
 type Repositories struct {
 	repos.ReposRepositorier
 	milestones.Milestoner
+	realeses.Realeser
 }
 
 type Config struct {
@@ -49,9 +51,11 @@ func New(cfg *Config) (*Repositories, error) {
 
 	reposCollection := client.Database(dbName).Collection("repos")
 	milestoneCollection := client.Database(dbName).Collection("milestones")
+	realeseCollection := client.Database(dbName).Collection("realese")
 	return &Repositories{
 		repos.New(reposCollection),
 		milestones.New(milestoneCollection),
+		realeses.New(realeseCollection),
 	}, 
 	nil
 }
