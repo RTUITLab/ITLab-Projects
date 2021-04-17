@@ -8,6 +8,7 @@ import (
 	"context"
 )
 
+// TODO make typeChecker like object with constr with reflect.Type
 type TypeChecker func(v interface{}) error
 
 type Get struct {
