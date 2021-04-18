@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"github.com/ITLab-Projects/pkg/repositories/estimates"
+	"github.com/ITLab-Projects/pkg/repositories/functasks"
 	"github.com/ITLab-Projects/pkg/repositories/realeses"
 	"github.com/ITLab-Projects/pkg/repositories/milestones"
 	"errors"
@@ -14,9 +16,11 @@ import (
 
 
 type Repositories struct {
-	repos.ReposRepositorier
-	milestones.Milestoner
-	realeses.Realeser
+	Repo repos.ReposRepositorier
+	Milestone milestones.Milestoner
+	Realese realeses.Realeser
+	FuncTask functasks.FuncTaskRepositorier
+	Estimate estimates.EstimateRepositorier
 }
 
 type Config struct {
@@ -52,10 +56,14 @@ func New(cfg *Config) (*Repositories, error) {
 	reposCollection := client.Database(dbName).Collection("repos")
 	milestoneCollection := client.Database(dbName).Collection("milestones")
 	realeseCollection := client.Database(dbName).Collection("realese")
+	estimeCollection := client.Database(dbName).Collection("estimate")
+	funcTaskCollection := client.Database(dbName).Collection("functask")
 	return &Repositories{
-		repos.New(reposCollection),
-		milestones.New(milestoneCollection),
-		realeses.New(realeseCollection),
+		Repo: repos.New(reposCollection),
+		Milestone: milestones.New(milestoneCollection),
+		Realese: realeses.New(realeseCollection),
+		Estimate: estimates.New(estimeCollection),
+		FuncTask: functasks.New(funcTaskCollection),
 	}, 
 	nil
 }

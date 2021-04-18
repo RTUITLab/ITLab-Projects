@@ -1,10 +1,13 @@
 package repositories_test
 
 import (
+	"github.com/ITLab-Projects/pkg/models/estimate"
 	"context"
 	"os"
 	"sync"
 	"testing"
+
+	"github.com/ITLab-Projects/pkg/models/functask"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -60,7 +63,7 @@ func TestFunc_SaveRepo(t *testing.T) {
 		t.FailNow()
 	}
 
-	if err := Repositories.ReposRepositorier.Save(repo.ToRepo(repos)); err != nil {
+	if err := Repositories.Repo.Save(repo.ToRepo(repos)); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -68,7 +71,7 @@ func TestFunc_SaveRepo(t *testing.T) {
 
 func TestFunc_GetAllRepos(t *testing.T) {
 	var repos []repo.Repo
-	err := Repositories.ReposRepositorier.GetAll(&repos)
+	err := Repositories.Repo.GetAll(&repos)
 	if err != nil {
 		t.Log(err)
 		t.FailNow()
@@ -98,7 +101,7 @@ func TestFunc_SaveMilestones(t *testing.T) {
 			if err != nil {
 				t.Log(err)
 			}
-			if err := Repositories.Milestoner.Save(ms); err != nil {
+			if err := Repositories.Milestone.Save(ms); err != nil {
 				t.Log(err)
 			}
 		}(&repos[i], &wg)
@@ -108,7 +111,7 @@ func TestFunc_SaveMilestones(t *testing.T) {
 
 func TestFunc_GetAllMilestones(t *testing.T) {
 	var ms []milestone.MilestoneInRepo
-	err := Repositories.Milestoner.GetAll(&ms)
+	err := Repositories.Milestone.GetAll(&ms)
 	if err != nil {
 		t.Log(err)
 		t.FailNow()
@@ -127,7 +130,7 @@ func TestFunc_SaveRealese(t *testing.T) {
 		},
 	}
 
-	err := Repositories.Realeser.Save(realse)
+	err := Repositories.Realese.Save(realse)
 	if err != nil {
 		t.Log(err)
 		t.FailNow()
@@ -137,7 +140,7 @@ func TestFunc_SaveRealese(t *testing.T) {
 func TestFunc_GetRealse(t *testing.T) {
 	opts := options.FindOne()
 	var rel realese.RealeseInRepo
-	err := Repositories.Realeser.GetOne(
+	err := Repositories.Realese.GetOne(
 		context.Background(),
 		bson.M{"repoid": 1},
 		func(sr *mongo.SingleResult) error {
@@ -152,4 +155,79 @@ func TestFunc_GetRealse(t *testing.T) {
 	}
 
 	t.Log(rel)
+}
+
+func TestFunc_SaveFuncTask(t *testing.T) {
+	ft := functask.FuncTask{
+		MilestoneID: 2,
+		FuncTaskURL: "some_url",
+	}
+
+	if err := Repositories.FuncTask.Save(ft); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+}
+
+func TestFunc_GetFuncTask(t *testing.T) {
+	var ft functask.FuncTask
+
+	if err := Repositories.FuncTask.GetOne(
+		context.Background(),
+		bson.M{"milestone_id": 2},
+		func(sr *mongo.SingleResult) error {
+			return sr.Decode(&ft)
+		},
+		options.FindOne(),
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	t.Log(ft)
+}
+
+func TestFunc_DeleteTaskFunc(t *testing.T) {
+	if err := Repositories.FuncTask.Delete(2); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+}
+
+
+func TestFunc_SaveEstimate(t *testing.T) {
+	e := estimate.Estimate{
+		MilestoneID: 2,
+		EstimateURL: "some_url",
+	}
+
+	if err := Repositories.Estimate.Save(e); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+}
+
+func TestFunc_GetEstimate(t *testing.T) {
+	var e estimate.Estimate
+
+	if err := Repositories.Estimate.GetOne(
+		context.Background(),
+		bson.M{"milestone_id": 2},
+		func(sr *mongo.SingleResult) error {
+			return sr.Decode(&e)
+		},
+		options.FindOne(),
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	t.Log(e)
+}
+
+func TestFunc_DeleteEstimate(t *testing.T) {
+	if err := Repositories.Estimate.Delete(2); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
 }
