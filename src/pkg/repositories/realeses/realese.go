@@ -1,34 +1,22 @@
 package realeses
 
 import (
-	"time"
 	"context"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	wrapper "github.com/pkg/errors"
-	"errors"
-	"fmt"
+	"time"
+
 	model "github.com/ITLab-Projects/pkg/models/realese"
-	"go.mongodb.org/mongo-driver/mongo"
 	"github.com/ITLab-Projects/pkg/repositories/getter"
+	"github.com/ITLab-Projects/pkg/repositories/saver"
+	"github.com/ITLab-Projects/pkg/repositories/typechecker"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type RealeseRepo struct {
 	realeseCollection *mongo.Collection
 	getter.GetOner
-}
-
-func (r *RealeseRepo) checkType(v interface{}) error {
-	var err error = nil
-
-	switch v.(type) {
-	case *[]model.RealeseInRepo:
-		break
-	default:
-		err = fmt.Errorf("Uknown type: %T Expected: %T", v, &[]model.RealeseInRepo{})
-	}
-
-	return err
+	saver.Saver
 }
 
 func New(collection *mongo.Collection) Realeser {
@@ -36,27 +24,24 @@ func New(collection *mongo.Collection) Realeser {
 		realeseCollection: collection,
 	}
 
-	r.GetOner = getter.New(r.realeseCollection, r.checkType)
+	m := model.RealeseInRepo{}
+
+	r.GetOner = getter.New(
+		r.realeseCollection, 
+		typechecker.NewSingleByInterface(m),
+	)
+
+	r.Saver = saver.New(
+		collection,
+		m,
+		r.save,
+	)
 
 	return r
 }
 
 func (r *RealeseRepo) Save(v interface{}) error {
-	var err error = nil
-	switch v.(type) {
-	case []model.RealeseInRepo:
-		err = r.saveAll(v.([]model.RealeseInRepo))
-	case model.RealeseInRepo:
-		err = r.save(v.(model.RealeseInRepo))
-	case *model.RealeseInRepo:
-		err = r.save(*(v.(*model.RealeseInRepo)))
-	default:
-		err = wrapper.Wrapf(
-			errors.New("Uknown type"), 
-			"%T Expected %T or %T or %T", 
-			v, []model.RealeseInRepo{}, model.RealeseInRepo{}, &model.RealeseInRepo{}, 
-		)
-	}
+	err := r.Saver.Save(v)
 
 	if err != nil {
 		return err
@@ -65,7 +50,8 @@ func (r *RealeseRepo) Save(v interface{}) error {
 	return nil
 }
 
-func (r *RealeseRepo) save(real model.RealeseInRepo) error {
+func (r *RealeseRepo) save(v interface{}) error {
+	real, _ := v.(model.RealeseInRepo)
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"id": real.ID}
 	
