@@ -121,9 +121,9 @@ func TestFunc_SaveRealese(t *testing.T) {
 	realse := realese.RealeseInRepo{
 		RepoID: 1,
 		Realese: realese.Realese{
-			ID: 2,
+			ID:      2,
 			HTMLURL: "some_html_url",
-			URL: "some_url",
+			URL:     "some_url",
 		},
 	}
 
@@ -138,8 +138,8 @@ func TestFunc_GetRealse(t *testing.T) {
 	opts := options.FindOne()
 	var rel realese.RealeseInRepo
 	err := Repositories.Realeser.GetOne(
-		context.Background(), 
-		bson.M{"repoid": 1}, 
+		context.Background(),
+		bson.M{"repoid": 1},
 		func(sr *mongo.SingleResult) error {
 			return sr.Decode(&rel)
 		},
