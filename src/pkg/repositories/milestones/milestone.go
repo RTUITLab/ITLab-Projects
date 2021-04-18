@@ -1,15 +1,15 @@
 package milestones
 
 import (
-	"fmt"
 	"context"
-	"errors"
 	"time"
+
+	"github.com/ITLab-Projects/pkg/repositories/saver"
+	"github.com/ITLab-Projects/pkg/repositories/typechecker"
 
 	model "github.com/ITLab-Projects/pkg/models/milestone"
 	"github.com/ITLab-Projects/pkg/repositories/counter"
 	"github.com/ITLab-Projects/pkg/repositories/getter"
-	wrapper "github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -19,6 +19,7 @@ type MilestoneRepository struct {
 	milestoneCollection *mongo.Collection
 	counter.Counter
 	getter.Getter
+	saver.Saver
 }
 
 func New(collection *mongo.Collection) Milestoner {
@@ -27,52 +28,38 @@ func New(collection *mongo.Collection) Milestoner {
 		Counter: counter.New(collection),
 	}
 
+	m := model.MilestoneInRepo{}
+
 	mr.Getter = getter.New(
 		collection,
-		mr.checkType,
+		typechecker.NewSingleByInterface(m),
+	)
+
+	mr.Saver = saver.New(
+		collection,
+		m,
+		mr.save,
 	)
 
 	return mr
 }
 
-func (m *MilestoneRepository) checkType(v interface{}) error {
-	var err error = nil
-
-	switch v.(type) {
-	case *[]model.MilestoneInRepo:
-		break
-	default:
-		err = fmt.Errorf("Uknown type: %T Expected: %T", v, &[]model.MilestoneInRepo{})
-	}
-
-	return err
-}
-
 func (m *MilestoneRepository) Save(milestone interface{}) error {
-	var err error = nil
-	switch milestone.(type) {
-	case model.MilestoneInRepo:
-		err = m.save(milestone.(model.MilestoneInRepo))
-	case *model.MilestoneInRepo:
-		err = m.save(*(milestone.(*model.MilestoneInRepo)))
-	case []model.MilestoneInRepo:
-		err = m.saveAll(milestone.([]model.MilestoneInRepo))
-	default:
-		err = wrapper.Wrapf(
-			errors.New("Uknown type"), 
-			"%T Expected %T or %T or %T", 
-			milestone, []model.MilestoneInRepo{}, model.MilestoneInRepo{}, &model.MilestoneInRepo{}, 
-		)
+	err := m.Saver.Save(milestone)
+	if err != nil {
+		return err
 	}
 
-	if err != nil {
+	if _, err := m.UpdateCount(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (m *MilestoneRepository) save(milestone model.MilestoneInRepo) error {
+func (m *MilestoneRepository) save(v interface{}) error {
+	milestone, _ := v.(model.MilestoneInRepo)
+
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"id": milestone.ID}
 
