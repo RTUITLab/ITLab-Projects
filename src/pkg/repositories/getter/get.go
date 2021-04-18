@@ -1,6 +1,7 @@
 package getter
 
 import (
+	"github.com/ITLab-Projects/pkg/repositories/typechecker"
 	"time"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -8,15 +9,12 @@ import (
 	"context"
 )
 
-// TODO make typeChecker like object with constr with reflect.Type
-type TypeChecker func(v interface{}) error
-
 type Get struct {
 	collection 	*mongo.Collection
-	checker		TypeChecker
+	checker		typechecker.TypeChecker
 }
 
-func New(c *mongo.Collection, typeChecker TypeChecker) Getter {
+func New(c *mongo.Collection, typeChecker typechecker.TypeChecker) Getter {
 	return &Get{
 		collection: c,
 		checker: typeChecker,
