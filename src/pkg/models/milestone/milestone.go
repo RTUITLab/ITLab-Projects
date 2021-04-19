@@ -1,6 +1,8 @@
 package milestone
 
 import (
+	"github.com/ITLab-Projects/pkg/models/functask"
+	"github.com/ITLab-Projects/pkg/models/estimate"
 	"github.com/ITLab-Projects/pkg/models/pullrequest"
 	"github.com/ITLab-Projects/pkg/models/label"
 	"github.com/ITLab-Projects/pkg/models/assignee"
@@ -19,8 +21,10 @@ type MilestoneFromGH struct {
 }
 
 type Milestone struct {
-	MilestoneFromGH			`bson:",inline"`
-	Issues 			[]Issue	`json:"issues"`
+	MilestoneFromGH						`bson:",inline"`
+	Issues 			[]Issue				`json:"issues"`
+	Estimate 		estimate.Estimate 	`json:"estimate" bson:"-"`
+	FuncTask		functask.FuncTask	`json:"func_task" bson:"-"`
 }
 
 type MilestoneInRepo struct {
