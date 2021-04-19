@@ -11,10 +11,11 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/ITLab-Projects/pkg/githubreq"
+	"github.com/ITLab-Projects/pkg/models/milestone"
 	"github.com/ITLab-Projects/pkg/models/repo"
 )
 
-var requster *githubreq.GHRequester
+var requster githubreq.Requester
 
 func init() {
 	// Strange path but okay
@@ -125,6 +126,34 @@ func TestFunc_GetLastRealese(t *testing.T) {
 		t.FailNow()
 	}
 
-	rls := requster.GetLastsRealeseWithRepoID(repo.ToRepo(repos))
+	rls := requster.GetLastsRealeseWithRepoID(
+		repo.ToRepo(repos),
+		func(e error) {
+			t.Log(e)
+		},
+	)
 	t.Log(rls)
+}
+
+func TestFunc_GetAllMilestonesForRepoWithID(t *testing.T) {
+	repos, err := requster.GetRepositories()
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+
+	msChan := make(chan []milestone.MilestoneInRepo, 1)
+	go func() {
+		ms := requster.GetAllMilestonesForRepoWithID(repo.ToRepo(repos), func(e error) {
+			logrus.WithFields(
+				logrus.Fields{
+					"err": err,
+				},
+			).Error()
+		})
+		msChan <- ms
+	}()
+
+	t.Log(<-msChan)
 }

@@ -21,7 +21,6 @@ import (
 
 	"net/url"
 
-	"github.com/ITLab-Projects/pkg/models/page"
 )
 
 type Config struct {
@@ -30,18 +29,31 @@ type Config struct {
 	AccessToken		string 
 }
 
-// TODO доделать
-type Requester interface {
-	// key-value pairs for query
-	GetRepositories(...string) ([]page.Page, error)
 
-	GetRepositoriesForEach(func(page.Page)) error
-	GetRepositoriesPage(uint) ([]repo.Repo, error)
-	GetRepositoryByName(string) (repo.Repo, error)
+// TODO также обращаться к Landing.md в каждом репо и читать теги
+
+type Requester interface {
+	GetMilestonesForRepo(string) ([]milestone.Milestone, error)
+	GetMilestonesForRepoWithID(repo.Repo) ([]milestone.MilestoneInRepo, error)
+	GetRepositoriesWithoutURL() ([]repo.Repo, error)
+	GetLastsRealeseWithRepoID(
+		reps []repo.Repo,
+		// error handling
+		// if error is nil would'nt call
+		f func(error),
+	) ([]realese.RealeseInRepo)
+	GetLastRealeseWithRepoID(rep repo.Repo) (realese.RealeseInRepo, error)
+	GetRepositories() ([]repo.RepoWithURLS, error)
+	GetAllMilestonesForRepoWithID(
+		reps []repo.Repo,
+		// error handling
+		// if error is nil would'nt call
+		f func(error),
+	) ([]milestone.MilestoneInRepo)
 }
 
 // TODO return Requester
-func New(cfg *Config) *GHRequester {
+func New(cfg *Config) Requester {
 	r :=  &GHRequester {
 		baseUrl: url.URL{
 			Scheme: scheme,
@@ -135,6 +147,32 @@ func (r *GHRequester) GetMilestonesForRepoWithID(rep repo.Repo) ([]milestone.Mil
 	return milestones, nil
 }
 
+func (r *GHRequester) GetAllMilestonesForRepoWithID(
+	reps []repo.Repo,
+	// error handling
+	// if error is nil would'nt call
+	f func(error),
+) ([]milestone.MilestoneInRepo) {
+	var ms []milestone.MilestoneInRepo
+
+	var wg sync.WaitGroup
+	for i, _ := range reps {
+		wg.Add(1)
+		go func(rep *repo.Repo, wg *sync.WaitGroup){
+			defer wg.Done()
+			m, err := r.GetMilestonesForRepoWithID(*rep)
+			if err != nil {
+				f(err)
+				return
+			}
+			ms = append(ms, m...)
+		}(&reps[i], &wg)
+	}
+	wg.Wait()
+
+	return ms
+}
+
 // return buffer with resp body
 func (r *GHRequester) getAllIssues(repName string) ([]milestone.IssueFromGH, error) {
 	url := r.baseUrl
@@ -194,7 +232,10 @@ func (r *GHRequester) GetRepositoriesWithoutURL() ([]repo.Repo, error) {
 	return repo.ToRepo(reps), nil
 }
 
-func (r *GHRequester) GetLastsRealeseWithRepoID(reps []repo.Repo) ([]realese.RealeseInRepo) {
+func (r *GHRequester) GetLastsRealeseWithRepoID(
+	reps []repo.Repo,
+	f func(error),
+) ([]realese.RealeseInRepo) {
 	var rls []realese.RealeseInRepo
 
 	var wg sync.WaitGroup
@@ -204,13 +245,7 @@ func (r *GHRequester) GetLastsRealeseWithRepoID(reps []repo.Repo) ([]realese.Rea
 			defer wg.Done()
 			rl, err := r.GetLastRealeseWithRepoID(rep)
 			if err != nil {
-				log.WithFields(
-					log.Fields{
-						"package": "githubreq",
-						"func": "GetLastsRealeseWithRepoID",
-						"err": err,
-					},
-				).Warn("Failed to get last realese")
+				f(err)
 				return
 			}
 			rls = append(rls, rl)
@@ -403,7 +438,7 @@ func (r *GHRequester) setMaxRepPage(resp *http.Response) error {
 	re := regexp.MustCompile(pattern)
 	all := re.FindStringSubmatch(link)
 	if len(all) != 2 {
-		return errors.New("Can't get last page")
+		return ErrGetLastPage
 	}
 	maxPage, _ := strconv.ParseInt(all[1], 10, 64)
 	r.maxRepsPage = int(maxPage)
