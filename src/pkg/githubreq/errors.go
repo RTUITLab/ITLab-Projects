@@ -6,4 +6,5 @@ import (
 
 var (
 	UnexpectedCode = errors.New("UnexpectedCode")
+	ErrGetLastPage = errors.New("Can't get last page")
 )
