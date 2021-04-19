@@ -26,7 +26,7 @@ import (
 )
 
 var Repositories *repositories.Repositories
-var requster *githubreq.GHRequester
+var requster githubreq.Requester
 
 func init() {
 	_r, err := repositories.New(&repositories.Config{
