@@ -35,7 +35,7 @@ func New(collection *mongo.Collection) Milestoner {
 		typechecker.NewSingleByInterface(m),
 	)
 
-	mr.Saver = saver.New(
+	mr.Saver = saver.NewSaver(
 		collection,
 		m,
 		mr.save,

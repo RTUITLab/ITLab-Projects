@@ -31,7 +31,7 @@ func New(collection *mongo.Collection) Realeser {
 		typechecker.NewSingleByInterface(m),
 	)
 
-	r.Saver = saver.New(
+	r.Saver = saver.NewSaver(
 		collection,
 		m,
 		r.save,

@@ -2,9 +2,11 @@ package repos
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ITLab-Projects/pkg/repositories/counter"
+	"github.com/ITLab-Projects/pkg/repositories/deleter"
 	"github.com/ITLab-Projects/pkg/repositories/getter"
 	"github.com/ITLab-Projects/pkg/repositories/saver"
 	"github.com/ITLab-Projects/pkg/repositories/typechecker"
@@ -20,7 +22,8 @@ type ReposRepository struct {
 	CountOfDocuments	int64
 	counter.Counter
 	getter.Getter
-	saver.Saver
+	saver.SaverWithDelete
+	deleter.Deleter
 }
 
 
@@ -37,17 +40,34 @@ func New(repoCollection *mongo.Collection) ReposRepositorier {
 		typechecker.NewSingleByInterface(Type),
 	)
 
-	rr.Saver = saver.New(
+	rr.SaverWithDelete = saver.NewSaverWithDelete(
 		repoCollection,
 		Type,
 		rr.save,
+		rr.buildFilter,
+	)
+
+	rr.Deleter = deleter.New(
+		repoCollection,
 	)
 
 	return rr
 }
 
+func (r *ReposRepository) buildFilter(v interface{}) interface{} {
+	repos, _ := v.([]repo.Repo)
+
+	var ids []uint64
+
+	for _, rep := range repos {
+		ids = append(ids, rep.ID)
+	}
+
+	return bson.M{"id": bson.M{"$nin": ids}}
+}
+
 func (r *ReposRepository) Save(repos interface{}) error {
-	if err := r.Saver.Save(repos); err != nil {
+	if err := r.SaverWithDelete.Save(repos); err != nil {
 		return err
 	}
 
@@ -58,11 +78,39 @@ func (r *ReposRepository) Save(repos interface{}) error {
 	return nil
 }
 
-func (r *ReposRepository) saveAll(repos []repo.Repo) error {
+func (r *ReposRepository) SaveAndDeletedUnfind(ctx context.Context, repos interface{}) error {
+	if err := r.SaverWithDelete.SaveAndDeletedUnfind(ctx, repos); err != nil {
+		return err
+	}
+
+	if _, err := r.UpdateCount(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *ReposRepository) deleteExpectNew(v interface{}) error {
+	repos, ok := v.([]repo.Repo)
+	if !ok {
+		return fmt.Errorf("Unexpected type %T Expected %T", v, []repo.Repo{})
+	}
+
+	var ids []uint64
 	for _, rep := range repos {
-		if err := r.save(rep); err != nil {
-			return err
-		}
+		ids = append(ids, rep.ID)
+	}
+
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	opt := options.Delete()
+	filter := bson.M{"id": bson.M{"$nin": ids}}
+	if err := r.Delete(
+		ctx,
+		filter,
+		nil,
+		opt,
+	); err != nil {
+		return err
 	}
 
 	return nil

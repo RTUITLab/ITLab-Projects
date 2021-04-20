@@ -7,7 +7,7 @@ import (
 )
 
 type ReposRepositorier interface {
-	saver.Saver
+	saver.SaverWithDelete
 	counter.Counter
 	getter.Getter
 }

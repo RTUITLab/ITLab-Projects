@@ -32,7 +32,7 @@ func New(
 		typechecker.NewSingleByInterface(ft),
 	)
 
-	ftr.Saver = saver.New(
+	ftr.Saver = saver.NewSaver(
 		collection,
 		ft,
 		ftr.save,

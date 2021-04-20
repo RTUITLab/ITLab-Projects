@@ -34,7 +34,7 @@ func New(
 		typechecker.NewSingleByInterface(e),
 	)
 
-	er.Saver = saver.New(
+	er.Saver = saver.NewSaver(
 		collection,
 		e,
 		er.save,

@@ -53,7 +53,6 @@ func (g *Get) GetOne(
 	if err := f(single); err != nil {
 		return err
 	}
-
 	return nil
 }
 
