@@ -52,7 +52,6 @@ type Requester interface {
 	) ([]milestone.MilestoneInRepo)
 }
 
-// TODO return Requester
 func New(cfg *Config) Requester {
 	r :=  &GHRequester {
 		baseUrl: url.URL{
@@ -426,7 +425,6 @@ func (r* GHRequester) getRepoContributorsByURL(url string) ([]user.User, error) 
 // prepareReqToGH set Authorization Header if them defined
 func (r *GHRequester) prepareReqToGH(req *http.Request) {
 	if r.accessToken != "" {
-		// TODO read docs again and checkout of some new solution
 		req.Header.Set("Authorization", "Bearer " + r.accessToken)
 	}
 }

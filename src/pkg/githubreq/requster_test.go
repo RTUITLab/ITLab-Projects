@@ -118,7 +118,7 @@ func TestFunc_URL(t *testing.T) {
 	t.Log(baseUrl.String())
 }
 
-// TODO Сделать тестовый релиз потому что на гитхабе их нет
+
 func TestFunc_GetLastRealese(t *testing.T) {
 	repos, err := requster.GetRepositories()
 	if err != nil {
