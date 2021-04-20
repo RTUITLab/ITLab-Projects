@@ -102,7 +102,12 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := a.Repository.Milestone.Save(<- msChan); err != nil {
+	ms := <- msChan
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	if err := a.Repository.Milestone.SaveAndDeletedUnfind(
+		ctx,
+		ms,
+	); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
 			e.Err{
@@ -113,7 +118,12 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := a.Repository.Realese.Save(<- rsChan); err != nil {
+	rs := <- rsChan
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	if err := a.Repository.Realese.SaveAndDeletedUnfind(
+		ctx,
+		rs,
+	); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
 			e.Err{
