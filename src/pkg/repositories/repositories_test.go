@@ -29,15 +29,6 @@ var Repositories *repositories.Repositories
 var requster githubreq.Requester
 
 func init() {
-	_r, err := repositories.New(&repositories.Config{
-		DBURI: "mongodb://root:root@127.0.0.1:27100/ITLabProjects",
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	Repositories = _r
-
 	if err := godotenv.Load("../../.env"); err != nil {
 		panic(err)
 	}
@@ -46,6 +37,20 @@ func init() {
 	if !find {
 		panic("Don't find token")
 	}
+
+	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI")
+	if !find {
+		panic("Don't find dburi")
+	}
+
+	_r, err := repositories.New(&repositories.Config{
+		DBURI: dburi,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	Repositories = _r
 
 	requster = githubreq.New(
 		&githubreq.Config{
