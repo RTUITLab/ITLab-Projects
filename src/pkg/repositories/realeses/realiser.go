@@ -7,5 +7,5 @@ import (
 
 type Realeser interface {
 	getter.GetOner
-	saver.Saver
+	saver.SaverWithDelete
 }

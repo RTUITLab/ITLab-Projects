@@ -7,7 +7,7 @@ import (
 )
 
 type Milestoner interface {
-	saver.Saver
+	saver.SaverWithDelete
 	counter.Counter
 	getter.Getter
 }

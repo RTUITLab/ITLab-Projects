@@ -16,7 +16,7 @@ import (
 type RealeseRepo struct {
 	realeseCollection *mongo.Collection
 	getter.GetOner
-	saver.Saver
+	Saver saver.SaverWithDelete
 }
 
 func New(collection *mongo.Collection) Realeser {
@@ -31,13 +31,25 @@ func New(collection *mongo.Collection) Realeser {
 		typechecker.NewSingleByInterface(m),
 	)
 
-	r.Saver = saver.NewSaver(
+	r.Saver = saver.NewSaverWithDelete(
 		collection,
 		m,
 		r.save,
+		r.buildFilter,
 	)
 
 	return r
+}
+
+func (r *RealeseRepo) buildFilter(v interface{}) interface{} {
+	rls, _ := v.([]model.RealeseInRepo)
+
+	var ids []uint64
+	for _, r := range rls {
+		ids = append(ids, r.ID)
+	}
+
+	return bson.M{"id": bson.M{"$nin": ids}}
 }
 
 func (r *RealeseRepo) Save(v interface{}) error {
@@ -74,5 +86,13 @@ func (r *RealeseRepo) saveAll(rls []model.RealeseInRepo) error {
 	return nil
 }
 
+
+func (r *RealeseRepo) SaveAndDeletedUnfind(ctx context.Context, rls interface{}) error {
+	if err := r.Saver.SaveAndDeletedUnfind(ctx, rls); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 

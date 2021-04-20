@@ -19,7 +19,7 @@ type MilestoneRepository struct {
 	milestoneCollection *mongo.Collection
 	counter.Counter
 	getter.Getter
-	saver.Saver
+	Saver saver.SaverWithDelete
 }
 
 func New(collection *mongo.Collection) Milestoner {
@@ -35,13 +35,25 @@ func New(collection *mongo.Collection) Milestoner {
 		typechecker.NewSingleByInterface(m),
 	)
 
-	mr.Saver = saver.NewSaver(
+	mr.Saver = saver.NewSaverWithDelete(
 		collection,
 		m,
 		mr.save,
+		mr.buildFilter,
 	)
 
 	return mr
+}
+
+func (m *MilestoneRepository) buildFilter(v interface{}) interface{} {
+	ms, _ := v.([]model.MilestoneInRepo)
+
+	var ids []uint64
+	for _, m := range ms {
+		ids = append(ids, m.ID)
+	}
+
+	return bson.M{"id": bson.M{"$nin": ids}}
 }
 
 func (m *MilestoneRepository) Save(milestone interface{}) error {
@@ -77,6 +89,24 @@ func (m *MilestoneRepository) saveAll(milestones []model.MilestoneInRepo) error 
 		if err := m.save(milestone); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *MilestoneRepository) SaveAndDeletedUnfind(
+	ctx context.Context,
+	milestones interface{},
+) error {
+	if err := m.Saver.SaveAndDeletedUnfind(
+		ctx,
+		milestones,
+	); err != nil {
+		return err
+	}
+
+	if _, err := m.UpdateCount(); err != nil {
+		return err
 	}
 
 	return nil
