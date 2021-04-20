@@ -1,7 +1,14 @@
 package saver
 
+import (
+	"context"
+)
+
 type Saver interface {
 	Save(interface{}) error
 }
 
-// TODO make a standart realization with reflect.Type
+type SaverWithDelete interface {
+	Saver
+	SaveAndDeletedUnfind(context.Context, interface{}) error
+}

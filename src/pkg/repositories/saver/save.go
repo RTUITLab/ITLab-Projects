@@ -1,16 +1,21 @@
 package saver
 
 import (
+	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"reflect"
 
+	log "github.com/sirupsen/logrus"
+
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Save struct {
 	collection *mongo.Collection
-	save saveWithReplaceFunc
+	save 		saveWithReplaceFunc
+	// type of elems
+	t			reflect.Type
 }
 
 func (s *Save) Save(v interface{}) error {
@@ -19,13 +24,13 @@ func (s *Save) Save(v interface{}) error {
 
 type saveWithReplaceFunc func(interface{}) error
 
-func New(
+func NewSaver(
 	c *mongo.Collection,
 	// Should be not ptr and slice
 	// reccomend use type like model.Model{}
 	Type interface{},
 	fun saveWithReplaceFunc,
-) Saver {
+) *Save {
 	s := &Save{
 		collection: c,
 	}
@@ -40,6 +45,7 @@ func New(
 			},
 		).Panic()
 	}
+	s.t = t
 
 	saveFunc := func(v interface{}) error {
 		typeOfV := reflect.TypeOf(v)
@@ -82,4 +88,69 @@ func getTypeOrPanic(Type interface{}) (reflect.Type, error) {
 	}
 
 	return t, nil
+}
+
+
+type SaveWithDelete struct {
+	s *Save
+	f filterBuilder
+}
+
+type filterBuilder func(interface{}) (interface{})
+
+func NewSaverWithDelete(
+	collection *mongo.Collection,
+	Type interface{},
+	saveFunc saveWithReplaceFunc,
+	f filterBuilder,
+) *SaveWithDelete {
+	s := &SaveWithDelete{
+		f: f,
+	}
+
+	s.s = NewSaver(
+		collection,
+		Type,
+		saveFunc,
+	)
+
+
+	return s
+}
+
+func (swd *SaveWithDelete) SaveAndDeletedUnfind(ctx context.Context, v interface{}) error {
+	if err := swd.s.Save(v); err != nil {
+		return err
+	}
+
+	value := reflect.ValueOf(v)
+	if value.Type().AssignableTo(
+		reflect.PtrTo(swd.s.t),
+	) {
+		value = value.Elem()
+	}
+
+	if value.Type().AssignableTo(
+		swd.s.t,
+	) {
+		value = reflect.MakeSlice(swd.s.t, 0, 1)
+		value = reflect.Append(value, reflect.ValueOf(v))
+	}
+
+	filter := swd.f(value.Interface())
+	opts := options.Delete()
+
+	if _, err := swd.s.collection.DeleteMany(
+		ctx,
+		filter,
+		opts,
+	); err != nil {
+		return err
+	}
+	
+	return nil
+}
+
+func (swd *SaveWithDelete) Save(v interface{}) error {
+	return swd.s.Save(v)
 }
