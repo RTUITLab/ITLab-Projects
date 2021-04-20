@@ -1,11 +1,13 @@
 package repositories_test
 
 import (
-	"github.com/ITLab-Projects/pkg/models/estimate"
 	"context"
 	"os"
 	"sync"
 	"testing"
+	"time"
+
+	"github.com/ITLab-Projects/pkg/models/estimate"
 
 	"github.com/ITLab-Projects/pkg/models/functask"
 
@@ -72,6 +74,26 @@ func TestFunc_SaveRepo(t *testing.T) {
 		t.Log(err)
 		t.FailNow()
 	}
+}
+
+func TestFunc_SaveRepoAndDeleteInfind(t *testing.T) {
+	repos, err := requster.GetRepositories()
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	t.Log(repos[0:10])
+
+	ctx, _ := context.WithTimeout(context.Background(), 10 * time.Second)
+	if err := Repositories.Repo.SaveAndDeletedUnfind(
+		ctx,
+		repo.ToRepo(repos[0:10]),
+	); err != nil {
+		t.Log(err)
+	}
+
+	t.Log(Repositories.Repo.Count())
 }
 
 func TestFunc_GetAllRepos(t *testing.T) {
