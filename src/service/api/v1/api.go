@@ -1,8 +1,10 @@
 package v1
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/ITLab-Projects/pkg/apibuilder"
 	e "github.com/ITLab-Projects/pkg/err"
@@ -31,7 +33,7 @@ func New(
 }
 
 func (a *Api) Build(r *mux.Router) {
-	requester := r.PathPrefix("api/v1/projects").Subrouter()
+	requester := r.PathPrefix("/api/v1/projects").Subrouter()
 	requester.HandleFunc("/", a.UpdateAllProjects).Methods("POST")
 
 }
@@ -87,10 +89,9 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		close(rsChan)
 	}()
 
-	ms := <- msChan
-	rs := <- rsChan
-
-	if err := a.Repository.Repo.Save(
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	if err := a.Repository.Repo.SaveAndDeletedUnfind(
+		ctx,
 		repo.ToRepo(repos),
 	); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -101,7 +102,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := a.Repository.Milestone.Save(ms); err != nil {
+	if err := a.Repository.Milestone.Save(<- msChan); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
 			e.Err{
@@ -112,7 +113,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := a.Repository.Realese.Save(rs); err != nil {
+	if err := a.Repository.Realese.Save(<- rsChan); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
 			e.Err{
