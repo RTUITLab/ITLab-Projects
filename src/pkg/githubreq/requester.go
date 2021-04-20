@@ -251,7 +251,7 @@ func (r *GHRequester) GetLastsRealeseWithRepoID(
 			rls = append(rls, rl)
 		}(reps[i], &wg)
 	}
-	wg.Done()
+	wg.Wait()
 
 	return rls
 }
