@@ -135,6 +135,11 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// TODO add handler to add estimeate
+// TODO add handler to add func_task
+// TODO add handler to get projs by chunks
+// TODO 
+
 func logError(message, Handler string, err error) {
 	prepare(Handler, err).Error(message)
 }
