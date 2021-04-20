@@ -145,6 +145,7 @@ func TestFunc_GetAllMilestonesForRepoWithID(t *testing.T) {
 
 	msChan := make(chan []milestone.MilestoneInRepo, 1)
 	go func() {
+		defer close(msChan)
 		ms := requster.GetAllMilestonesForRepoWithID(repo.ToRepo(repos), func(e error) {
 			logrus.WithFields(
 				logrus.Fields{
