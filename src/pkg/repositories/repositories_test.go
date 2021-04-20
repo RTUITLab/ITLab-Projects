@@ -136,6 +136,38 @@ func TestFunc_SaveMilestones(t *testing.T) {
 	wg.Wait()
 }
 
+func TestFunc_SaveMilestonesAndDeleteUnfind(t *testing.T) {
+	repos, err := requster.GetRepositories()
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	ms := requster.GetAllMilestonesForRepoWithID(
+		repo.ToRepo(repos), 
+		func(e error) {
+			t.Log(e)
+		},
+	)
+
+	ctx, _ := context.WithTimeout(
+		context.Background(),
+		10 * time.Second,
+	)
+
+	t.Log(ms)
+
+	if err := Repositories.Milestone.SaveAndDeletedUnfind(
+		ctx,
+		ms,
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	t.Log(Repositories.Milestone.Count())
+}
+
 func TestFunc_GetAllMilestones(t *testing.T) {
 	var ms []milestone.MilestoneInRepo
 	err := Repositories.Milestone.GetAll(&ms)
@@ -148,17 +180,50 @@ func TestFunc_GetAllMilestones(t *testing.T) {
 }
 
 func TestFunc_SaveRealese(t *testing.T) {
-	realse := realese.RealeseInRepo{
-		RepoID: 1,
-		Realese: realese.Realese{
-			ID:      2,
-			HTMLURL: "some_html_url",
-			URL:     "some_url",
-		},
+	repos, err := requster.GetRepositories()
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
 	}
 
-	err := Repositories.Realese.Save(realse)
+	realse := requster.GetLastsRealeseWithRepoID(
+		repo.ToRepo(repos),
+		func(e error) {
+			t.Log(e)
+		},
+	)
+
+	if err := Repositories.Realese.Save(realse);
+	err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+}
+
+func TestFunc_SaveRealeseAndDeleteUnfind(t *testing.T) {
+	repos, err := requster.GetRepositories()
 	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	realse := requster.GetLastsRealeseWithRepoID(
+		repo.ToRepo(repos),
+		func(e error) {
+			t.Log(e)
+		},
+	)
+
+	ctx, _ := context.WithTimeout(
+		context.Background(),
+		10 * time.Second,
+	)
+
+	if err := Repositories.Realese.SaveAndDeletedUnfind(
+		ctx,
+		realse,
+	);
+	err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
