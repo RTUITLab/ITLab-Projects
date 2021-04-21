@@ -41,16 +41,21 @@ func (a *Api) Build(r *mux.Router) {
 // UpdateAllProjects
 // @Summary Update all projects
 // @Description make all request to github to update repositories, milestones
-// @Router /api/v1/projects/
-// 
+// @Description If don't get from gh some repos delete it in db
+// @Router /api/v1/projects/ [post]
+// @Success 200
+// @Failure 502 {object} e.Err
+// @Failure 500 {object} e.Message
 func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 	repos, err := a.Requester.GetRepositories()
 	if err == githubreq.ErrGetLastPage {
 		w.WriteHeader(http.StatusBadGateway)
 		json.NewEncoder(w).Encode(
 			e.Err{
-				Err: err, 
-				Message: "Try later we can't get pages of repo from githun",
+				Err: err.Error(), 
+				Message: e.Message {
+					Message: "Try later we can't get pages of repo from githun",
+				},
 			},
 		)
 		logError("Can't get last page", "UpdateAllProjects", err)
@@ -58,7 +63,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
-			e.Err{
+			e.Message{
 				Message: "Can't get last page",
 			},
 		)
@@ -95,7 +100,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		repo.ToRepo(repos),
 	); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(e.Err{
+		json.NewEncoder(w).Encode(e.Message{
 			Message: "Can't save repositories",
 		})
 		prepare("UpdateAllProjects", err).Error("Can't save repositories")
@@ -110,7 +115,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 	); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
-			e.Err{
+			e.Message{
 				Message: "Can't save milestones",
 			},
 		)
@@ -126,7 +131,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 	); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
-			e.Err{
+			e.Message{
 				Message: "Can't save realeses",
 			},
 		)
