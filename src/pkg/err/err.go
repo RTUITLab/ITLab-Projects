@@ -1,6 +1,10 @@
 package err
 
+type Message struct {
+	Message string `json:"message"`
+}
+
 type Err struct {
-	Err error `json:"error"`
-	Message string `json:"string"`
+	Err string `json:"error"`
+	Message
 }
