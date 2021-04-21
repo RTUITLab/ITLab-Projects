@@ -158,3 +158,20 @@ func TestFunc_GetAllMilestonesForRepoWithID(t *testing.T) {
 
 	t.Log(<-msChan)
 }
+
+func TestFunc_GetTagsForRepos(t *testing.T) {
+	repos, err := requster.GetRepositories()
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	tags := requster.GetAllTagsForRepoWithID(
+		repo.ToRepo(repos),
+		func(e error) {
+			t.Log(e)
+		},
+	)
+
+	t.Log(tags)
+}

@@ -1,15 +1,20 @@
 package githubreq
 
 import (
-	"github.com/ITLab-Projects/pkg/models/realese"
-	"github.com/ITLab-Projects/pkg/clientwrapper"
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/ITLab-Projects/pkg/clientwrapper"
+	"github.com/ITLab-Projects/pkg/models/content"
+	"github.com/ITLab-Projects/pkg/models/realese"
+	"github.com/ITLab-Projects/pkg/models/tag"
 
 	"github.com/ITLab-Projects/pkg/models/milestone"
 	"github.com/ITLab-Projects/pkg/models/user"
@@ -20,7 +25,6 @@ import (
 	"github.com/ITLab-Projects/pkg/models/repo"
 
 	"net/url"
-
 )
 
 type Config struct {
@@ -50,6 +54,11 @@ type Requester interface {
 		// if error is nil would'nt call
 		f func(error),
 	) ([]milestone.MilestoneInRepo)
+	GetAllTagsForRepoWithID(
+		reps []repo.Repo,
+		// if f nill would'nt call
+		f func(error),
+	) ([]tag.Tag)
 }
 
 func New(cfg *Config) Requester {
@@ -170,6 +179,105 @@ func (r *GHRequester) GetAllMilestonesForRepoWithID(
 	wg.Wait()
 
 	return ms
+}
+
+func (r *GHRequester) GetAllTagsForRepoWithID(
+	reps []repo.Repo,
+	// if f nill would'nt call
+	f func(error),
+) ([]tag.Tag) {
+	var tags []tag.Tag
+
+	var wg sync.WaitGroup
+
+	for i, _ := range reps {
+		wg.Add(1)
+		go func(rep *repo.Repo, wg *sync.WaitGroup) {
+			defer wg.Done()
+			c, err := r.getLandingForRepo(*rep)
+			if err != nil && f != nil {
+				f(err)
+				return
+			}
+
+			t, err := r.getTagsByURL(*c)
+			if err != nil && f != nil {
+				f(err)
+				return
+			}
+
+			tags = append(tags, t...)
+		}(&reps[i], &wg)
+	}
+	wg.Wait()
+
+	return tags
+}
+
+func (r *GHRequester) getTagsByURL(c content.Content) ([]tag.Tag, error) {
+
+	req, err := http.NewRequest("GET", c.DownloadURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := r.clientWithWrap.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.Wrapf(UnexpectedCode, "%v", resp.StatusCode)
+	}
+
+	re := regexp.MustCompile(`(?m)^#\sTags[\s]*?\n(\*\s[\s]*\w+[\s]*?\n?)+$`)
+	
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	list := re.FindString(bytes.NewBuffer(data).String())
+
+	re = regexp.MustCompile(`(?m)\*[\s]*?(\w+)[\s]*?`)
+
+	var tags []tag.Tag
+
+	for _, match := range re.FindAllStringSubmatch(list, -1) {
+		tags = append(tags, tag.Tag{RepoID: c.RepoID, Tag: match[1]})
+	}
+
+	return tags, nil
+}
+
+func (r *GHRequester) getLandingForRepo(
+	rep repo.Repo,
+) (*content.Content, error) {
+	url := r.baseUrl
+	url.Path += fmt.Sprintf("/repos/%s/%s/contents/LANDING.md", orgName, rep.Name)
+	req, err := http.NewRequest("GET", url.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := r.clientWithWrap.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.Wrapf(UnexpectedCode, "%v", resp.StatusCode)
+	}
+
+	var content content.Content
+	if err := json.NewDecoder(resp.Body).Decode(&content); err != nil {
+		return nil, err
+	}
+	content.RepoID = rep.ID
+
+	return &content, nil
 }
 
 // return buffer with resp body
