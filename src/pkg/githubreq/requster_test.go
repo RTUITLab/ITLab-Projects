@@ -1,6 +1,7 @@
 package githubreq_test
 
 import (
+	"context"
 	"net/url"
 	"os"
 	"sync"
@@ -127,6 +128,7 @@ func TestFunc_GetLastRealese(t *testing.T) {
 	}
 
 	rls := requster.GetLastsRealeseWithRepoID(
+		context.Background(),
 		repo.ToRepo(repos),
 		func(e error) {
 			t.Log(e)
@@ -146,13 +148,17 @@ func TestFunc_GetAllMilestonesForRepoWithID(t *testing.T) {
 	msChan := make(chan []milestone.MilestoneInRepo, 1)
 	go func() {
 		defer close(msChan)
-		ms := requster.GetAllMilestonesForRepoWithID(repo.ToRepo(repos), func(e error) {
-			logrus.WithFields(
-				logrus.Fields{
-					"err": err,
-				},
-			).Error()
-		})
+		ms := requster.GetAllMilestonesForRepoWithID(
+			context.Background(),
+			repo.ToRepo(repos), 
+			func(e error) {
+				logrus.WithFields(
+					logrus.Fields{
+						"err": err,
+					},
+				).Error()
+			},
+		)
 		msChan <- ms
 	}()
 
@@ -167,6 +173,7 @@ func TestFunc_GetTagsForRepos(t *testing.T) {
 	}
 
 	tags := requster.GetAllTagsForRepoWithID(
+		context.Background(),
 		repo.ToRepo(repos),
 		func(e error) {
 			t.Log(e)
@@ -174,4 +181,11 @@ func TestFunc_GetTagsForRepos(t *testing.T) {
 	)
 
 	t.Log(tags)
+}
+
+func TestFunc(t *testing.T) {
+	var i []int = nil
+	var l []int
+
+	l = append(l, i...)
 }

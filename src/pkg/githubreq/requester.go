@@ -2,6 +2,7 @@ package githubreq
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -41,6 +42,7 @@ type Requester interface {
 	GetMilestonesForRepoWithID(repo.Repo) ([]milestone.MilestoneInRepo, error)
 	GetRepositoriesWithoutURL() ([]repo.Repo, error)
 	GetLastsRealeseWithRepoID(
+		ctx context.Context,
 		reps []repo.Repo,
 		// error handling
 		// if error is nil would'nt call
@@ -49,12 +51,14 @@ type Requester interface {
 	GetLastRealeseWithRepoID(rep repo.Repo) (realese.RealeseInRepo, error)
 	GetRepositories() ([]repo.RepoWithURLS, error)
 	GetAllMilestonesForRepoWithID(
+		ctx context.Context,
 		reps []repo.Repo,
 		// error handling
 		// if error is nil would'nt call
 		f func(error),
 	) ([]milestone.MilestoneInRepo)
 	GetAllTagsForRepoWithID(
+		ctx context.Context,
 		reps []repo.Repo,
 		// if f nill would'nt call
 		f func(error),
@@ -160,60 +164,83 @@ func (r *GHRequester) GetMilestonesForRepoWithID(rep repo.Repo) ([]milestone.Mil
 }
 
 func (r *GHRequester) GetAllMilestonesForRepoWithID(
+	ctx context.Context,
 	reps []repo.Repo,
 	// error handling
 	// if error is nil would'nt call
 	f func(error),
 ) ([]milestone.MilestoneInRepo) {
 	var ms []milestone.MilestoneInRepo
+	msChan := make(chan []milestone.MilestoneInRepo)
 
-	var wg sync.WaitGroup
+	var count int = 0
 	for i, _ := range reps {
-		wg.Add(1)
-		go func(rep *repo.Repo, wg *sync.WaitGroup){
-			defer wg.Done()
+		count++
+		go func(rep *repo.Repo){
 			m, err := r.GetMilestonesForRepoWithID(*rep)
-			if err != nil {
+			if err != nil && f != nil {
 				f(err)
+				msChan <- nil
 				return
 			}
-			ms = append(ms, m...)
-		}(&reps[i], &wg)
+
+			msChan <- m
+		}(&reps[i])
 	}
-	wg.Wait()
+
+	for i := 0; i < count; i++ {
+		select {
+		case <-ctx.Done():
+			return nil
+		case m := <- msChan:
+			ms = append(ms, m...)
+		}
+	}
 
 	return ms
 }
 
 func (r *GHRequester) GetAllTagsForRepoWithID(
+	ctx context.Context,
 	reps []repo.Repo,
 	// if f nil would'nt call
+	// if canceled return nil
 	f func(error),
 ) ([]tag.Tag) {
 	var tags []tag.Tag
 
-	var wg sync.WaitGroup
+	tgsChan := make(chan []tag.Tag)
 
+	var count = 0
 	for i, _ := range reps {
-		wg.Add(1)
-		go func(rep *repo.Repo, wg *sync.WaitGroup) {
-			defer wg.Done()
+		count++
+		go func(rep *repo.Repo) {
 			c, err := r.getLandingForRepo(*rep)
 			if err != nil && f != nil {
 				f(err)
+				tgsChan <- nil
 				return
 			}
 
 			t, err := r.getTagsByURL(*c)
 			if err != nil && f != nil {
 				f(err)
+				tgsChan <- nil
 				return
 			}
 
-			tags = append(tags, t...)
-		}(&reps[i], &wg)
+			tgsChan <- t
+		}(&reps[i])
 	}
-	wg.Wait()
+
+	for i := 0; i < count; i++ {
+		select {
+		case <-ctx.Done():
+			return nil
+		case t := <- tgsChan:
+			tags = append(tags, t...)
+		}
+	}
 
 	return tags
 }
@@ -356,25 +383,38 @@ func (r *GHRequester) GetRepositoriesWithoutURL() ([]repo.Repo, error) {
 }
 
 func (r *GHRequester) GetLastsRealeseWithRepoID(
+	ctx context.Context,
 	reps []repo.Repo,
 	f func(error),
 ) ([]realese.RealeseInRepo) {
 	var rls []realese.RealeseInRepo
 
-	var wg sync.WaitGroup
+	rlChan := make(chan realese.RealeseInRepo)
+
+	var count = 0
 	for i, _ := range reps {
-		wg.Add(1)
-		go func(rep repo.Repo, wg *sync.WaitGroup) {
-			defer wg.Done()
+		count++
+		go func(rep repo.Repo) {
 			rl, err := r.GetLastRealeseWithRepoID(rep)
-			if err != nil {
+			if err != nil && f != nil{
 				f(err)
+				rlChan <- realese.RealeseInRepo{RepoID: 0}
 				return
 			}
-			rls = append(rls, rl)
-		}(reps[i], &wg)
+			rlChan <- rl
+		}(reps[i])
 	}
-	wg.Wait()
+
+	for i := 0; i < count; i++ {
+		select {
+		case <-ctx.Done():
+			return nil
+		case rl := <- rlChan:
+			if rl.RepoID != 0 {
+				rls = append(rls, rl)
+			}
+		}
+	}
 
 	return rls
 }
