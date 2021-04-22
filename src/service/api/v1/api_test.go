@@ -1,7 +1,9 @@
 package v1_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -9,6 +11,9 @@ import (
 	"time"
 
 	"github.com/ITLab-Projects/pkg/githubreq"
+	"github.com/ITLab-Projects/pkg/models/estimate"
+	"github.com/ITLab-Projects/pkg/models/functask"
+	"github.com/ITLab-Projects/pkg/models/milestone"
 	"github.com/ITLab-Projects/pkg/repositories"
 	v1 "github.com/ITLab-Projects/service/api/v1"
 	"github.com/gorilla/mux"
@@ -128,4 +133,168 @@ func TestFunc_GetPanic(t *testing.T) {
 	t.Log(*num3)
 
 	t.Log("Okay")
+}
+
+
+func TestFunc_AddFuncTask_NotFound(t *testing.T) {
+	f := functask.FuncTask{
+		MilestoneID: 1,
+		FuncTaskURL: "some_url",
+	}
+
+	data, err := json.Marshal(f)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	req := httptest.NewRequest("POST", "/api/v1/projects/add/functask", bytes.NewReader(data))
+
+	w := httptest.NewRecorder()
+
+	Router.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusNotFound {
+		t.Log(w.Result().StatusCode)
+		t.FailNow()
+	}
+
+	t.Log(w.Body.String())
+}
+
+func TestFunc_AddTestFunc(t *testing.T) {
+	milestone := milestone.MilestoneInRepo{
+		RepoID: 12,
+		Milestone: milestone.Milestone{
+			MilestoneFromGH: milestone.MilestoneFromGH{
+				ID: 2,
+			},
+		},
+	}
+
+	if err := API.Repository.Milestone.Save(milestone); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	f := functask.FuncTask{
+		MilestoneID: 2,
+		FuncTaskURL: "some_url",
+	}
+
+	data, err := json.Marshal(f)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	req := httptest.NewRequest("POST", "/api/v1/projects/add/functask", bytes.NewReader(data))
+
+	w := httptest.NewRecorder()
+
+	Router.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusCreated {
+		t.Log(w.Result().StatusCode)
+		t.FailNow()
+	}
+
+	t.Log(w.Body.String())
+}
+
+func TestFunc_AddTask_BadRequest(t *testing.T) {
+	req := httptest.NewRequest("POST", "/api/v1/projects/add/functask", nil)
+
+	w := httptest.NewRecorder()
+
+	Router.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusBadRequest {
+		t.Log(w.Result().StatusCode)
+		t.FailNow()
+	}
+
+	t.Log(w.Body.String())
+}
+
+func TestFunc_AddEstimate_NotFound(t *testing.T) {
+	f := estimate.Estimate {
+		MilestoneID: 1,
+		EstimateURL: "some_url",
+	}
+
+	data, err := json.Marshal(f)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	req := httptest.NewRequest("POST", "/api/v1/projects/add/estimate", bytes.NewReader(data))
+
+	w := httptest.NewRecorder()
+
+	Router.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusNotFound {
+		t.Log(w.Result().StatusCode)
+		t.FailNow()
+	}
+
+	t.Log(w.Body.String())
+}
+
+func TestFunc_AddEstimate(t *testing.T) {
+	milestone := milestone.MilestoneInRepo{
+		RepoID: 12,
+		Milestone: milestone.Milestone{
+			MilestoneFromGH: milestone.MilestoneFromGH{
+				ID: 2,
+			},
+		},
+	}
+
+	if err := API.Repository.Milestone.Save(milestone); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	f := estimate.Estimate {
+		MilestoneID: 2,
+		EstimateURL: "some_url",
+	}
+
+	data, err := json.Marshal(f)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	req := httptest.NewRequest("POST", "/api/v1/projects/add/estimate", bytes.NewReader(data))
+
+	w := httptest.NewRecorder()
+
+	Router.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusCreated {
+		t.Log(w.Result().StatusCode)
+		t.FailNow()
+	}
+
+	t.Log(w.Body.String())
+	
+}
+
+func TestFunc_AddEstimate_BadRequest(t *testing.T) {
+	req := httptest.NewRequest("POST", "/api/v1/projects/add/estimate", nil)
+
+	w := httptest.NewRecorder()
+
+	Router.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusBadRequest {
+		t.Log(w.Result().StatusCode)
+		t.FailNow()
+	}
+
+	t.Log(w.Body.String())
 }

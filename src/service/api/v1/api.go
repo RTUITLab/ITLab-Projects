@@ -1,11 +1,15 @@
 package v1
 
 import (
+	"go.mongodb.org/mongo-driver/bson"
 	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/ITLab-Projects/pkg/models/estimate"
 	"github.com/ITLab-Projects/pkg/models/functask"
@@ -76,7 +80,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 			e.Err {
 				Err: err.Error(),
 				Message: e.Message{
-					"Can't get repositories",
+					Message: "Can't get repositories",
 				},
 			},
 		)
@@ -101,7 +105,6 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 	)
 
 	go func() {
-		log.Info("start ms")
 		time.Sleep(1*time.Second)
 		ms := a.Requester.GetAllMilestonesForRepoWithID(
 			ctx,
@@ -116,12 +119,10 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 				}
 			},
 		)
-		log.Info("Send ms")
 		msChan <- ms
 	}()
 
 	go func() {
-		log.Info("start rs")
 		time.Sleep(2*time.Second)
 		rs := a.Requester.GetLastsRealeseWithRepoID(
 			ctx,
@@ -138,12 +139,10 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 				}
 			},
 		)
-		log.Info("Send rs")
 		rsChan <- rs
 	}()
 
 	go func() {
-		log.Info("start tgs")
 		time.Sleep(3*time.Second)
 		tgs := a.Requester.GetAllTagsForRepoWithID(
 			ctx,
@@ -157,7 +156,6 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 				prepare("UpdateAllProjects", err).Warn("Faield to get tag")
 			},
 		)
-		log.Info("Send tgs")
 		tgsChan <- tgs
 	}()
 	var (
@@ -169,29 +167,24 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 	// TODO Переделать работу с каналами
 
 	for i := 0; i < 3; i++ {
-		log.Info("Start select")
 		select {
 		case <- ctx.Done():
-			log.Info("Get cancel")
 			err := <- errChan
 			w.WriteHeader(http.StatusBadGateway)
 			json.NewEncoder(w).Encode(
 				e.Err{
 					Err: err.Error(),
 					Message: e.Message {
-						"Failed to update",
+						Message: "Failed to update",
 					},
 				},
 			)
 			return
 		case _ms := <- msChan:
-			log.Info("catch ms")
 			ms = _ms
 		case _rs := <- rsChan:
-			log.Info("catch rs")
 			rs = _rs
 		case _tgs := <- tgsChan:
-			log.Info("catch tgs")
 			tgs = _tgs
 		}
 	}
@@ -253,8 +246,30 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		prepare("UpdateAllProjects", err).Error("Can't save tags")
 		return
 	}
+	// TODO delete also functask and estimate for deleted milestones
 }
 
+// AddFuncTask
+// 
+// @Summary add func task to milestone
+// 
+// @Description add func task to milestone
+// 
+// @Description if func task is exist for milesotne will replace it
+// 
+// @Router /api/v1/projects/add/functask [post]
+// 
+// @Accept json
+// 
+// @Param functask body functask.FuncTask true "function task that you want to add"
+// 
+// @Success 201
+// 
+// @Failure 400 {object} e.Message
+// 
+// @Failure 500 {object} e.Message
+// 
+// @Failure 404 {object} e.Message
 func (a *Api) AddFuncTask(w http.ResponseWriter, r *http.Request) {
 	var fntask functask.FuncTask
 	if err := json.NewDecoder(r.Body).Decode(&fntask); err != nil {
@@ -264,7 +279,37 @@ func (a *Api) AddFuncTask(w http.ResponseWriter, r *http.Request) {
 				Message: "Unexpected body",
 			},
 		)
-		prepare("AddFuncTask", err).Warn()
+		return
+	}
+
+	ctx, _ := context.WithTimeout(
+		context.Background(),
+		10*time.Second,
+	)
+
+	if err := a.Repository.Milestone.GetOne(
+		ctx,
+		bson.M{"id": fntask.MilestoneID},
+		func(sr *mongo.SingleResult) error {
+			return nil
+		},
+		options.FindOne(),
+	); err == mongo.ErrNoDocuments {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(
+			e.Message{
+				Message: "Don't find milestone with this id",
+			},
+		)
+		return
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			e.Message {
+				Message: "Failed to save funtask",
+			},
+		)
+		prepare("AddFuncTask", err).Error()
 		return
 	}
 
@@ -278,6 +323,8 @@ func (a *Api) AddFuncTask(w http.ResponseWriter, r *http.Request) {
 		prepare("AddFuncTask", err).Error()
 		return
 	}
+
+	w.WriteHeader(http.StatusCreated)
 }
 
 func (a *Api) DeleteFuncTask(w http.ResponseWriter, r *http.Request) {
@@ -287,13 +334,34 @@ func (a *Api) DeleteFuncTask(w http.ResponseWriter, r *http.Request) {
 
 	milestoneID, _ := strconv.ParseUint(_mid, 10, 64)
 
-	if err := a.Repository.FuncTask.Delete(
-		uint64(milestoneID),
-	); err != nil {
+	ctx, _ := context.WithTimeout(
+		context.Background(),
+		10 * time.Second,
+	)
+
+	if err := a.Repository.FuncTask.DeleteOne(
+		ctx,
+		bson.M{"milestone_id": milestoneID},
+		func(dr *mongo.DeleteResult) error {
+			if dr.DeletedCount == 0 {
+				return mongo.ErrNoDocuments
+			}
+			return nil
+		},
+		options.Delete(),
+	); err == mongo.ErrNoDocuments {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(
+			e.Message{
+				Message: "func task not found",
+			},
+		)
+		return
+	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
 			e.Message{
-				"Failed to delete functask",
+				Message: "Failed to delete functask",
 			},
 		)
 		prepare("DeleteFuncTask", err).Error()
@@ -314,6 +382,37 @@ func (a *Api) AddEstimate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx, _ := context.WithTimeout(
+		context.Background(),
+		10 * time.Second,
+	)
+
+	if err := a.Repository.Milestone.GetOne(
+		ctx,
+		bson.M{"id": est.MilestoneID},
+		func(sr *mongo.SingleResult) error {
+			return nil
+		},
+		options.FindOne(),
+	); err == mongo.ErrNoDocuments {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(
+			e.Message{
+				Message: "Don't find milestone with this id",
+			},
+		)
+		return
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			e.Message {
+				Message: "Failed to save estimate",
+			},
+		)
+		prepare("AddEstimate", err).Error()
+		return
+	}
+
 	if err := a.Repository.Estimate.Save(est); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
@@ -324,6 +423,8 @@ func (a *Api) AddEstimate(w http.ResponseWriter, r *http.Request) {
 		prepare("AddEstimate", err).Error()
 		return
 	}
+
+	w.WriteHeader(http.StatusCreated)
 }
 
 func (a *Api) DeleteEstimate(w http.ResponseWriter, r *http.Request) {
@@ -333,13 +434,35 @@ func (a *Api) DeleteEstimate(w http.ResponseWriter, r *http.Request) {
 
 	milestoneID, _ := strconv.ParseUint(_mid, 10, 64)
 
-	if err := a.Repository.Estimate.Delete(
-		uint64(milestoneID),
-	); err != nil {
+	ctx, _ := context.WithTimeout(
+		context.Background(),
+		10 * time.Second,
+	)
+
+	if err := a.Repository.Estimate.DeleteOne(
+		ctx,
+		bson.M{"milestone_id": milestoneID},
+		func(dr *mongo.DeleteResult) error {
+			if dr.DeletedCount == 0 {
+				return mongo.ErrNoDocuments
+			}
+
+			return nil
+		},
+		options.Delete(),
+	); err == mongo.ErrNoDocuments {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(
+			e.Message{
+				Message: "estimate not found",
+			},
+		)
+		return
+	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
 			e.Message{
-				"Failed to delete estimate",
+				Message: "Failed to delete estimate",
 			},
 		)
 		prepare("DeleteEstimate", err).Error()
