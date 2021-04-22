@@ -6,6 +6,7 @@ import (
 
 	"github.com/ITLab-Projects/pkg/repositories/saver"
 	"github.com/ITLab-Projects/pkg/repositories/typechecker"
+	"github.com/sirupsen/logrus"
 
 	model "github.com/ITLab-Projects/pkg/models/milestone"
 	"github.com/ITLab-Projects/pkg/repositories/counter"
@@ -46,7 +47,15 @@ func New(collection *mongo.Collection) Milestoner {
 }
 
 func (m *MilestoneRepository) buildFilter(v interface{}) interface{} {
-	ms, _ := v.([]model.MilestoneInRepo)
+	ms, ok := v.([]model.MilestoneInRepo)
+	if !ok {
+		logrus.WithFields(
+			logrus.Fields{
+				"package": "repositories/milestones",
+				"func": "buildfilter",
+			},
+		).Panic()
+	}
 
 	var ids []uint64
 	for _, m := range ms {
