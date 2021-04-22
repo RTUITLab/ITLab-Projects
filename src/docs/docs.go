@@ -46,6 +46,49 @@ var doc = `{
                     }
                 }
             }
+        },
+        "/api/v1/projects/add/functask": {
+            "post": {
+                "description": "add func task to milestone\nif func task is exist for milesotne will replace it",
+                "consumes": [
+                    "application/json"
+                ],
+                "summary": "add func task to milestone",
+                "parameters": [
+                    {
+                        "description": "function task that you want to add",
+                        "name": "functask",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/functask.FuncTask"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -65,6 +108,17 @@ var doc = `{
             "properties": {
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "functask.FuncTask": {
+            "type": "object",
+            "properties": {
+                "func_task_url": {
+                    "type": "string"
+                },
+                "milestone_id": {
+                    "type": "integer"
                 }
             }
         }

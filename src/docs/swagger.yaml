@@ -11,6 +11,13 @@ definitions:
       message:
         type: string
     type: object
+  functask.FuncTask:
+    properties:
+      func_task_url:
+        type: string
+      milestone_id:
+        type: integer
+    type: object
 info:
   contact: {}
 paths:
@@ -31,4 +38,34 @@ paths:
           schema:
             $ref: '#/definitions/err.Err'
       summary: Update all projects
+  /api/v1/projects/add/functask:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        add func task to milestone
+        if func task is exist for milesotne will replace it
+      parameters:
+      - description: function task that you want to add
+        in: body
+        name: functask
+        required: true
+        schema:
+          $ref: '#/definitions/functask.FuncTask'
+      responses:
+        "201":
+          description: ""
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/err.Message'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: add func task to milestone
 swagger: "2.0"
