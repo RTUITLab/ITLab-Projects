@@ -323,3 +323,52 @@ func TestFunc_DeleteEstimate(t *testing.T) {
 		t.FailNow()
 	}
 }
+
+func TestFunc_SaveTags(t *testing.T) {
+	repos, err := requster.GetRepositories()
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	tags := requster.GetAllTagsForRepoWithID(
+		repo.ToRepo(repos),
+		func(e error) {
+			t.Log(e)
+		},
+	)
+
+	if err := Repositories.Tag.Save(tags); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+}
+
+func TestFunc_SaveAndDeleteUnfindTags(t *testing.T) {
+	repos, err := requster.GetRepositories()
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	tags := requster.GetAllTagsForRepoWithID(
+		repo.ToRepo(repos),
+		func(e error) {
+			t.Log(e)
+		},
+	)
+
+	ctx, _ := context.WithTimeout(
+		context.Background(),
+		10*time.Second,
+	)
+
+	if err := Repositories.Tag.SaveAndDeletedUnfind(
+		ctx,
+		tags,
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+}
