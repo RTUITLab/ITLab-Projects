@@ -1,6 +1,7 @@
 package functasks
 
 import (
+	"github.com/ITLab-Projects/pkg/repositories/deleter"
 	"github.com/ITLab-Projects/pkg/repositories/getter"
 	"github.com/ITLab-Projects/pkg/repositories/saver"
 )
@@ -8,5 +9,6 @@ import (
 type FuncTaskRepositorier interface {
 	saver.Saver
 	getter.Getter
-	Delete(MilestoneID uint64) error
+	deleter.DeleterOne
+	Delete(uint64) error
 }

@@ -1,22 +1,25 @@
 package estimates
 
 import (
-	"time"
 	"context"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"time"
+
 	"github.com/ITLab-Projects/pkg/models/estimate"
 	model "github.com/ITLab-Projects/pkg/models/estimate"
+	"github.com/ITLab-Projects/pkg/repositories/deleter"
 	"github.com/ITLab-Projects/pkg/repositories/getter"
 	"github.com/ITLab-Projects/pkg/repositories/saver"
 	"github.com/ITLab-Projects/pkg/repositories/typechecker"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type EstimateRepository struct {
 	estimateColletion *mongo.Collection
 	saver.Saver
 	getter.Getter
+	deleter.DeleterOne
 }
 
 
@@ -38,6 +41,10 @@ func New(
 		collection,
 		e,
 		er.save,
+	)
+
+	er.DeleterOne = deleter.New(
+		collection,
 	)
 
 	return er
