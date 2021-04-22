@@ -119,6 +119,10 @@ func (r *GHRequester) getRepositories(kv ...string) ([]repo.RepoWithURLS, error)
 	}
 	defer resp.Body.Close()
 
+	if err := checkStatusIfForbiddenOrUnathorizated(resp); err != nil {
+		return nil, err
+	}
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.Wrapf(UnexpectedCode, "%v", resp.StatusCode)
 	}
@@ -183,7 +187,7 @@ func (r *GHRequester) GetAllMilestonesForRepoWithID(
 
 func (r *GHRequester) GetAllTagsForRepoWithID(
 	reps []repo.Repo,
-	// if f nill would'nt call
+	// if f nil would'nt call
 	f func(error),
 ) ([]tag.Tag) {
 	var tags []tag.Tag
@@ -227,8 +231,12 @@ func (r *GHRequester) getTagsByURL(c content.Content) ([]tag.Tag, error) {
 	}
 	defer resp.Body.Close()
 
+	if err := checkStatusIfForbiddenOrUnathorizated(resp); err != nil {
+		return nil, err
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Wrapf(UnexpectedCode, "%v", resp.StatusCode)
+		return nil, errors.Wrapf(UnexpectedCode, "%v for repo_id %v", resp.StatusCode, c.RepoID)
 	}
 
 	re := regexp.MustCompile(`(?m)^#\sTags[\s]*?\n(\*\s[\s]*\w+[\s]*?\n?)+$`)
@@ -267,8 +275,12 @@ func (r *GHRequester) getLandingForRepo(
 	}
 	defer resp.Body.Close()
 
+	if err := checkStatusIfForbiddenOrUnathorizated(resp); err != nil {
+		return nil, err
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Wrapf(UnexpectedCode, "%v", resp.StatusCode)
+		return nil, errors.Wrapf(UnexpectedCode, "%v for repo %s", resp.StatusCode, rep.Name)
 	}
 
 	var content content.Content
@@ -296,8 +308,12 @@ func (r *GHRequester) getAllIssues(repName string) ([]milestone.IssueFromGH, err
 	}
 	defer resp.Body.Close()
 
+	if err := checkStatusIfForbiddenOrUnathorizated(resp); err != nil {
+		return nil, err
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Wrapf(UnexpectedCode, "%v", resp.StatusCode)
+		return nil, errors.Wrapf(UnexpectedCode, "%v for repo %s", resp.StatusCode, repName)
 	}
 
 	var issues []milestone.IssueFromGH
@@ -380,6 +396,13 @@ func (r *GHRequester) GetLastRealeseWithRepoID(rep repo.Repo) (realese.RealeseIn
 	}
 	defer resp.Body.Close()
 
+	if err := checkStatusIfForbiddenOrUnathorizated(resp); err != nil {
+		return real, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return real, errors.Wrapf(UnexpectedCode, "status code: %v for repo: %s", resp.StatusCode, rep.Name)
+	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&real); err != nil {
 		return real, err
@@ -494,8 +517,12 @@ func (r *GHRequester) getRepoLanguagesByURL(url string) (map[string]int, error) 
 	}
 	defer resp.Body.Close()
 
+	if err := checkStatusIfForbiddenOrUnathorizated(resp); err != nil {
+		return nil, err
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Wrapf(UnexpectedCode, "%v", resp.StatusCode)
+		return nil, errors.Wrapf(UnexpectedCode, "%v for url %s", resp.StatusCode, url)
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&langs); err != nil {
@@ -519,8 +546,12 @@ func (r* GHRequester) getRepoContributorsByURL(url string) ([]user.User, error) 
 	}
 	defer resp.Body.Close()
 
+	if err := checkStatusIfForbiddenOrUnathorizated(resp); err != nil {
+		return nil, err
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Wrapf(UnexpectedCode, "status code: %v", resp.StatusCode)
+		return nil, errors.Wrapf(UnexpectedCode, "status code: %v for url %s", resp.StatusCode, url)
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&users); err != nil {
@@ -564,6 +595,13 @@ func (r *GHRequester) getMaxRepPage() error {
 		return err
 	}
 	defer resp.Body.Close()
+	if err := checkStatusIfForbiddenOrUnathorizated(resp); err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.Wrapf(UnexpectedCode, "status code: %v", resp.StatusCode)
+	}
 
 	if err := r.setMaxRepPage(resp); err != nil {
 		return err
@@ -582,4 +620,14 @@ func parseKeyValue(kv ...string) url.Values {
 	}
 
 	return val
+}
+
+func checkStatusIfForbiddenOrUnathorizated(resp *http.Response) error {
+	if resp.StatusCode == http.StatusForbidden {
+		return ErrForbiden
+	} else if resp.StatusCode == http.StatusUnauthorized {
+		return ErrUnatorizared
+	}
+
+	return nil
 }
