@@ -39,3 +39,27 @@ func (d *Delete) Delete(
 
 	return nil
 }
+
+func (d *Delete) DeleteOne(
+	ctx context.Context,
+	filter interface{},
+	// if nil would'nt call
+	f func(*mongo.DeleteResult) error,
+	opts ...*options.DeleteOptions,
+) error {
+	res, err := d.collection.DeleteOne(
+		ctx,
+		filter,
+		opts...
+	)
+
+	if err != nil {
+		return err
+	}
+
+	if f != nil {
+		return f(res)
+	}
+
+	return nil
+}
