@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/ITLab-Projects/pkg/models/tag"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -60,6 +61,9 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		)
 		logError("Can't get last page", "UpdateAllProjects", err)
 		return
+	} else if err == githubreq.ErrForbiden || err == githubreq.ErrUnatorizared {
+		logError("Can't repositories", "UpdateAllProjects", err)
+		return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
@@ -73,11 +77,21 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 
 	msChan := make(chan []milestone.MilestoneInRepo, 1)
 	rsChan := make(chan []realese.RealeseInRepo, 1)
+	tgsChan := make(chan []tag.Tag, 1)
+
+	ctx, cancel := context.WithCancel(
+		context.Background(),
+	)
+
 	go func() {
 		ms := a.Requester.GetAllMilestonesForRepoWithID(
 			repo.ToRepo(repos),
 			func(e error) {
-				prepare("UpdateAllProjects", err).Warn()
+				if e == githubreq.ErrForbiden || e == githubreq.ErrUnatorizared {
+					prepare("UpdateAllProjects", err).Error("Failed to get milestone")
+					cancel()
+				}
+				prepare("UpdateAllProjects", err).Warn("Failed to get milestone")
 			},
 		)
 		msChan <- ms
@@ -87,14 +101,56 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		rs := a.Requester.GetLastsRealeseWithRepoID(
 			repo.ToRepo(repos),
 			func(e error) {
-				prepare("UpdateAllProjects", err).Warn()
+				if e == githubreq.ErrForbiden || e == githubreq.ErrUnatorizared {
+					prepare("UpdateAllProjects", err).Error("Failed to get realese")
+					cancel()
+				}
+				prepare("UpdateAllProjects", err).Warn("Failed to get realese")
 			},
 		)
 		rsChan <- rs
 		close(rsChan)
 	}()
 
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	go func() {
+		tgs := a.Requester.GetAllTagsForRepoWithID(
+			repo.ToRepo(repos),
+			func(e error) {
+				if e == githubreq.ErrForbiden || e == githubreq.ErrUnatorizared {
+					prepare("UpdateAllProjects", err).Error("Faield to get tag")
+					cancel()
+				}
+				prepare("UpdateAllProjects", err).Warn("Faield to get tag")
+			},
+		)
+		tgsChan <- tgs
+		close(tgsChan)
+	}()
+	var (
+		ms 	[]milestone.MilestoneInRepo = nil
+		rs 	[]realese.RealeseInRepo		= nil
+		tgs	[]tag.Tag					= nil
+	)
+
+	for {
+		select {
+		case _ms := <- msChan:
+			ms = _ms
+		case _rs := <- rsChan:
+			rs = _rs
+		case _tgs := <-tgsChan:
+			tgs = _tgs
+		case <- ctx.Done():
+			return
+		default:
+			if ms != nil && rs != nil && tgs != nil {
+				break
+			}
+		}
+	}
+
+
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
 	if err := a.Repository.Repo.SaveAndDeletedUnfind(
 		ctx,
 		repo.ToRepo(repos),
@@ -107,7 +163,6 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ms := <- msChan
 	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
 	if err := a.Repository.Milestone.SaveAndDeletedUnfind(
 		ctx,
@@ -119,11 +174,10 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 				Message: "Can't save milestones",
 			},
 		)
-		prepare("UpdateAllProjecys", err).Error("Can't save milestones")
+		prepare("UpdateAllProjects", err).Error("Can't save milestones")
 		return
 	}
 
-	rs := <- rsChan
 	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
 	if err := a.Repository.Realese.SaveAndDeletedUnfind(
 		ctx,
@@ -135,7 +189,22 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 				Message: "Can't save realeses",
 			},
 		)
-		prepare("UpdateAllProjecys", err).Error("Can't save realeses")
+		prepare("UpdateAllProjects", err).Error("Can't save realeses")
+		return
+	}
+
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	if err := a.Repository.Tag.SaveAndDeletedUnfind(
+		ctx,
+		tgs,
+	); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			e.Message{
+				Message: "Can't save realeses",
+			},
+		)
+		prepare("UpdateAllProjects", err).Error("Can't save tags")
 		return
 	}
 }

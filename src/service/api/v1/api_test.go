@@ -1,10 +1,12 @@
 package v1_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/ITLab-Projects/pkg/githubreq"
 	"github.com/ITLab-Projects/pkg/repositories"
@@ -68,4 +70,58 @@ func TestFunc_UpdateAllProjects(t *testing.T) {
 		t.Log(w.Result().StatusCode)
 		t.FailNow()
 	}
+
+}
+
+func TestFunc_GetPanic(t *testing.T) {
+	f := make(chan int, 1)
+	s := make(chan int, 1)
+	v := make(chan int, 1)
+
+	ctx, cancel := context.WithCancel(
+		context.Background(),
+	)
+
+
+	go func() {
+		time.Sleep(50*time.Millisecond)
+		f <- 2
+	}()
+
+	go func() {
+		time.Sleep(60*time.Millisecond)
+		s <- 3
+		t.Log("Error")
+		cancel()
+	}()
+
+	go func() {
+		time.Sleep(40*time.Millisecond)
+		v <- 3
+	}()
+
+	var (
+		num1 *int = nil
+		num2 *int = nil
+		num3 *int = nil
+	)
+
+	for i := 0; i < 3; i++ {
+		select {
+		case <-ctx.Done():
+			return
+		case _f := <- f:
+			num1 = &_f
+		case _s := <- s:
+			num2 = &_s
+		case _v := <- v:
+			num3 = &_v
+		}
+	}
+
+	t.Log(*num1)
+	t.Log(*num2)
+	t.Log(*num3)
+
+	t.Log("Okay")
 }
