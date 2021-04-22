@@ -18,6 +18,8 @@ type Save struct {
 	t			reflect.Type
 }
 
+// TODO make check func before save
+
 func (s *Save) Save(v interface{}) error {
 	return s.save(v)
 }
