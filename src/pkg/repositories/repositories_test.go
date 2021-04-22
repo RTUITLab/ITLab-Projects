@@ -144,6 +144,7 @@ func TestFunc_SaveMilestonesAndDeleteUnfind(t *testing.T) {
 	}
 
 	ms := requster.GetAllMilestonesForRepoWithID(
+		context.Background(),
 		repo.ToRepo(repos), 
 		func(e error) {
 			t.Log(e)
@@ -187,6 +188,7 @@ func TestFunc_SaveRealese(t *testing.T) {
 	}
 
 	realse := requster.GetLastsRealeseWithRepoID(
+		context.Background(),
 		repo.ToRepo(repos),
 		func(e error) {
 			t.Log(e)
@@ -208,6 +210,7 @@ func TestFunc_SaveRealeseAndDeleteUnfind(t *testing.T) {
 	}
 
 	realse := requster.GetLastsRealeseWithRepoID(
+		context.Background(),
 		repo.ToRepo(repos),
 		func(e error) {
 			t.Log(e)
@@ -332,6 +335,7 @@ func TestFunc_SaveTags(t *testing.T) {
 	}
 
 	tags := requster.GetAllTagsForRepoWithID(
+		context.Background(),
 		repo.ToRepo(repos),
 		func(e error) {
 			t.Log(e)
@@ -353,6 +357,7 @@ func TestFunc_SaveAndDeleteUnfindTags(t *testing.T) {
 	}
 
 	tags := requster.GetAllTagsForRepoWithID(
+		context.Background(),
 		repo.ToRepo(repos),
 		func(e error) {
 			t.Log(e)
