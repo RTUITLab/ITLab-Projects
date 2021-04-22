@@ -1,11 +1,16 @@
 package v1
 
 import (
-	"github.com/ITLab-Projects/pkg/models/tag"
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"time"
+
+	"github.com/ITLab-Projects/pkg/models/estimate"
+	"github.com/ITLab-Projects/pkg/models/functask"
+	"github.com/ITLab-Projects/pkg/models/tag"
+	"github.com/pkg/errors"
 
 	"github.com/ITLab-Projects/pkg/apibuilder"
 	e "github.com/ITLab-Projects/pkg/err"
@@ -36,7 +41,10 @@ func New(
 func (a *Api) Build(r *mux.Router) {
 	requester := r.PathPrefix("/api/v1/projects").Subrouter()
 	requester.HandleFunc("/", a.UpdateAllProjects).Methods("POST")
-
+	requester.HandleFunc("/add/functask", a.AddFuncTask).Methods("POST")
+	requester.HandleFunc("/add/estimate", a.AddEstimate).Methods("POST")
+	requester.HandleFunc("/delete/functask/{milestone_id:[0-9]+}", a.DeleteFuncTask).Methods("DELETE")
+	requester.HandleFunc("/delete/estimate/{milestone_id:[0-9]+}", a.DeleteEstimate).Methods("DELETE")
 }
 
 // UpdateAllProjects
@@ -62,7 +70,16 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		logError("Can't get last page", "UpdateAllProjects", err)
 		return
 	} else if err == githubreq.ErrForbiden || err == githubreq.ErrUnatorizared {
-		logError("Can't repositories", "UpdateAllProjects", err)
+		logError("Can't get repositories", "UpdateAllProjects", err)
+		w.WriteHeader(http.StatusBadGateway)
+		json.NewEncoder(w).Encode(
+			e.Err {
+				Err: err.Error(),
+				Message: e.Message{
+					"Can't get repositories",
+				},
+			},
+		)
 		return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -78,53 +95,70 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 	msChan := make(chan []milestone.MilestoneInRepo, 1)
 	rsChan := make(chan []realese.RealeseInRepo, 1)
 	tgsChan := make(chan []tag.Tag, 1)
-
+	errChan := make(chan error, 1)
 	ctx, cancel := context.WithCancel(
 		context.Background(),
 	)
 
 	go func() {
+		log.Info("start ms")
+		time.Sleep(1*time.Second)
 		ms := a.Requester.GetAllMilestonesForRepoWithID(
+			ctx,
 			repo.ToRepo(repos),
-			func(e error) {
-				if e == githubreq.ErrForbiden || e == githubreq.ErrUnatorizared {
+			func(err error) {
+				if err == githubreq.ErrForbiden || err == githubreq.ErrUnatorizared {
 					prepare("UpdateAllProjects", err).Error("Failed to get milestone")
 					cancel()
+					errChan <- err
+				} else if err != nil {
+					prepare("UpdateAllProjects", err).Warn("Failed to get milestone")
 				}
-				prepare("UpdateAllProjects", err).Warn("Failed to get milestone")
 			},
 		)
+		log.Info("Send ms")
 		msChan <- ms
-		close(msChan)
-	}()
-	go func() {
-		rs := a.Requester.GetLastsRealeseWithRepoID(
-			repo.ToRepo(repos),
-			func(e error) {
-				if e == githubreq.ErrForbiden || e == githubreq.ErrUnatorizared {
-					prepare("UpdateAllProjects", err).Error("Failed to get realese")
-					cancel()
-				}
-				prepare("UpdateAllProjects", err).Warn("Failed to get realese")
-			},
-		)
-		rsChan <- rs
-		close(rsChan)
 	}()
 
 	go func() {
-		tgs := a.Requester.GetAllTagsForRepoWithID(
+		log.Info("start rs")
+		time.Sleep(2*time.Second)
+		rs := a.Requester.GetLastsRealeseWithRepoID(
+			ctx,
 			repo.ToRepo(repos),
-			func(e error) {
-				if e == githubreq.ErrForbiden || e == githubreq.ErrUnatorizared {
+			func(err error) {
+				if err == githubreq.ErrForbiden || err == githubreq.ErrUnatorizared {
+					prepare("UpdateAllProjects", err).Error("Failed to get realese")
+					cancel()
+					errChan <- err
+				} else if errors.Unwrap(err) == githubreq.UnexpectedCode {
+
+				} else if err != nil {
+					prepare("UpdateAllProjects", err).Warn("Failed to get realese")
+				}
+			},
+		)
+		log.Info("Send rs")
+		rsChan <- rs
+	}()
+
+	go func() {
+		log.Info("start tgs")
+		time.Sleep(3*time.Second)
+		tgs := a.Requester.GetAllTagsForRepoWithID(
+			ctx,
+			repo.ToRepo(repos),
+			func(err error) {
+				if err == githubreq.ErrForbiden || err == githubreq.ErrUnatorizared {
 					prepare("UpdateAllProjects", err).Error("Faield to get tag")
 					cancel()
+					errChan <- err
 				}
 				prepare("UpdateAllProjects", err).Warn("Faield to get tag")
 			},
 		)
+		log.Info("Send tgs")
 		tgsChan <- tgs
-		close(tgsChan)
 	}()
 	var (
 		ms 	[]milestone.MilestoneInRepo = nil
@@ -132,23 +166,35 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		tgs	[]tag.Tag					= nil
 	)
 
-	for {
+	// TODO Переделать работу с каналами
+
+	for i := 0; i < 3; i++ {
+		log.Info("Start select")
 		select {
+		case <- ctx.Done():
+			log.Info("Get cancel")
+			err := <- errChan
+			w.WriteHeader(http.StatusBadGateway)
+			json.NewEncoder(w).Encode(
+				e.Err{
+					Err: err.Error(),
+					Message: e.Message {
+						"Failed to update",
+					},
+				},
+			)
+			return
 		case _ms := <- msChan:
+			log.Info("catch ms")
 			ms = _ms
 		case _rs := <- rsChan:
+			log.Info("catch rs")
 			rs = _rs
-		case _tgs := <-tgsChan:
+		case _tgs := <- tgsChan:
+			log.Info("catch tgs")
 			tgs = _tgs
-		case <- ctx.Done():
-			return
-		default:
-			if ms != nil && rs != nil && tgs != nil {
-				break
-			}
 		}
 	}
-
 
 	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
 	if err := a.Repository.Repo.SaveAndDeletedUnfind(
@@ -209,10 +255,100 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// TODO add handler to add estimeate
-// TODO add handler to add func_task
+func (a *Api) AddFuncTask(w http.ResponseWriter, r *http.Request) {
+	var fntask functask.FuncTask
+	if err := json.NewDecoder(r.Body).Decode(&fntask); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(
+			e.Message{
+				Message: "Unexpected body",
+			},
+		)
+		prepare("AddFuncTask", err).Warn()
+		return
+	}
+
+	if err := a.Repository.FuncTask.Save(fntask); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			e.Message {
+				Message: "Failed to save funtask",
+			},
+		)
+		prepare("AddFuncTask", err).Error()
+		return
+	}
+}
+
+func (a *Api) DeleteFuncTask(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	_mid := vars["milestone_id"]
+
+	milestoneID, _ := strconv.ParseUint(_mid, 10, 64)
+
+	if err := a.Repository.FuncTask.Delete(
+		uint64(milestoneID),
+	); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			e.Message{
+				"Failed to delete functask",
+			},
+		)
+		prepare("DeleteFuncTask", err).Error()
+		return
+	}
+}
+
+func (a *Api) AddEstimate(w http.ResponseWriter, r *http.Request) {
+	var est estimate.Estimate
+	if err := json.NewDecoder(r.Body).Decode(&est); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(
+			e.Message{
+				Message: "Unexpected body",
+			},
+		)
+		prepare("AddEstimate", err).Warn()
+		return
+	}
+
+	if err := a.Repository.Estimate.Save(est); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			e.Message {
+				Message: "Failed to save estimate",
+			},
+		)
+		prepare("AddEstimate", err).Error()
+		return
+	}
+}
+
+func (a *Api) DeleteEstimate(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	_mid := vars["milestone_id"]
+
+	milestoneID, _ := strconv.ParseUint(_mid, 10, 64)
+
+	if err := a.Repository.Estimate.Delete(
+		uint64(milestoneID),
+	); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			e.Message{
+				"Failed to delete estimate",
+			},
+		)
+		prepare("DeleteEstimate", err).Error()
+		return
+	}
+}
+
+
 // TODO add handler to get projs by chunks
-// TODO 
 
 func logError(message, Handler string, err error) {
 	prepare(Handler, err).Error(message)
