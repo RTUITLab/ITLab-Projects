@@ -70,7 +70,6 @@ func TestFunc_UpdateAllProjects(t *testing.T) {
 		t.Log(w.Result().StatusCode)
 		t.FailNow()
 	}
-
 }
 
 func TestFunc_GetPanic(t *testing.T) {
@@ -90,9 +89,9 @@ func TestFunc_GetPanic(t *testing.T) {
 
 	go func() {
 		time.Sleep(60*time.Millisecond)
-		s <- 3
 		t.Log("Error")
 		cancel()
+		s <- 4
 	}()
 
 	go func() {
@@ -107,14 +106,19 @@ func TestFunc_GetPanic(t *testing.T) {
 	)
 
 	for i := 0; i < 3; i++ {
+		t.Log("Start selection")
 		select {
 		case <-ctx.Done():
+			t.Log("Got done returning")
 			return
 		case _f := <- f:
+			t.Log("Catch f")
 			num1 = &_f
 		case _s := <- s:
+			t.Log("Catch s")
 			num2 = &_s
 		case _v := <- v:
+			t.Log("Catch v")
 			num3 = &_v
 		}
 	}
