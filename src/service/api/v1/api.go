@@ -52,12 +52,19 @@ func (a *Api) Build(r *mux.Router) {
 }
 
 // UpdateAllProjects
+// 
 // @Summary Update all projects
+// 
 // @Description make all request to github to update repositories, milestones
+// 
 // @Description If don't get from gh some repos delete it in db
+// 
 // @Router /api/v1/projects/ [post]
+// 
 // @Success 200
+// 
 // @Failure 502 {object} e.Err
+// 
 // @Failure 500 {object} e.Message
 func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 	repos, err := a.Requester.GetRepositories()
@@ -257,19 +264,21 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 // 
 // @Description if func task is exist for milesotne will replace it
 // 
-// @Router /api/v1/projects/add/functask [post]
+// @Router /api/v1/projects/task [post]
 // 
 // @Accept json
+// 
+// @Produce json
 // 
 // @Param functask body functask.FuncTask true "function task that you want to add"
 // 
 // @Success 201
 // 
-// @Failure 400 {object} e.Message
+// @Failure 400 {object} e.Message "Unexpected body"
 // 
-// @Failure 500 {object} e.Message
+// @Failure 500 {object} e.Message "Failed to save functask"
 // 
-// @Failure 404 {object} e.Message
+// @Failure 404 {object} e.Message "Don't find milestone with this id"
 func (a *Api) AddFuncTask(w http.ResponseWriter, r *http.Request) {
 	var fntask functask.FuncTask
 	if err := json.NewDecoder(r.Body).Decode(&fntask); err != nil {
@@ -327,6 +336,23 @@ func (a *Api) AddFuncTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+// DeleteFuncTask
+// 
+// @Summary delete functask from database
+// 
+// @Description delete functask from database
+// 
+// @Router /api/v1/projects/task/{milestone_id} [delete]
+// 
+// @Param milestone_id path uint64 true "should be uint"
+// 
+// @Produce json
+// 
+// @Success 200
+// 
+// @Failure 404 {object} e.Message "func task not found"
+// 
+// @Failure 500 {object} e.Message "Failed to delete func task"
 func (a *Api) DeleteFuncTask(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
@@ -369,6 +395,29 @@ func (a *Api) DeleteFuncTask(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// AddEstimate
+// 
+// @Summary add estimate to milestone
+// 
+// @Description add estimate to milestone
+// 
+// @Description if estimate is exist for milesotne will replace it
+// 
+// @Router /api/v1/projects/estimate [post]
+// 
+// @Accept json
+// 
+// @Produce json
+// 
+// @Param estimate body estimate.Estimate true "estimate that you want to add"
+// 
+// @Success 201
+// 
+// @Failure 400 {object} e.Message "Unexpected body"
+// 
+// @Failure 500 {object} e.Message "Failed to save estimate"
+// 
+// @Failure 404 {object} e.Message "Don't find milestone with this id"
 func (a *Api) AddEstimate(w http.ResponseWriter, r *http.Request) {
 	var est estimate.Estimate
 	if err := json.NewDecoder(r.Body).Decode(&est); err != nil {
@@ -427,6 +476,23 @@ func (a *Api) AddEstimate(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+// DeleteEstimate
+// 
+// @Summary delete estimate from database
+// 
+// @Description delete estimate from database
+// 
+// @Router /api/v1/projects/estimate/{milestone_id} [delete]
+// 
+// @Param milestone_id path uint64 true "should be uint"
+// 
+// @Produce json
+// 
+// @Success 200
+// 
+// @Failure 404 {object} e.Message "estimate not found"
+// 
+// @Failure 500 {object} e.Message "Failed to delete estimate"
 func (a *Api) DeleteEstimate(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
