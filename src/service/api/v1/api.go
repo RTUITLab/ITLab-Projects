@@ -253,7 +253,28 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		prepare("UpdateAllProjects", err).Error("Can't save tags")
 		return
 	}
-	// TODO delete also functask and estimate for deleted milestones
+	
+	if err := a.Repository.FuncTask.DeleteFuncTasksNotIn(ms); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			e.Message{
+				Message: "Can't delete unused func tasks",
+			},
+		)
+		prepare("UpdateAllProjects", err).Error("Can't delete unused func tasks")
+		return
+	}
+
+	if err := a.Repository.Estimate.DeleteEstimatesNotIn(ms); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			e.Message{
+				Message: "Can't delete unused estimates",
+			},
+		)
+		prepare("UpdateAllProjects", err).Error("Can't delete unused estimates")
+		return
+	}
 }
 
 // AddFuncTask
