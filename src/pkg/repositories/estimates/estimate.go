@@ -6,6 +6,7 @@ import (
 
 	"github.com/ITLab-Projects/pkg/models/estimate"
 	model "github.com/ITLab-Projects/pkg/models/estimate"
+	"github.com/ITLab-Projects/pkg/models/milestone"
 	"github.com/ITLab-Projects/pkg/repositories/deleter"
 	"github.com/ITLab-Projects/pkg/repositories/getter"
 	"github.com/ITLab-Projects/pkg/repositories/saver"
@@ -48,6 +49,24 @@ func New(
 	)
 
 	return er
+}
+
+func (er *EstimateRepository) DeleteEstimatesNotIn(ms []milestone.MilestoneInRepo) error {
+	ids := milestone.GetIDS(ms)
+
+	ctx, _ := context.WithTimeout(
+		context.Background(),
+		10*time.Second,
+	)
+
+	return er.DeleteMany(
+		ctx,
+		bson.M{"milestone_id": bson.M{"$nin": ids}},
+		func(dr *mongo.DeleteResult) error {
+			return nil
+		},
+		options.Delete(),
+	)
 }
 
 func (er *EstimateRepository) save(v interface{}) error {

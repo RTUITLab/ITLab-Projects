@@ -1,6 +1,7 @@
 package functasks
 
 import (
+	"github.com/ITLab-Projects/pkg/models/milestone"
 	"context"
 	"time"
 
@@ -47,6 +48,24 @@ func New(
 
 
 	return ftr
+}
+
+func (ftr *FuncTaskRepository) DeleteFuncTasksNotIn(ms []milestone.MilestoneInRepo) error {
+	ids := milestone.GetIDS(ms)
+
+	ctx, _ := context.WithTimeout(
+		context.Background(),
+		10*time.Second,
+	)
+
+	return ftr.DeleteMany(
+		ctx,
+		bson.M{"milestone_id": bson.M{"$nin": ids}},
+		func(dr *mongo.DeleteResult) error {
+			return nil
+		},
+		options.Delete(),
+	)
 }
 
 func (ftr *FuncTaskRepository) save(v interface{}) error {
