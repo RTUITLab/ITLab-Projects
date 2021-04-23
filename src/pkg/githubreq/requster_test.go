@@ -144,6 +144,7 @@ func TestFunc_GetAllMilestonesForRepoWithID(t *testing.T) {
 		t.FailNow()
 	}
 
+	t.Log(len(repos))
 
 	msChan := make(chan []milestone.MilestoneInRepo, 1)
 	go func() {
@@ -154,7 +155,7 @@ func TestFunc_GetAllMilestonesForRepoWithID(t *testing.T) {
 			func(e error) {
 				logrus.WithFields(
 					logrus.Fields{
-						"err": err,
+						"err": e,
 					},
 				).Error()
 			},
@@ -188,4 +189,39 @@ func TestFunc(t *testing.T) {
 	var l []int
 
 	l = append(l, i...)
+}
+
+func TestFunc_HashSet(t *testing.T) {
+		var issues []milestone.IssueFromGH = []milestone.IssueFromGH{
+			{Issue: milestone.Issue{Description: "issue_1"}, Milestone: nil,},
+			{Issue: milestone.Issue{Description: "issue_2"}, Milestone: nil,},
+			{Issue: milestone.Issue{Description: "issue_3"}, Milestone: &milestone.MilestoneFromGH{ID: 2},},
+			{Issue: milestone.Issue{Description: "issue_4"}, Milestone: &milestone.MilestoneFromGH{ID: 2},},
+			{Issue: milestone.Issue{Description: "issue_5"}, Milestone: &milestone.MilestoneFromGH{ID: 1},},
+			{Issue: milestone.Issue{Description: "issue_6"}, Milestone: &milestone.MilestoneFromGH{ID: 3},},
+		}
+
+		set := make(map[interface{}][]milestone.Issue)
+	
+		for _, issue := range issues {
+			if issue.Milestone != nil {
+				if _, find := set[*issue.Milestone]; !find {
+					set[*issue.Milestone] = []milestone.Issue{issue.Issue}
+				} else if find {
+					set[*issue.Milestone] = append(set[*issue.Milestone], issue.Issue)
+				}
+			}
+		}
+	
+		var milestones []milestone.Milestone
+	
+		for k, v := range set {
+			m := k.(milestone.MilestoneFromGH)
+			milestones = append(milestones,  milestone.Milestone{MilestoneFromGH: m, Issues: v})
+		}
+
+		for _, m := range milestones {
+			t.Log(m)
+		}
+	
 }

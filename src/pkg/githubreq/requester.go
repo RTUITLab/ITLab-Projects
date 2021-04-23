@@ -35,8 +35,6 @@ type Config struct {
 }
 
 
-// TODO также обращаться к Landing.md в каждом репо и читать теги
-
 type Requester interface {
 	GetMilestonesForRepo(string) ([]milestone.Milestone, error)
 	GetMilestonesForRepoWithID(repo.Repo) ([]milestone.MilestoneInRepo, error)
@@ -319,10 +317,12 @@ func (r *GHRequester) getLandingForRepo(
 	return &content, nil
 }
 
-// return buffer with resp body
 func (r *GHRequester) getAllIssues(repName string) ([]milestone.IssueFromGH, error) {
 	url := r.baseUrl
 	url.Path += fmt.Sprintf("repos/%s/%s/issues", orgName, repName)
+	q := url.Query()
+	q.Add("state", "all")
+	url.RawQuery = q.Encode()
 	req, err := http.NewRequest("GET", url.String(), nil)
 	if err != nil {
 		return nil, err
@@ -356,18 +356,20 @@ func (r *GHRequester) getAllMilestones(issues []milestone.IssueFromGH) ([]milest
 	set := make(map[interface{}][]milestone.Issue)
 
 	for _, issue := range issues {
-		if _, find := set[issue.Milestone]; issue.Milestone != nil && !find {
-			set[issue.Milestone] = []milestone.Issue{issue.Issue}
-		} else if issue.Milestone != nil && find {
-			set[issue.Milestone] = append(set[issue.Milestone], issue.Issue)
+		if issue.Milestone != nil {
+			if _, find := set[*issue.Milestone]; !find {
+				set[*issue.Milestone] = []milestone.Issue{issue.Issue}
+			} else if find {
+				set[*issue.Milestone] = append(set[*issue.Milestone], issue.Issue)
+			}
 		}
 	}
 
 	var milestones []milestone.Milestone
 
 	for k, v := range set {
-		m := k.(*milestone.MilestoneFromGH)
-		milestones = append(milestones,  milestone.Milestone{MilestoneFromGH: *m, Issues: v})
+		m := k.(milestone.MilestoneFromGH)
+		milestones = append(milestones,  milestone.Milestone{MilestoneFromGH: m, Issues: v})
 	}
 
 	return milestones
