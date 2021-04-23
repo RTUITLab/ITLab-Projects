@@ -47,10 +47,94 @@ var doc = `{
                 }
             }
         },
-        "/api/v1/projects/add/functask": {
+        "/api/v1/projects/estimate": {
+            "post": {
+                "description": "add estimate to milestone\nif estimate is exist for milesotne will replace it",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "add estimate to milestone",
+                "parameters": [
+                    {
+                        "description": "estimate that you want to add",
+                        "name": "estimate",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/estimate.Estimate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Unexpected body",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "404": {
+                        "description": "Don't find milestone with this id",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to save estimate",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/estimate/{milestone_id}": {
+            "delete": {
+                "description": "delete estimate from database",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "delete estimate from database",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "should be uint",
+                        "name": "milestone_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "404": {
+                        "description": "estimate not found",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete estimate",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/task": {
             "post": {
                 "description": "add func task to milestone\nif func task is exist for milesotne will replace it",
                 "consumes": [
+                    "application/json"
+                ],
+                "produces": [
                     "application/json"
                 ],
                 "summary": "add func task to milestone",
@@ -70,19 +154,54 @@ var doc = `{
                         "description": ""
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Unexpected body",
                         "schema": {
                             "$ref": "#/definitions/err.Message"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Don't find milestone with this id",
                         "schema": {
                             "$ref": "#/definitions/err.Message"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Failed to save functask",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/task/{milestone_id}": {
+            "delete": {
+                "description": "delete functask from database",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "delete functask from database",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "should be uint",
+                        "name": "milestone_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "404": {
+                        "description": "func task not found",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete func task",
                         "schema": {
                             "$ref": "#/definitions/err.Message"
                         }
@@ -108,6 +227,17 @@ var doc = `{
             "properties": {
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "estimate.Estimate": {
+            "type": "object",
+            "properties": {
+                "estimate_url": {
+                    "type": "string"
+                },
+                "milestone_id": {
+                    "type": "integer"
                 }
             }
         },

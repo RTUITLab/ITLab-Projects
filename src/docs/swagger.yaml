@@ -11,6 +11,13 @@ definitions:
       message:
         type: string
     type: object
+  estimate.Estimate:
+    properties:
+      estimate_url:
+        type: string
+      milestone_id:
+        type: integer
+    type: object
   functask.FuncTask:
     properties:
       func_task_url:
@@ -38,7 +45,62 @@ paths:
           schema:
             $ref: '#/definitions/err.Err'
       summary: Update all projects
-  /api/v1/projects/add/functask:
+  /api/v1/projects/estimate:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        add estimate to milestone
+        if estimate is exist for milesotne will replace it
+      parameters:
+      - description: estimate that you want to add
+        in: body
+        name: estimate
+        required: true
+        schema:
+          $ref: '#/definitions/estimate.Estimate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: ""
+        "400":
+          description: Unexpected body
+          schema:
+            $ref: '#/definitions/err.Message'
+        "404":
+          description: Don't find milestone with this id
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Failed to save estimate
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: add estimate to milestone
+  /api/v1/projects/estimate/{milestone_id}:
+    delete:
+      description: delete estimate from database
+      parameters:
+      - description: should be uint
+        in: path
+        name: milestone_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+        "404":
+          description: estimate not found
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Failed to delete estimate
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: delete estimate from database
+  /api/v1/projects/task:
     post:
       consumes:
       - application/json
@@ -52,20 +114,45 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/functask.FuncTask'
+      produces:
+      - application/json
       responses:
         "201":
           description: ""
         "400":
-          description: Bad Request
+          description: Unexpected body
           schema:
             $ref: '#/definitions/err.Message'
         "404":
-          description: Not Found
+          description: Don't find milestone with this id
           schema:
             $ref: '#/definitions/err.Message'
         "500":
-          description: Internal Server Error
+          description: Failed to save functask
           schema:
             $ref: '#/definitions/err.Message'
       summary: add func task to milestone
+  /api/v1/projects/task/{milestone_id}:
+    delete:
+      description: delete functask from database
+      parameters:
+      - description: should be uint
+        in: path
+        name: milestone_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+        "404":
+          description: func task not found
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Failed to delete func task
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: delete functask from database
 swagger: "2.0"
