@@ -148,7 +148,7 @@ func TestFunc_AddFuncTask_NotFound(t *testing.T) {
 		t.FailNow()
 	}
 
-	req := httptest.NewRequest("POST", "/api/v1/projects/add/functask", bytes.NewReader(data))
+	req := httptest.NewRequest("POST", "/api/v1/projects/task", bytes.NewReader(data))
 
 	w := httptest.NewRecorder()
 
@@ -188,7 +188,7 @@ func TestFunc_AddTestFunc(t *testing.T) {
 		t.FailNow()
 	}
 
-	req := httptest.NewRequest("POST", "/api/v1/projects/add/functask", bytes.NewReader(data))
+	req := httptest.NewRequest("POST", "/api/v1/projects/task", bytes.NewReader(data))
 
 	w := httptest.NewRecorder()
 
@@ -203,7 +203,7 @@ func TestFunc_AddTestFunc(t *testing.T) {
 }
 
 func TestFunc_AddTask_BadRequest(t *testing.T) {
-	req := httptest.NewRequest("POST", "/api/v1/projects/add/functask", nil)
+	req := httptest.NewRequest("POST", "/api/v1/projects/task", nil)
 
 	w := httptest.NewRecorder()
 
@@ -229,7 +229,7 @@ func TestFunc_AddEstimate_NotFound(t *testing.T) {
 		t.FailNow()
 	}
 
-	req := httptest.NewRequest("POST", "/api/v1/projects/add/estimate", bytes.NewReader(data))
+	req := httptest.NewRequest("POST", "/api/v1/projects/estimate", bytes.NewReader(data))
 
 	w := httptest.NewRecorder()
 
@@ -269,7 +269,7 @@ func TestFunc_AddEstimate(t *testing.T) {
 		t.FailNow()
 	}
 
-	req := httptest.NewRequest("POST", "/api/v1/projects/add/estimate", bytes.NewReader(data))
+	req := httptest.NewRequest("POST", "/api/v1/projects/estimate", bytes.NewReader(data))
 
 	w := httptest.NewRecorder()
 
@@ -281,17 +281,79 @@ func TestFunc_AddEstimate(t *testing.T) {
 	}
 
 	t.Log(w.Body.String())
-	
+
 }
 
 func TestFunc_AddEstimate_BadRequest(t *testing.T) {
-	req := httptest.NewRequest("POST", "/api/v1/projects/add/estimate", nil)
+	req := httptest.NewRequest("POST", "/api/v1/projects/estimate", nil)
 
 	w := httptest.NewRecorder()
 
 	Router.ServeHTTP(w, req)
 
 	if w.Result().StatusCode != http.StatusBadRequest {
+		t.Log(w.Result().StatusCode)
+		t.FailNow()
+	}
+
+	t.Log(w.Body.String())
+}
+
+func TestFunc_DeleteFuncTask_NotFound(t *testing.T) {
+	req := httptest.NewRequest("DELETE", "/api/v1/projects/task/1", nil)
+
+	w := httptest.NewRecorder()
+
+	Router.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusNotFound {
+		t.Log(w.Result().StatusCode)
+		t.FailNow()
+	}
+
+	t.Log(w.Body.String())
+}
+
+func TestFunc_DeleteFuncTask(t *testing.T) {
+	req := httptest.NewRequest("DELETE", "/api/v1/projects/task/2", nil)
+
+	w := httptest.NewRecorder()
+
+	Router.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusOK {
+		t.Log("Maybe you forget to add functask with milestone_id 2")
+		t.Log(w.Result().StatusCode)
+		t.FailNow()
+	}
+
+	t.Log(w.Body.String())
+}
+
+func TestFunc_DeleteEstimate_NotFound(t *testing.T) {
+	req := httptest.NewRequest("DELETE", "/api/v1/projects/estimate/1", nil)
+
+	w := httptest.NewRecorder()
+
+	Router.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusNotFound {
+		t.Log(w.Result().StatusCode)
+		t.FailNow()
+	}
+
+	t.Log(w.Body.String())
+}
+
+func TestFunc_DeleteEstimate(t *testing.T) {
+	req := httptest.NewRequest("DELETE", "/api/v1/projects/estimate/2", nil)
+
+	w := httptest.NewRecorder()
+
+	Router.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusOK {
+		t.Log("Maybe you forget to add estimate with milestone_id 2")
 		t.Log(w.Result().StatusCode)
 		t.FailNow()
 	}
