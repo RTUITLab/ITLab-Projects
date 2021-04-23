@@ -63,5 +63,5 @@ stages:
               inputs:
                 sshEndpoint: 'swarm manager'
                 runOptions: 'commands'
-                commands: 'docker service update --image rtuitlab/itlab-projects-back:$(tag) ${{variables.serviceName}} --with-registry-auth'
+                commands: 'docker service update --image rtuitlab/itlab-projects-back:$(Build.BuildId) ${{variables.serviceName}} --with-registry-auth'
                 readyTimeout: '20000'
