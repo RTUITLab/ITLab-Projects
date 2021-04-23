@@ -57,8 +57,6 @@ func (a *Api) Build(r *mux.Router) {
 // 
 // @Description make all request to github to update repositories, milestones
 // 
-// @Description If don't get from gh some repos delete it in db
-// 
 // @Router /api/v1/projects/ [post]
 // 
 // @Success 200
@@ -196,9 +194,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
-	if err := a.Repository.Repo.SaveAndDeletedUnfind(
-		ctx,
+	if err := a.Repository.Repo.Save(
 		repo.ToRepo(repos),
 	); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -209,9 +205,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
-	if err := a.Repository.Milestone.SaveAndDeletedUnfind(
-		ctx,
+	if err := a.Repository.Milestone.Save(
 		ms,
 	); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -224,9 +218,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
-	if err := a.Repository.Realese.SaveAndDeletedUnfind(
-		ctx,
+	if err := a.Repository.Realese.Save(
 		rs,
 	); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -239,9 +231,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
-	if err := a.Repository.Tag.SaveAndDeletedUnfind(
-		ctx,
+	if err := a.Repository.Tag.Save(
 		tgs,
 	); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -254,27 +244,27 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	if err := a.Repository.FuncTask.DeleteFuncTasksNotIn(ms); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(
-			e.Message{
-				Message: "Can't delete unused func tasks",
-			},
-		)
-		prepare("UpdateAllProjects", err).Error("Can't delete unused func tasks")
-		return
-	}
+	// if err := a.Repository.FuncTask.DeleteFuncTasksNotIn(ms); err != nil {
+	// 	w.WriteHeader(http.StatusInternalServerError)
+	// 	json.NewEncoder(w).Encode(
+	// 		e.Message{
+	// 			Message: "Can't delete unused func tasks",
+	// 		},
+	// 	)
+	// 	prepare("UpdateAllProjects", err).Error("Can't delete unused func tasks")
+	// 	return
+	// }
 
-	if err := a.Repository.Estimate.DeleteEstimatesNotIn(ms); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(
-			e.Message{
-				Message: "Can't delete unused estimates",
-			},
-		)
-		prepare("UpdateAllProjects", err).Error("Can't delete unused estimates")
-		return
-	}
+	// if err := a.Repository.Estimate.DeleteEstimatesNotIn(ms); err != nil {
+	// 	w.WriteHeader(http.StatusInternalServerError)
+	// 	json.NewEncoder(w).Encode(
+	// 		e.Message{
+	// 			Message: "Can't delete unused estimates",
+	// 		},
+	// 	)
+	// 	prepare("UpdateAllProjects", err).Error("Can't delete unused estimates")
+	// 	return
+	// }
 }
 
 // AddFuncTask

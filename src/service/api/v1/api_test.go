@@ -65,7 +65,7 @@ func init() {
 
 func TestFunc_UpdateAllProjects(t *testing.T) {
 	req := httptest.NewRequest("POST", "/api/v1/projects/", nil)
-	
+
 	w := httptest.NewRecorder()
 
 	Router.ServeHTTP(w, req)
@@ -75,6 +75,7 @@ func TestFunc_UpdateAllProjects(t *testing.T) {
 		t.Log(w.Result().StatusCode)
 		t.FailNow()
 	}
+
 }
 
 func TestFunc_GetPanic(t *testing.T) {
@@ -86,21 +87,20 @@ func TestFunc_GetPanic(t *testing.T) {
 		context.Background(),
 	)
 
-
 	go func() {
-		time.Sleep(50*time.Millisecond)
+		time.Sleep(50 * time.Millisecond)
 		f <- 2
 	}()
 
 	go func() {
-		time.Sleep(60*time.Millisecond)
+		time.Sleep(60 * time.Millisecond)
 		t.Log("Error")
 		cancel()
 		s <- 4
 	}()
 
 	go func() {
-		time.Sleep(40*time.Millisecond)
+		time.Sleep(40 * time.Millisecond)
 		v <- 3
 	}()
 
@@ -116,13 +116,13 @@ func TestFunc_GetPanic(t *testing.T) {
 		case <-ctx.Done():
 			t.Log("Got done returning")
 			return
-		case _f := <- f:
+		case _f := <-f:
 			t.Log("Catch f")
 			num1 = &_f
-		case _s := <- s:
+		case _s := <-s:
 			t.Log("Catch s")
 			num2 = &_s
-		case _v := <- v:
+		case _v := <-v:
 			t.Log("Catch v")
 			num3 = &_v
 		}
@@ -134,7 +134,6 @@ func TestFunc_GetPanic(t *testing.T) {
 
 	t.Log("Okay")
 }
-
 
 func TestFunc_AddFuncTask_NotFound(t *testing.T) {
 	f := functask.FuncTask{
@@ -218,7 +217,7 @@ func TestFunc_AddTask_BadRequest(t *testing.T) {
 }
 
 func TestFunc_AddEstimate_NotFound(t *testing.T) {
-	f := estimate.Estimate {
+	f := estimate.Estimate{
 		MilestoneID: 1,
 		EstimateURL: "some_url",
 	}
@@ -258,7 +257,7 @@ func TestFunc_AddEstimate(t *testing.T) {
 		t.FailNow()
 	}
 
-	f := estimate.Estimate {
+	f := estimate.Estimate{
 		MilestoneID: 2,
 		EstimateURL: "some_url",
 	}
