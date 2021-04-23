@@ -32,6 +32,15 @@ type MilestoneInRepo struct {
 	Milestone						`bson:",inline"`
 }
 
+func GetIDS(ms []MilestoneInRepo) []uint64 {
+	var ids []uint64
+	for _, m := range ms {
+		ids = append(ids, m.ID)
+	}
+
+	return ids
+}
+
 type Issue struct {
 	ID        			uint64     				`json:"id"`
 	Number    			uint64     				`json:"number"`
