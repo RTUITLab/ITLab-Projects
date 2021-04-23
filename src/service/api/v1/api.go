@@ -45,10 +45,10 @@ func New(
 func (a *Api) Build(r *mux.Router) {
 	requester := r.PathPrefix("/api/v1/projects").Subrouter()
 	requester.HandleFunc("/", a.UpdateAllProjects).Methods("POST")
-	requester.HandleFunc("/add/functask", a.AddFuncTask).Methods("POST")
-	requester.HandleFunc("/add/estimate", a.AddEstimate).Methods("POST")
-	requester.HandleFunc("/delete/functask/{milestone_id:[0-9]+}", a.DeleteFuncTask).Methods("DELETE")
-	requester.HandleFunc("/delete/estimate/{milestone_id:[0-9]+}", a.DeleteEstimate).Methods("DELETE")
+	requester.HandleFunc("/task", a.AddFuncTask).Methods("POST")
+	requester.HandleFunc("/estimate", a.AddEstimate).Methods("POST")
+	requester.HandleFunc("/task/{milestone_id:[0-9]+}", a.DeleteFuncTask).Methods("DELETE")
+	requester.HandleFunc("/estimate/{milestone_id:[0-9]+}", a.DeleteEstimate).Methods("DELETE")
 }
 
 // UpdateAllProjects
