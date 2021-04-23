@@ -7,7 +7,7 @@ import (
 )
 
 type Deleter interface {
-	Delete(
+	DeleteMany(
 		ctx context.Context,
 		filter interface{},
 		f func(*mongo.DeleteResult) error,

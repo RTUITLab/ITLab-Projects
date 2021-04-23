@@ -9,6 +9,6 @@ import (
 type FuncTaskRepositorier interface {
 	saver.Saver
 	getter.Getter
-	deleter.DeleterOne
+	deleter.Deleter
 	Delete(uint64) error
 }

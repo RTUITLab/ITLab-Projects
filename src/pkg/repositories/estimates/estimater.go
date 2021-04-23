@@ -9,6 +9,6 @@ import (
 type EstimateRepositorier interface {
 	saver.Saver
 	getter.Getter
-	deleter.DeleterOne
+	deleter.Deleter
 	Delete(MilestoneID uint64) error
 }

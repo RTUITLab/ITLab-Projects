@@ -19,7 +19,7 @@ type EstimateRepository struct {
 	estimateColletion *mongo.Collection
 	saver.Saver
 	getter.Getter
-	deleter.DeleterOne
+	deleter.Deleter
 }
 
 
@@ -43,7 +43,7 @@ func New(
 		er.save,
 	)
 
-	er.DeleterOne = deleter.New(
+	er.Deleter = deleter.New(
 		collection,
 	)
 

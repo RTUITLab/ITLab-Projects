@@ -16,7 +16,7 @@ func New(c *mongo.Collection) Deleter {
 	}
 }
 
-func (d *Delete) Delete(
+func (d *Delete) DeleteMany(
 	ctx context.Context,
 	filter interface{},
 	// if nil would'nt call

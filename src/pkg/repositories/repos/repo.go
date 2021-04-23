@@ -2,7 +2,6 @@ package repos
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/ITLab-Projects/pkg/repositories/counter"
@@ -90,31 +89,6 @@ func (r *ReposRepository) SaveAndDeletedUnfind(ctx context.Context, repos interf
 	return nil
 }
 
-func (r *ReposRepository) deleteExpectNew(v interface{}) error {
-	repos, ok := v.([]repo.Repo)
-	if !ok {
-		return fmt.Errorf("Unexpected type %T Expected %T", v, []repo.Repo{})
-	}
-
-	var ids []uint64
-	for _, rep := range repos {
-		ids = append(ids, rep.ID)
-	}
-
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	opt := options.Delete()
-	filter := bson.M{"id": bson.M{"$nin": ids}}
-	if err := r.Delete(
-		ctx,
-		filter,
-		nil,
-		opt,
-	); err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func (r *ReposRepository) save(v interface{}) error {
 	repo, _ := v.(repo.Repo)

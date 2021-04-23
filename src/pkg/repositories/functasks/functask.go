@@ -18,7 +18,7 @@ type FuncTaskRepository struct {
 	funcTaskCollection *mongo.Collection
 	saver.Saver
 	getter.Getter
-	deleter.DeleterOne
+	deleter.Deleter
 }
 
 func New(
@@ -41,9 +41,10 @@ func New(
 		ftr.save,
 	)
 
-	ftr.DeleterOne = deleter.New(
+	ftr.Deleter = deleter.New(
 		collection,
 	)
+
 
 	return ftr
 }
