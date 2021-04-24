@@ -200,6 +200,9 @@ definitions:
     type: object
 info:
   contact: {}
+  description: This is a server to get projects from github
+  title: ITLab-Projects API
+  version: "1.0"
 paths:
   /api/v1/projects/:
     get:
@@ -237,6 +240,8 @@ paths:
           schema:
             $ref: '#/definitions/err.Message'
       summary: return projects according to query value
+      tags:
+      - v1 projects
     post:
       description: make all request to github to update repositories, milestones
       responses:
@@ -251,6 +256,33 @@ paths:
           schema:
             $ref: '#/definitions/err.Err'
       summary: Update all projects
+      tags:
+      - v1
+  /api/v1/projects/{id}:
+    get:
+      description: return a project according to id value in path
+      parameters:
+      - description: a uint value of repository id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/repoasproj.RepoAsProj'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: return project according to id
   /api/v1/projects/estimate:
     post:
       consumes:
@@ -283,6 +315,8 @@ paths:
           schema:
             $ref: '#/definitions/err.Message'
       summary: add estimate to milestone
+      tags:
+      - v1 estimate
   /api/v1/projects/estimate/{milestone_id}:
     delete:
       description: delete estimate from database
@@ -306,6 +340,8 @@ paths:
           schema:
             $ref: '#/definitions/err.Message'
       summary: delete estimate from database
+      tags:
+      - v1 estimate
   /api/v1/projects/task:
     post:
       consumes:
@@ -338,6 +374,8 @@ paths:
           schema:
             $ref: '#/definitions/err.Message'
       summary: add func task to milestone
+      tags:
+      - v1 functask
   /api/v1/projects/task/{milestone_id}:
     delete:
       description: delete functask from database
@@ -361,4 +399,6 @@ paths:
           schema:
             $ref: '#/definitions/err.Message'
       summary: delete functask from database
+      tags:
+      - v1 functask
 swagger: "2.0"

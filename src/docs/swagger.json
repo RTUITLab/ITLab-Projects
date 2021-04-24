@@ -1,7 +1,10 @@
 {
     "swagger": "2.0",
     "info": {
-        "contact": {}
+        "description": "This is a server to get projects from github",
+        "title": "ITLab-Projects API",
+        "contact": {},
+        "version": "1.0"
     },
     "paths": {
         "/api/v1/projects/": {
@@ -9,6 +12,9 @@
                 "description": "return a projects you can filter count of them\ntags, name",
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "v1 projects"
                 ],
                 "summary": "return projects according to query value",
                 "parameters": [
@@ -57,6 +63,9 @@
             },
             "post": {
                 "description": "make all request to github to update repositories, milestones",
+                "tags": [
+                    "v1"
+                ],
                 "summary": "Update all projects",
                 "responses": {
                     "200": {
@@ -85,6 +94,9 @@
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "v1 estimate"
                 ],
                 "summary": "add estimate to milestone",
                 "parameters": [
@@ -129,6 +141,9 @@
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "v1 estimate"
+                ],
                 "summary": "delete estimate from database",
                 "parameters": [
                     {
@@ -166,6 +181,9 @@
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "v1 functask"
                 ],
                 "summary": "add func task to milestone",
                 "parameters": [
@@ -210,6 +228,9 @@
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "v1 functask"
+                ],
                 "summary": "delete functask from database",
                 "parameters": [
                     {
@@ -232,6 +253,44 @@
                     },
                     "500": {
                         "description": "Failed to delete func task",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{id}": {
+            "get": {
+                "description": "return a project according to id value in path",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "return project according to id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "a uint value of repository id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/repoasproj.RepoAsProj"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/err.Message"
                         }

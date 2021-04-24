@@ -30,6 +30,9 @@ var doc = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "v1 projects"
+                ],
                 "summary": "return projects according to query value",
                 "parameters": [
                     {
@@ -77,6 +80,9 @@ var doc = `{
             },
             "post": {
                 "description": "make all request to github to update repositories, milestones",
+                "tags": [
+                    "v1"
+                ],
                 "summary": "Update all projects",
                 "responses": {
                     "200": {
@@ -105,6 +111,9 @@ var doc = `{
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "v1 estimate"
                 ],
                 "summary": "add estimate to milestone",
                 "parameters": [
@@ -149,6 +158,9 @@ var doc = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "v1 estimate"
+                ],
                 "summary": "delete estimate from database",
                 "parameters": [
                     {
@@ -186,6 +198,9 @@ var doc = `{
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "v1 functask"
                 ],
                 "summary": "add func task to milestone",
                 "parameters": [
@@ -230,6 +245,9 @@ var doc = `{
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "v1 functask"
+                ],
                 "summary": "delete functask from database",
                 "parameters": [
                     {
@@ -252,6 +270,44 @@ var doc = `{
                     },
                     "500": {
                         "description": "Failed to delete func task",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/{id}": {
+            "get": {
+                "description": "return a project according to id value in path",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "return project according to id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "a uint value of repository id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/repoasproj.RepoAsProj"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/err.Message"
                         }
@@ -580,12 +636,12 @@ type swaggerInfo struct {
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = swaggerInfo{
-	Version:     "",
+	Version:     "1.0",
 	Host:        "",
 	BasePath:    "",
 	Schemes:     []string{},
-	Title:       "",
-	Description: "",
+	Title:       "ITLab-Projects API",
+	Description: "This is a server to get projects from github",
 }
 
 type s struct{}
