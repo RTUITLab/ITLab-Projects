@@ -23,8 +23,8 @@ type MilestoneFromGH struct {
 type Milestone struct {
 	MilestoneFromGH						`bson:",inline"`
 	Issues 			[]Issue				`json:"issues"`
-	Estimate 		estimate.Estimate 	`json:"estimate" bson:"-"`
-	FuncTask		functask.FuncTask	`json:"func_task" bson:"-"`
+	Estimate 		*estimate.Estimate 	`json:"estimate" bson:"-"`
+	FuncTask		*functask.FuncTask	`json:"func_task" bson:"-"`
 }
 
 type MilestoneInRepo struct {
