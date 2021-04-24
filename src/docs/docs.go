@@ -25,8 +25,58 @@ var doc = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/api/v1/projects/": {
+            "get": {
+                "description": "return a projects you can filter count of them\ntags, name",
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "return projects according to query value",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "represents the number of skiped projects",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "represent a limit of projects",
+                        "name": "count",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "use to filter projects by tag",
+                        "name": "tag",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "use to filter by name",
+                        "name": "name",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/repoasproj.RepoAsProj"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get repositories",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            },
             "post": {
-                "description": "make all request to github to update repositories, milestones\nIf don't get from gh some repos delete it in db",
+                "description": "make all request to github to update repositories, milestones",
                 "summary": "Update all projects",
                 "responses": {
                     "200": {
@@ -211,6 +261,23 @@ var doc = `{
         }
     },
     "definitions": {
+        "assignee.Assignee": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "html_url": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "login": {
+                    "type": "string"
+                }
+            }
+        },
         "err.Err": {
             "type": "object",
             "properties": {
@@ -249,6 +316,253 @@ var doc = `{
                 },
                 "milestone_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "label.Label": {
+            "type": "object",
+            "properties": {
+                "color": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "node_id": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "milestone.Issue": {
+            "type": "object",
+            "properties": {
+                "assignees": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/assignee.Assignee"
+                    }
+                },
+                "body": {
+                    "type": "string"
+                },
+                "closed_at": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "html_url": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "labels": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/label.Label"
+                    }
+                },
+                "number": {
+                    "type": "integer"
+                },
+                "project_path": {
+                    "type": "string"
+                },
+                "pull_request": {
+                    "$ref": "#/definitions/pullrequest.PullRequest"
+                },
+                "reppath": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/user.User"
+                }
+            }
+        },
+        "milestone.Milestone": {
+            "type": "object",
+            "properties": {
+                "closed_issues": {
+                    "type": "integer"
+                },
+                "creator": {
+                    "$ref": "#/definitions/user.User"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "estimate": {
+                    "$ref": "#/definitions/estimate.Estimate"
+                },
+                "func_task": {
+                    "$ref": "#/definitions/functask.FuncTask"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "issues": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/milestone.Issue"
+                    }
+                },
+                "number": {
+                    "type": "integer"
+                },
+                "open_issues": {
+                    "type": "integer"
+                },
+                "state": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "pullrequest.PullRequest": {
+            "type": "object",
+            "properties": {
+                "diff_url": {
+                    "type": "string"
+                },
+                "html_url": {
+                    "type": "string"
+                },
+                "patch_url": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "realese.Realese": {
+            "type": "object",
+            "properties": {
+                "html_url": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "repo.Repo": {
+            "type": "object",
+            "properties": {
+                "archived": {
+                    "type": "boolean"
+                },
+                "contributors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/user.User"
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "html_url": {
+                    "description": "Path\t\t\t\tstring\t\t` + "`" + `json:\"path_with_namespace,omitempty\"` + "`" + `",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "languages": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "pushed_at": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "repoasproj.RepoAsProj": {
+            "type": "object",
+            "properties": {
+                "last_realese": {
+                    "$ref": "#/definitions/realese.Realese"
+                },
+                "milestones": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/milestone.Milestone"
+                    }
+                },
+                "repo": {
+                    "$ref": "#/definitions/repo.Repo"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/tag.Tag"
+                    }
+                }
+            }
+        },
+        "tag.Tag": {
+            "type": "object",
+            "properties": {
+                "tag": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.User": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "html_url": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "login": {
+                    "type": "string"
                 }
             }
         }
