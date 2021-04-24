@@ -14,6 +14,7 @@ import (
 	"github.com/ITLab-Projects/pkg/models/estimate"
 	"github.com/ITLab-Projects/pkg/models/functask"
 	"github.com/ITLab-Projects/pkg/models/milestone"
+	"github.com/ITLab-Projects/pkg/models/repoasproj"
 	"github.com/ITLab-Projects/pkg/repositories"
 	v1 "github.com/ITLab-Projects/service/api/v1"
 	"github.com/gorilla/mux"
@@ -358,4 +359,63 @@ func TestFunc_DeleteEstimate(t *testing.T) {
 	}
 
 	t.Log(w.Body.String())
+}
+
+func TestFunc_GetProjects(t *testing.T) {
+	req := httptest.NewRequest("GET", "/api/v1/projects/?start=0&count=100", nil)
+
+	w := httptest.NewRecorder()
+
+	Router.ServeHTTP(w, req)
+	var projs []repoasproj.RepoAsProj
+
+	t.Log(w.Result().StatusCode)
+
+	json.NewDecoder(w.Result().Body).Decode(&projs)
+
+	t.Log(len(projs))
+}
+
+func TestFunc_GetProjectsByTag(t *testing.T) {
+	req := httptest.NewRequest("GET", "/api/v1/projects/?start=0&count=100&tag=Mobile+Tool", nil)
+
+	w := httptest.NewRecorder()
+
+	Router.ServeHTTP(w, req)
+	var projs []repoasproj.RepoAsProj
+
+	t.Log(w.Result().StatusCode)
+
+	json.NewDecoder(w.Result().Body).Decode(&projs)
+
+
+	for _, p := range projs {
+		t.Log(p)
+	}
+	
+
+
+
+}
+
+
+func TestFunc_GetProjectByName(t *testing.T) {
+	req := httptest.NewRequest("GET", "/api/v1/projects/?start=0&count=100&name=CyberBird", nil)
+
+	w := httptest.NewRecorder()
+
+	Router.ServeHTTP(w, req)
+
+	var projs []repoasproj.RepoAsProj
+
+	t.Log(w.Result().StatusCode)
+
+	json.NewDecoder(w.Result().Body).Decode(&projs)
+
+
+	for _, p := range projs {
+		t.Log(p)
+	}
+
+	t.Log(len(projs))
 }

@@ -1,12 +1,17 @@
 package v1
 
 import (
-	"go.mongodb.org/mongo-driver/bson"
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
+
+	"github.com/ITLab-Projects/pkg/models/repoasproj"
+
+	"go.mongodb.org/mongo-driver/bson"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -49,6 +54,7 @@ func (a *Api) Build(r *mux.Router) {
 	requester.HandleFunc("/estimate", a.AddEstimate).Methods("POST")
 	requester.HandleFunc("/task/{milestone_id:[0-9]+}", a.DeleteFuncTask).Methods("DELETE")
 	requester.HandleFunc("/estimate/{milestone_id:[0-9]+}", a.DeleteEstimate).Methods("DELETE")
+	requester.HandleFunc("/", a.GetProjects).Methods("GET")
 }
 
 // UpdateAllProjects
@@ -547,8 +553,290 @@ func (a *Api) DeleteEstimate(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetProjects
+// 
+// @Summary return projects according to query value
+// 
+// @Description return a projects you can filter count of them
+// 
+// @Description tags, name
+// 
+// @Produce json
+// 
+// @Router /api/v1/projects/ [get]
+// 
+// @Param start query integer false "represents the number of skiped projects"
+// 
+// @Param count query integer false "represent a limit of projects"
+// 
+// @Param tag query string false "use to filter projects by tag"
+// 
+// @Param name query string false "use to filter by name"
+// 
+// @Success 200 {array} repoasproj.RepoAsProj
+// 
+// @Failure 500 {object} e.Message "Failed to get projects"
+// 
+// @Failure 500 {object} e.Message "Failed to get repositories"
+func (a *Api) GetProjects(w http.ResponseWriter, r *http.Request) {
+	values := r.URL.Query()
 
-// TODO add handler to get projs by chunks
+	start := getUint(values, "start")
+	count := getUint(values, "count")
+	tag := values.Get("tag")
+	name := values.Get("name")
+
+	ctx, _ := context.WithCancel(
+		context.Background(),
+	)
+
+	if count == 0 {
+		count = uint64(a.Repository.Repo.Count())
+	}
+
+	var repos []repo.Repo
+	filter := bson.M{}
+	if tag != "" {
+		f, err := a.buildFilterForTags(ctx, tag)
+		if err == mongo.ErrNoDocuments {
+			json.NewEncoder(w).Encode(
+				[]repoasproj.RepoAsProj{},
+			)
+			return
+		} else if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(
+				e.Message {
+					Message: "Failed to get repositories",
+				},
+			)
+			prepare("GetProjects", err).Error()
+		}
+		filter = f
+	}
+
+	if name != "" {
+		filter = func(f map[string]interface{}) bson.M {
+			f["name"] = bson.M{"$regex": name, "$options": "-i"}
+			return f
+		}(filter)
+	}
+
+	if err := a.Repository.Repo.GetAllFiltered(
+		ctx,
+		filter,
+		func(c *mongo.Cursor) error {
+			c.All(
+				context.Background(),
+				&repos,
+			)
+			return c.Err()
+		},
+		options.Find().
+			SetSkip(int64(start)).
+			SetLimit(int64(count)),
+	); err != mongo.ErrNoDocuments && err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			e.Message{
+				Message: "Failed to get projects",
+			},
+		)
+		prepare("GetProjects", err).Error()
+		return
+	}
+
+	projs, err := a.getProjs(repos)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			e.Message{
+				Message: "Failed to get projects",
+			},
+		)
+		prepare("GetProjects", err).Error()
+		return
+	}
+
+	json.NewEncoder(w).Encode(
+		projs,
+	)
+}
+
+func (a *Api) getProjs(reps []repo.Repo) ([]repoasproj.RepoAsProj, error) {
+	var projs []repoasproj.RepoAsProj
+
+	ctx, cancel := context.WithCancel(
+		context.Background(),
+	)
+
+	errChan := make(chan error, 1)
+	projChan := make(chan []repoasproj.RepoAsProj, 1)
+
+	var count uint
+	for i := range reps {
+		count++
+		go func(r *repo.Repo) {
+			proj := repoasproj.RepoAsProj{
+				Repo: *r,
+			}
+
+			if err := a.Repository.Milestone.GetAllFiltered(
+				ctx,
+				bson.M{"repoid": r.ID},
+				func(c *mongo.Cursor) error {
+					c.All(
+						context.Background(),
+						&proj.Milestones,
+					)
+
+					if c.Err() != nil {
+						return c.Err()
+					}
+
+					return nil
+				},
+				options.Find(),
+			); err != mongo.ErrNoDocuments && err != nil {
+				cancel()
+				errChan <- err
+				return
+			}
+
+			if err := a.getAssetsForMilestones(ctx, &proj.Milestones); err != nil {
+				cancel()
+				errChan <- err
+				return
+			}
+			
+			var rl realese.RealeseInRepo
+			if err := a.Repository.Realese.GetOne(
+				ctx,
+				bson.M{"repoid": r.ID},
+				func(sr *mongo.SingleResult) error {
+					return sr.Decode(&rl)
+				},
+				options.FindOne(),
+			); err != mongo.ErrNoDocuments && err != nil {
+				cancel()
+				errChan <- err
+				return
+			} else if err != mongo.ErrNoDocuments {
+				proj.LastRealese = &rl.Realese
+			}
+
+			if err := a.Repository.Tag.GetAllFiltered(
+				ctx,
+				bson.M{"repo_id": r.ID},
+				func(c *mongo.Cursor) error {
+					c.All(
+						ctx,
+						&proj.Tags,
+					)
+					return c.Err()
+				},
+				options.Find(),
+			); err != mongo.ErrNoDocuments && err != nil {
+				cancel()
+				errChan <- err
+				return
+			}
+
+			projChan <- []repoasproj.RepoAsProj{proj}
+		}(&reps[i])
+	}
+
+	for i := uint(0); i < count; i++ {
+		select {
+		case p := <- projChan:
+			projs = append(projs, p...)
+		case <- ctx.Done():
+			err := <- errChan
+			return nil, err
+		}
+	}
+
+	return projs, nil
+}
+
+func (a *Api) getAssetsForMilestones(ctx context.Context, ms *[]milestone.Milestone) error {
+	for i, m := range *ms {
+		var e estimate.Estimate
+		if err := a.Repository.Estimate.GetOne(
+			ctx,
+			bson.M{"milestone_id": m.ID},
+			func(sr *mongo.SingleResult) error {
+				return sr.Decode(&e)
+			},
+			options.FindOne(),
+		); err != mongo.ErrNoDocuments && err != nil {
+			return err
+		} else if err != mongo.ErrNoDocuments {
+			(*ms)[i].Estimate = &e
+		}
+
+		var f functask.FuncTask
+
+		if err := a.Repository.FuncTask.GetOne(
+			ctx,
+			bson.M{"milestone_id": m.ID},
+			func(sr *mongo.SingleResult) error {
+				return sr.Decode(&f)
+			},
+			options.FindOne(),
+		); err != mongo.ErrNoDocuments && err != nil {
+			return err
+		} else if err != mongo.ErrNoDocuments {
+			(*ms)[i].FuncTask = &f
+		}
+	}
+
+	return nil
+}
+
+func (a *Api) buildFilterForTags(ctx context.Context, t string) (bson.M, error) {
+	var tags []tag.Tag
+	massOfTags := strings.Split(t, " ")
+	if err := a.Repository.Tag.GetAllFiltered(
+		ctx,
+		bson.M{"tag": bson.M{"$in": massOfTags}},
+		func(c *mongo.Cursor) error {
+			if c.RemainingBatchLength() == 0 {
+				return mongo.ErrNoDocuments
+			}
+
+			return c.All(
+				ctx,
+				&tags,
+			)
+		},
+		options.Find(),
+	); err != nil {
+		return nil, err
+	}
+
+	var ids []uint64
+	for _, t := range tags {
+		ids = append(ids, t.RepoID)
+	}
+
+	return bson.M{"id": bson.M{"$in": ids}}, nil 
+}
+
+func getUint(v url.Values, name string) uint64 {
+	_value := v.Get(name)
+
+	if _value == "" {
+		return 0
+	}
+
+	value, err := strconv.ParseUint(_value, 10, 64)
+	if err != nil {
+		return 0
+	}
+
+	return value
+}
 
 func logError(message, Handler string, err error) {
 	prepare(Handler, err).Error(message)
