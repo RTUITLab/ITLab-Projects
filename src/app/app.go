@@ -1,12 +1,14 @@
 package app
 
 import (
-	"github.com/ITLab-Projects/pkg/githubreq"
+	"fmt"
 	"net/http"
+
 	"github.com/ITLab-Projects/pkg/apibuilder"
-	log "github.com/sirupsen/logrus"
 	"github.com/ITLab-Projects/pkg/config"
+	"github.com/ITLab-Projects/pkg/githubreq"
 	"github.com/ITLab-Projects/pkg/repositories"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/gorilla/mux"
 )
@@ -54,7 +56,7 @@ func (a *App) AddApi(Builders ...apibuilder.ApiBulder) {
 
 func (a *App) Start() {
 	log.Infof("Starting Application is port %s", a.Port)
-	if err := http.ListenAndServe(a.Port, a.Router); err != nil {
+	if err := http.ListenAndServe(fmt.Sprintf(":%s",a.Port), a.Router); err != nil {
 		log.Panicf("Failed to start application %v", err)
 	}
 }
