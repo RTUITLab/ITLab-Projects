@@ -362,18 +362,20 @@ func TestFunc_DeleteEstimate(t *testing.T) {
 }
 
 func TestFunc_GetProjects(t *testing.T) {
-	req := httptest.NewRequest("GET", "/api/v1/projects/?start=0&count=100", nil)
+	req := httptest.NewRequest("GET", "/api/v1/projects/?start=10&count=20", nil)
 
 	w := httptest.NewRecorder()
 
 	Router.ServeHTTP(w, req)
-	var projs []repoasproj.RepoAsProj
+	var projs []repoasproj.RepoAsProjCompact
 
 	t.Log(w.Result().StatusCode)
 
 	json.NewDecoder(w.Result().Body).Decode(&projs)
 
-	t.Log(len(projs))
+	for _, p := range projs {
+		t.Log(p.Repo.CreatedAt)
+	}
 }
 
 func TestFunc_GetProjectsByTag(t *testing.T) {
@@ -382,22 +384,17 @@ func TestFunc_GetProjectsByTag(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	Router.ServeHTTP(w, req)
-	var projs []repoasproj.RepoAsProj
+	var projs []repoasproj.RepoAsProjCompact
 
 	t.Log(w.Result().StatusCode)
 
 	json.NewDecoder(w.Result().Body).Decode(&projs)
 
-
 	for _, p := range projs {
 		t.Log(p)
 	}
-	
-
-
 
 }
-
 
 func TestFunc_GetProjectsByName(t *testing.T) {
 	req := httptest.NewRequest("GET", "/api/v1/projects/?start=0&count=100&name=CyberBird", nil)
@@ -406,12 +403,11 @@ func TestFunc_GetProjectsByName(t *testing.T) {
 
 	Router.ServeHTTP(w, req)
 
-	var projs []repoasproj.RepoAsProj
+	var projs []repoasproj.RepoAsProjCompact
 
 	t.Log(w.Result().StatusCode)
 
 	json.NewDecoder(w.Result().Body).Decode(&projs)
-
 
 	for _, p := range projs {
 		t.Log(p)
@@ -452,4 +448,16 @@ func TestFunc_GetProject_NotFound(t *testing.T) {
 		t.Log(w.Result().StatusCode)
 		t.FailNow()
 	}
+}
+
+func TestFunc_ParseTime(t *testing.T) {
+	const l = "2019-09-27T13:46:32Z"
+
+	parsed, err := time.Parse(time.RFC3339, l)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	t.Log(parsed.String())
 }

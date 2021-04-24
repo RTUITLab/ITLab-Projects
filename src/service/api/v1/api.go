@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -591,7 +592,7 @@ func (a *Api) DeleteEstimate(w http.ResponseWriter, r *http.Request) {
 // 
 // @Param name query string false "use to filter by name"
 // 
-// @Success 200 {array} repoasproj.RepoAsProj
+// @Success 200 {array} repoasproj.RepoAsProjCompact
 // 
 // @Failure 500 {object} e.Message "Failed to get projects"
 // 
@@ -650,6 +651,7 @@ func (a *Api) GetProjects(w http.ResponseWriter, r *http.Request) {
 			return c.Err()
 		},
 		options.Find().
+			SetSort(bson.M{"createdat": -1}).
 			SetSkip(int64(start)).
 			SetLimit(int64(count)),
 	); err != mongo.ErrNoDocuments && err != nil {
@@ -663,7 +665,7 @@ func (a *Api) GetProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	projs, err := a.getProjs(repos)
+	projs, err := a.getCompatcProj(repos)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
@@ -674,6 +676,8 @@ func (a *Api) GetProjects(w http.ResponseWriter, r *http.Request) {
 		prepare("GetProjects", err).Error()
 		return
 	}
+
+	sort.Sort(repoasproj.ByCreateDate(projs))
 
 	json.NewEncoder(w).Encode(
 		projs,
@@ -852,6 +856,97 @@ func (a *Api) getProjs(reps []repo.Repo) ([]repoasproj.RepoAsProj, error) {
 
 			projChan <- []repoasproj.RepoAsProj{proj}
 		}(&reps[i])
+	}
+
+	for i := uint(0); i < count; i++ {
+		select {
+		case p := <- projChan:
+			projs = append(projs, p...)
+		case <- ctx.Done():
+			err := <- errChan
+			return nil, err
+		}
+	}
+
+	return projs, nil
+}
+
+func (a *Api) getCompatcProj(repos []repo.Repo) ([]repoasproj.RepoAsProjCompact, error) {
+	var projs []repoasproj.RepoAsProjCompact
+
+	ctx, cancel := context.WithCancel(
+		context.Background(),
+	)
+	defer cancel()
+
+	errChan := make(chan error, 1)
+	projChan := make(chan []repoasproj.RepoAsProjCompact, 1)
+
+	var count uint
+	for i := range repos {
+		count++
+		go func(r *repo.Repo) {
+			proj := repoasproj.RepoAsProjCompact{
+				Repo: *r,
+			}
+
+			if err := a.Repository.Milestone.GetAllFiltered(
+				ctx,
+				bson.M{"repoid": r.ID},
+				func(c *mongo.Cursor) error {
+					var mls []milestone.MilestoneInRepo
+					c.All(
+						context.Background(),
+						&mls,
+					)
+
+					if c.Err() != nil {
+						return c.Err()
+					}
+					
+					var open float64
+					var closed float64
+					for _, m := range mls {
+						if m.OpenIssues != 0 {
+							open += float64(m.OpenIssues)
+							closed += float64(m.ClosedIssues)
+						}
+					}
+
+					if closed == 0 {
+						proj.Completed = 1
+					} else {
+						proj.Completed = open/closed
+					}
+
+					return nil
+				},
+				options.Find(),
+			); err != mongo.ErrNoDocuments && err != nil {
+				cancel()
+				errChan <- err
+				return
+			}
+
+			if err := a.Repository.Tag.GetAllFiltered(
+				ctx,
+				bson.M{"repo_id": r.ID},
+				func(c *mongo.Cursor) error {
+					c.All(
+						ctx,
+						&proj.Tags,
+					)
+					return c.Err()
+				},
+				options.Find(),
+			); err != mongo.ErrNoDocuments && err != nil {
+				cancel()
+				errChan <- err
+				return
+			}
+
+			projChan <- []repoasproj.RepoAsProjCompact{proj}
+		}(&repos[i])
 	}
 
 	for i := uint(0); i < count; i++ {
