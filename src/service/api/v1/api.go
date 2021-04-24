@@ -3,6 +3,7 @@ package v1
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -49,15 +50,19 @@ func New(
 
 func (a *Api) Build(r *mux.Router) {
 	requester := r.PathPrefix("/api/v1/projects").Subrouter()
+
 	requester.HandleFunc("/", a.UpdateAllProjects).Methods("POST")
 	requester.HandleFunc("/task", a.AddFuncTask).Methods("POST")
 	requester.HandleFunc("/estimate", a.AddEstimate).Methods("POST")
 	requester.HandleFunc("/task/{milestone_id:[0-9]+}", a.DeleteFuncTask).Methods("DELETE")
 	requester.HandleFunc("/estimate/{milestone_id:[0-9]+}", a.DeleteEstimate).Methods("DELETE")
 	requester.HandleFunc("/", a.GetProjects).Methods("GET")
+	requester.HandleFunc("/{id:[0-9]+}", a.GetProject).Methods("GET")
 }
 
 // UpdateAllProjects
+// 
+// @Tags v1
 // 
 // @Summary Update all projects
 // 
@@ -175,7 +180,6 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		tgs	[]tag.Tag					= nil
 	)
 
-	// TODO Переделать работу с каналами
 
 	for i := 0; i < 3; i++ {
 		select {
@@ -275,6 +279,8 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 
 // AddFuncTask
 // 
+// @Tags v1 functask
+// 
 // @Summary add func task to milestone
 // 
 // @Description add func task to milestone
@@ -308,10 +314,11 @@ func (a *Api) AddFuncTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, _ := context.WithTimeout(
+	ctx, cancel := context.WithTimeout(
 		context.Background(),
 		10*time.Second,
 	)
+	defer cancel()
 
 	if err := a.Repository.Milestone.GetOne(
 		ctx,
@@ -355,6 +362,8 @@ func (a *Api) AddFuncTask(w http.ResponseWriter, r *http.Request) {
 
 // DeleteFuncTask
 // 
+// @Tags v1 functask
+// 
 // @Summary delete functask from database
 // 
 // @Description delete functask from database
@@ -377,10 +386,11 @@ func (a *Api) DeleteFuncTask(w http.ResponseWriter, r *http.Request) {
 
 	milestoneID, _ := strconv.ParseUint(_mid, 10, 64)
 
-	ctx, _ := context.WithTimeout(
+	ctx, cancel := context.WithTimeout(
 		context.Background(),
 		10 * time.Second,
 	)
+	defer cancel()
 
 	if err := a.Repository.FuncTask.DeleteOne(
 		ctx,
@@ -413,6 +423,8 @@ func (a *Api) DeleteFuncTask(w http.ResponseWriter, r *http.Request) {
 }
 
 // AddEstimate
+// 
+// @Tags v1 estimate
 // 
 // @Summary add estimate to milestone
 // 
@@ -448,10 +460,11 @@ func (a *Api) AddEstimate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, _ := context.WithTimeout(
+	ctx, cancel := context.WithTimeout(
 		context.Background(),
 		10 * time.Second,
 	)
+	defer cancel()
 
 	if err := a.Repository.Milestone.GetOne(
 		ctx,
@@ -495,6 +508,8 @@ func (a *Api) AddEstimate(w http.ResponseWriter, r *http.Request) {
 
 // DeleteEstimate
 // 
+// @Tags v1 estimate
+// 
 // @Summary delete estimate from database
 // 
 // @Description delete estimate from database
@@ -517,10 +532,11 @@ func (a *Api) DeleteEstimate(w http.ResponseWriter, r *http.Request) {
 
 	milestoneID, _ := strconv.ParseUint(_mid, 10, 64)
 
-	ctx, _ := context.WithTimeout(
+	ctx, cancel := context.WithTimeout(
 		context.Background(),
 		10 * time.Second,
 	)
+	defer cancel()
 
 	if err := a.Repository.Estimate.DeleteOne(
 		ctx,
@@ -555,6 +571,8 @@ func (a *Api) DeleteEstimate(w http.ResponseWriter, r *http.Request) {
 
 // GetProjects
 // 
+// @Tags v1 projects
+// 
 // @Summary return projects according to query value
 // 
 // @Description return a projects you can filter count of them
@@ -586,9 +604,7 @@ func (a *Api) GetProjects(w http.ResponseWriter, r *http.Request) {
 	tag := values.Get("tag")
 	name := values.Get("name")
 
-	ctx, _ := context.WithCancel(
-		context.Background(),
-	)
+	ctx := context.Background()
 
 	if count == 0 {
 		count = uint64(a.Repository.Repo.Count())
@@ -664,12 +680,103 @@ func (a *Api) GetProjects(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
+// GetProject
+// 
+// @Summary return project according to id
+// 
+// @Description return a project according to id value in path
+// 
+// @Produce json
+// 
+// @Router /api/v1/projects/{id} [get]
+// 
+// @Param id path integer true "a uint value of repository id"
+// 
+// @Success 200 {object} repoasproj.RepoAsProj
+// 
+// @Failure 404 {object} e.Message
+// 
+// @Failure 500 {object} e.Message
+func (a *Api) GetProject(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	_id := vars["id"]
+
+	id, _ := strconv.ParseUint(_id, 10, 64)
+
+	var repos []repo.Repo
+	ctx := context.Background()
+
+	if err := a.Repository.Repo.GetAllFiltered(
+		ctx,
+		bson.M{"id": id},
+		func(c *mongo.Cursor) error {
+			if err := c.All(
+				ctx,
+				&repos,
+			); err != nil {
+				return err
+			}
+
+			if len(repos) == 0 {
+				return mongo.ErrNoDocuments
+			}
+
+			return nil
+		},
+		options.Find(),
+	); err == mongo.ErrNoDocuments {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(
+			e.Message {
+				Message: "Don't find project",
+			},
+		)
+		return
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			e.Message {
+				Message: "Failed to find project",
+			},
+		)
+		prepare("GetProject", err).Error()
+		return
+	}
+
+	project, err := a.getProjs(repos)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			e.Message {
+				Message: "Failed to get project",
+			},
+		)
+		prepare("GetProject", err).Error()
+		return
+	} else if len(project) != 1 {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			e.Message {
+				Message: "Failed to get project",
+			},
+		)
+		prepare("GetProject", fmt.Errorf("Len of project == %v", len(project))).Error()
+		return
+	}
+
+	json.NewEncoder(w).Encode(
+		project[0],	
+	)
+}
+
 func (a *Api) getProjs(reps []repo.Repo) ([]repoasproj.RepoAsProj, error) {
 	var projs []repoasproj.RepoAsProj
 
 	ctx, cancel := context.WithCancel(
 		context.Background(),
 	)
+	defer cancel()
 
 	errChan := make(chan error, 1)
 	projChan := make(chan []repoasproj.RepoAsProj, 1)

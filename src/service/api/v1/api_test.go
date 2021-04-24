@@ -399,7 +399,7 @@ func TestFunc_GetProjectsByTag(t *testing.T) {
 }
 
 
-func TestFunc_GetProjectByName(t *testing.T) {
+func TestFunc_GetProjectsByName(t *testing.T) {
 	req := httptest.NewRequest("GET", "/api/v1/projects/?start=0&count=100&name=CyberBird", nil)
 
 	w := httptest.NewRecorder()
@@ -418,4 +418,38 @@ func TestFunc_GetProjectByName(t *testing.T) {
 	}
 
 	t.Log(len(projs))
+}
+
+func TestFunc_GetProject(t *testing.T) {
+	req := httptest.NewRequest("GET", "/api/v1/projects/358569413", nil)
+
+	w := httptest.NewRecorder()
+
+	Router.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusOK {
+		t.Log(w.Result().StatusCode)
+		t.FailNow()
+	}
+
+	var proj repoasproj.RepoAsProj
+	if err := json.NewDecoder(w.Body).Decode(&proj); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	t.Log(proj)
+}
+
+func TestFunc_GetProject_NotFound(t *testing.T) {
+	req := httptest.NewRequest("GET", "/api/v1/projects/3", nil)
+
+	w := httptest.NewRecorder()
+
+	Router.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusNotFound {
+		t.Log(w.Result().StatusCode)
+		t.FailNow()
+	}
 }
