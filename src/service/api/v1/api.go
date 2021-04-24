@@ -611,6 +611,7 @@ func (a *Api) GetProjects(w http.ResponseWriter, r *http.Request) {
 				},
 			)
 			prepare("GetProjects", err).Error()
+			return
 		}
 		filter = f
 	}
