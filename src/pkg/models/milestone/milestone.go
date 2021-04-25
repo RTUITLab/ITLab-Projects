@@ -25,6 +25,7 @@ type Milestone struct {
 	Issues 			[]Issue				`json:"issues"`
 	Estimate 		*estimate.Estimate 	`json:"estimate" bson:"-"`
 	FuncTask		*functask.FuncTask	`json:"func_task" bson:"-"`
+	Deleted			bool				`json:"deleted" bson:"deleted"`
 }
 
 type MilestoneInRepo struct {

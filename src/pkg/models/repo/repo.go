@@ -5,18 +5,20 @@ import (
 )
 
 type Repo struct {
-	ID          		uint64 		`json:"id"`
-	Name        		string 		`json:"name"`
-	Contributors		[]User		`json:"contributors"`
-	// Path				string		`json:"path_with_namespace,omitempty"`
-	HTMLUrl     		string 		`json:"html_url"`
-	Description 		string 		`json:"description"`
-	CreatedAt   		string 		`json:"created_at"`
-	UpdatedAt   		string 		`json:"updated_at"`
-	PushedAt			string		`json:"pushed_at"`
-	Language    		string 		`json:"language"`
+	ID          		uint64 			`json:"id"`
+	Name        		string 			`json:"name"`
+	Contributors		[]User			`json:"contributors"`
+	// Path				string			`json:"path_with_namespace,omitempty"`
+	HTMLUrl     		string 			`json:"html_url"`
+	Description 		string 			`json:"description"`
+	CreatedAt   		string 			`json:"created_at"`
+	UpdatedAt   		string 			`json:"updated_at"`
+	PushedAt			string			`json:"pushed_at"`
+	Language    		string 			`json:"language"`
 	Languages			map[string]int	`json:"languages"`
-	Archived    		bool   		`json:"archived"`
+	Archived    		bool   			`json:"archived"`
+
+	Deleted 			bool			`json:"deleted" bson:"deleted"`
 }
 
 type RepoWithURLS struct {
