@@ -77,6 +77,7 @@ func TestFunc_UpdateAllProjects(t *testing.T) {
 		t.FailNow()
 	}
 
+
 }
 
 func TestFunc_GetPanic(t *testing.T) {
@@ -362,7 +363,7 @@ func TestFunc_DeleteEstimate(t *testing.T) {
 }
 
 func TestFunc_GetProjects(t *testing.T) {
-	req := httptest.NewRequest("GET", "/api/v1/projects/?start=10&count=20", nil)
+	req := httptest.NewRequest("GET", "/api/v1/projects/?start=0&count=10000", nil)
 
 	w := httptest.NewRecorder()
 
@@ -374,7 +375,7 @@ func TestFunc_GetProjects(t *testing.T) {
 	json.NewDecoder(w.Result().Body).Decode(&projs)
 
 	for _, p := range projs {
-		t.Log(p.Repo.CreatedAt)
+		t.Logf("time: %s deleted: %v", p.Repo.CreatedAt, p.Repo.Deleted)
 	}
 }
 

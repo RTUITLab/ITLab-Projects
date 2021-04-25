@@ -63,7 +63,7 @@ func (a *Api) Build(r *mux.Router) {
 
 // UpdateAllProjects
 // 
-// @Tags v1
+// @Tags projects
 // 
 // @Summary Update all projects
 // 
@@ -205,8 +205,10 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := a.Repository.Repo.Save(
+	if err := a.Repository.Repo.SaveAndUpdatenUnfind(
+		context.Background(),
 		repo.ToRepo(repos),
+		bson.M{"$set": bson.M{"deleted": true}},
 	); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(e.Message{
@@ -216,8 +218,10 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := a.Repository.Milestone.Save(
+	if err := a.Repository.Milestone.SaveAndUpdatenUnfind(
+		context.Background(),
 		ms,
+		bson.M{"$set": bson.M{"deleted": true}},
 	); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
@@ -254,33 +258,11 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		prepare("UpdateAllProjects", err).Error("Can't save tags")
 		return
 	}
-	
-	// if err := a.Repository.FuncTask.DeleteFuncTasksNotIn(ms); err != nil {
-	// 	w.WriteHeader(http.StatusInternalServerError)
-	// 	json.NewEncoder(w).Encode(
-	// 		e.Message{
-	// 			Message: "Can't delete unused func tasks",
-	// 		},
-	// 	)
-	// 	prepare("UpdateAllProjects", err).Error("Can't delete unused func tasks")
-	// 	return
-	// }
-
-	// if err := a.Repository.Estimate.DeleteEstimatesNotIn(ms); err != nil {
-	// 	w.WriteHeader(http.StatusInternalServerError)
-	// 	json.NewEncoder(w).Encode(
-	// 		e.Message{
-	// 			Message: "Can't delete unused estimates",
-	// 		},
-	// 	)
-	// 	prepare("UpdateAllProjects", err).Error("Can't delete unused estimates")
-	// 	return
-	// }
 }
 
 // AddFuncTask
 // 
-// @Tags v1 functask
+// @Tags functask
 // 
 // @Summary add func task to milestone
 // 
@@ -363,7 +345,7 @@ func (a *Api) AddFuncTask(w http.ResponseWriter, r *http.Request) {
 
 // DeleteFuncTask
 // 
-// @Tags v1 functask
+// @Tags functask
 // 
 // @Summary delete functask from database
 // 
@@ -425,7 +407,7 @@ func (a *Api) DeleteFuncTask(w http.ResponseWriter, r *http.Request) {
 
 // AddEstimate
 // 
-// @Tags v1 estimate
+// @Tags estimate
 // 
 // @Summary add estimate to milestone
 // 
@@ -509,7 +491,7 @@ func (a *Api) AddEstimate(w http.ResponseWriter, r *http.Request) {
 
 // DeleteEstimate
 // 
-// @Tags v1 estimate
+// @Tags estimate
 // 
 // @Summary delete estimate from database
 // 
@@ -572,7 +554,7 @@ func (a *Api) DeleteEstimate(w http.ResponseWriter, r *http.Request) {
 
 // GetProjects
 // 
-// @Tags v1 projects
+// @Tags projects
 // 
 // @Summary return projects according to query value
 // 
@@ -651,7 +633,8 @@ func (a *Api) GetProjects(w http.ResponseWriter, r *http.Request) {
 			return c.Err()
 		},
 		options.Find().
-			SetSort(bson.M{"createdat": -1}).
+		// "createdat": -1, "deleted": -1,
+			SetSort(bson.D{ {"createdat", -1}, {"deleted", 1}} ).
 			SetSkip(int64(start)).
 			SetLimit(int64(count)),
 	); err != mongo.ErrNoDocuments && err != nil {
@@ -687,6 +670,8 @@ func (a *Api) GetProjects(w http.ResponseWriter, r *http.Request) {
 // GetProject
 // 
 // @Summary return project according to id
+// 
+// @Tags projects
 // 
 // @Description return a project according to id value in path
 // 
