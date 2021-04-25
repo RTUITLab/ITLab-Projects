@@ -21,7 +21,7 @@ type ReposRepository struct {
 	CountOfDocuments	int64
 	counter.Counter
 	getter.Getter
-	saver.SaverWithDelete
+	Saver 				saver.SaverWithDelUpdate
 	deleter.Deleter
 }
 
@@ -39,7 +39,7 @@ func New(repoCollection *mongo.Collection) ReposRepositorier {
 		typechecker.NewSingleByInterface(Type),
 	)
 
-	rr.SaverWithDelete = saver.NewSaverWithDelete(
+	rr.Saver = saver.NewSaverWithDelUpdate(
 		repoCollection,
 		Type,
 		rr.save,
@@ -66,7 +66,7 @@ func (r *ReposRepository) buildFilter(v interface{}) interface{} {
 }
 
 func (r *ReposRepository) Save(repos interface{}) error {
-	if err := r.SaverWithDelete.Save(repos); err != nil {
+	if err := r.Saver.Save(repos); err != nil {
 		return err
 	}
 
@@ -78,7 +78,23 @@ func (r *ReposRepository) Save(repos interface{}) error {
 }
 
 func (r *ReposRepository) SaveAndDeletedUnfind(ctx context.Context, repos interface{}) error {
-	if err := r.SaverWithDelete.SaveAndDeletedUnfind(ctx, repos); err != nil {
+	if err := r.Saver.SaveAndDeletedUnfind(ctx, repos); err != nil {
+		return err
+	}
+
+	if _, err := r.UpdateCount(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *ReposRepository) SaveAndUpdatenUnfind(
+	ctx context.Context, 
+	v interface{},	// value that we  
+	updateFilter interface{},	// filter where you change field
+) error {
+	if err := r.Saver.SaveAndUpdatenUnfind(ctx, v, updateFilter); err != nil {
 		return err
 	}
 

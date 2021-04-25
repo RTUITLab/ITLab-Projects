@@ -20,7 +20,7 @@ type MilestoneRepository struct {
 	milestoneCollection *mongo.Collection
 	counter.Counter
 	getter.Getter
-	Saver saver.SaverWithDelete
+	Saver saver.SaverWithDelUpdate
 }
 
 func New(collection *mongo.Collection) Milestoner {
@@ -36,7 +36,7 @@ func New(collection *mongo.Collection) Milestoner {
 		typechecker.NewSingleByInterface(m),
 	)
 
-	mr.Saver = saver.NewSaverWithDelete(
+	mr.Saver = saver.NewSaverWithDelUpdate(
 		collection,
 		m,
 		mr.save,
@@ -121,3 +121,18 @@ func (m *MilestoneRepository) SaveAndDeletedUnfind(
 	return nil
 }
 
+func (m *MilestoneRepository) SaveAndUpdatenUnfind(
+	ctx context.Context, 
+	v interface{},	// value that we  
+	updateFilter interface{},	// filter where you change field
+) error {
+	if err := m.Saver.SaveAndUpdatenUnfind(ctx, v, updateFilter); err != nil {
+		return err
+	}
+
+	if _, err := m.UpdateCount(); err != nil {
+		return err
+	}
+
+	return nil
+}
