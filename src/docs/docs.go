@@ -31,7 +31,7 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "v1 projects"
+                    "projects"
                 ],
                 "summary": "return projects according to query value",
                 "parameters": [
@@ -66,7 +66,7 @@ var doc = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/repoasproj.RepoAsProj"
+                                "$ref": "#/definitions/repoasproj.RepoAsProjCompact"
                             }
                         }
                     },
@@ -81,7 +81,7 @@ var doc = `{
             "post": {
                 "description": "make all request to github to update repositories, milestones",
                 "tags": [
-                    "v1"
+                    "projects"
                 ],
                 "summary": "Update all projects",
                 "responses": {
@@ -113,7 +113,7 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "v1 estimate"
+                    "estimate"
                 ],
                 "summary": "add estimate to milestone",
                 "parameters": [
@@ -159,7 +159,7 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "v1 estimate"
+                    "estimate"
                 ],
                 "summary": "delete estimate from database",
                 "parameters": [
@@ -200,7 +200,7 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "v1 functask"
+                    "functask"
                 ],
                 "summary": "add func task to milestone",
                 "parameters": [
@@ -246,7 +246,7 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "v1 functask"
+                    "functask"
                 ],
                 "summary": "delete functask from database",
                 "parameters": [
@@ -282,6 +282,9 @@ var doc = `{
                 "description": "return a project according to id value in path",
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "projects"
                 ],
                 "summary": "return project according to id",
                 "parameters": [
@@ -466,6 +469,9 @@ var doc = `{
                 "creator": {
                     "$ref": "#/definitions/user.User"
                 },
+                "deleted": {
+                    "type": "boolean"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -544,11 +550,14 @@ var doc = `{
                 "created_at": {
                     "type": "string"
                 },
+                "deleted": {
+                    "type": "boolean"
+                },
                 "description": {
                     "type": "string"
                 },
                 "html_url": {
-                    "description": "Path\t\t\t\tstring\t\t` + "`" + `json:\"path_with_namespace,omitempty\"` + "`" + `",
+                    "description": "Path\t\t\t\tstring\t\t\t` + "`" + `json:\"path_with_namespace,omitempty\"` + "`" + `",
                     "type": "string"
                 },
                 "id": {
@@ -585,6 +594,23 @@ var doc = `{
                     "items": {
                         "$ref": "#/definitions/milestone.Milestone"
                     }
+                },
+                "repo": {
+                    "$ref": "#/definitions/repo.Repo"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/tag.Tag"
+                    }
+                }
+            }
+        },
+        "repoasproj.RepoAsProjCompact": {
+            "type": "object",
+            "properties": {
+                "completed": {
+                    "type": "number"
                 },
                 "repo": {
                     "$ref": "#/definitions/repo.Repo"
