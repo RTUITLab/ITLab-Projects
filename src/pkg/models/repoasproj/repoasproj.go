@@ -30,6 +30,12 @@ func (b ByCreateDate) Len() int {
 }
 
 func (b ByCreateDate) Less(i, j int) bool {
+	if b[i].Repo.Deleted {
+		return false
+	} else if b[j].Repo.Deleted {
+		return true
+	}
+
 	parsedF, _ := time.Parse(time.RFC3339, b[i].Repo.CreatedAt)
 	parsedS, _ := time.Parse(time.RFC3339, b[j].Repo.CreatedAt)
 
