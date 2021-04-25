@@ -1,14 +1,16 @@
 package tags
 
 import (
-	"github.com/ITLab-Projects/pkg/repositories/typechecker"
-	log "github.com/sirupsen/logrus"
-	"time"
 	"context"
-	"go.mongodb.org/mongo-driver/bson"
+	"time"
+
 	model "github.com/ITLab-Projects/pkg/models/tag"
+	"github.com/ITLab-Projects/pkg/repositories/deleter"
 	"github.com/ITLab-Projects/pkg/repositories/getter"
 	"github.com/ITLab-Projects/pkg/repositories/saver"
+	"github.com/ITLab-Projects/pkg/repositories/typechecker"
+	log "github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -17,6 +19,7 @@ type TagRepository struct {
 	tagCollection *mongo.Collection
 	saver.SaverWithDelete
 	getter.Getter
+	deleter.Deleter
 }
 
 func New(
@@ -38,6 +41,10 @@ func New(
 	tr.Getter = getter.New(
 		collection,
 		typechecker.NewSingleByInterface(t),
+	)
+
+	tr.Deleter = deleter.New(
+		collection,
 	)
 
 	return tr

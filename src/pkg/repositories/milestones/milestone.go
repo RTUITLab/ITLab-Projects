@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/ITLab-Projects/pkg/repositories/deleter"
 	"github.com/ITLab-Projects/pkg/repositories/saver"
 	"github.com/ITLab-Projects/pkg/repositories/typechecker"
 	"github.com/sirupsen/logrus"
@@ -21,6 +22,7 @@ type MilestoneRepository struct {
 	counter.Counter
 	getter.Getter
 	Saver saver.SaverWithDelUpdate
+	deleter.Deleter
 }
 
 func New(collection *mongo.Collection) Milestoner {
@@ -41,6 +43,10 @@ func New(collection *mongo.Collection) Milestoner {
 		m,
 		mr.save,
 		mr.buildFilter,
+	)
+
+	mr.Deleter = deleter.New(
+		collection,
 	)
 
 	return mr

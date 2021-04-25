@@ -5,6 +5,7 @@ import (
 	"time"
 
 	model "github.com/ITLab-Projects/pkg/models/realese"
+	"github.com/ITLab-Projects/pkg/repositories/deleter"
 	"github.com/ITLab-Projects/pkg/repositories/getter"
 	"github.com/ITLab-Projects/pkg/repositories/saver"
 	"github.com/ITLab-Projects/pkg/repositories/typechecker"
@@ -17,6 +18,7 @@ type RealeseRepo struct {
 	realeseCollection *mongo.Collection
 	getter.GetOner
 	Saver saver.SaverWithDelete
+	deleter.Deleter
 }
 
 func New(collection *mongo.Collection) Realeser {
@@ -36,6 +38,10 @@ func New(collection *mongo.Collection) Realeser {
 		m,
 		r.save,
 		r.buildFilter,
+	)
+
+	r.Deleter = deleter.New(
+		collection,	
 	)
 
 	return r
