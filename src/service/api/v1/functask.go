@@ -1,43 +1,44 @@
 package v1
 
 import (
-	"github.com/ITLab-Projects/pkg/models/functask"
-	e "github.com/ITLab-Projects/pkg/err"
-	"encoding/json"
-	"go.mongodb.org/mongo-driver/bson"
-	"strconv"
-	"net/http"
-	"github.com/gorilla/mux"
-	"time"
 	"context"
+	"encoding/json"
+	"net/http"
+	"strconv"
+	"time"
+
+	e "github.com/ITLab-Projects/pkg/err"
+	"github.com/ITLab-Projects/pkg/models/functask"
+	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // AddFuncTask
-// 
+//
 // @Tags functask
-// 
+//
 // @Summary add func task to milestone
-// 
+//
 // @Description add func task to milestone
-// 
+//
 // @Description if func task is exist for milesotne will replace it
-// 
+//
 // @Router /api/v1/projects/task [post]
-// 
+//
 // @Accept json
-// 
+//
 // @Produce json
-// 
+//
 // @Param functask body functask.FuncTask true "function task that you want to add"
-// 
+//
 // @Success 201
-// 
+//
 // @Failure 400 {object} e.Message "Unexpected body"
-// 
+//
 // @Failure 500 {object} e.Message "Failed to save functask"
-// 
+//
 // @Failure 404 {object} e.Message "Don't find milestone with this id"
 func (a *Api) AddFuncTask(w http.ResponseWriter, r *http.Request) {
 	var fntask functask.FuncTask
@@ -157,4 +158,85 @@ func (a *Api) DeleteFuncTask(w http.ResponseWriter, r *http.Request) {
 		prepare("DeleteFuncTask", err).Error()
 		return
 	}
+}
+
+func (a *Api) deleteFuncTask(
+	ctx context.Context, 
+	milestoneid uint64,
+	beforeDelete beforeDeleteFunc,
+	) (error) {
+	var task functask.FuncTask
+
+	if err := a.Repository.FuncTask.GetOne(
+		ctx,
+		bson.M{"milestone_id": milestoneid},
+		func(sr *mongo.SingleResult) error {
+			return sr.Decode(&task)
+		},
+		options.FindOne(),
+	); err != nil {
+		return err
+	}
+
+	if err := beforeDelete(task); err != nil {
+		return err
+	}
+
+	if err := a.Repository.FuncTask.DeleteOne(
+		ctx,
+		bson.M{"milestone_id": milestoneid},
+		func(dr *mongo.DeleteResult) error {
+			if dr.DeletedCount == 0 {
+				return mongo.ErrNoDocuments
+			}
+
+			return nil
+		},
+		options.Delete(),
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *Api) deleteFuncTasks(
+	ctx context.Context, 
+	milestonesid []uint64,
+	beforeDelete beforeDeleteFunc,
+	) (error) {
+	var tasks []functask.FuncTask
+
+	if err := a.Repository.FuncTask.GetAllFiltered(
+		ctx,
+		bson.M{"milestone_id": bson.M{"$in": milestonesid}},
+		func(c *mongo.Cursor) error {
+			if err := c.All(
+				ctx,
+				&tasks,
+			); err != nil {
+				return err
+			}
+
+			return c.Err()
+		},
+		options.Find(),
+	); err != nil {
+		return err
+	}
+
+	if err := beforeDelete(tasks); err != nil {
+		return err
+	}
+
+	if err := a.Repository.FuncTask.DeleteMany(
+		ctx,
+		bson.M{"milestone_id": bson.M{"$in": milestonesid}},
+		nil,
+		options.Delete(),
+	); err != nil {
+		return err
+	}
+
+	return nil
 }

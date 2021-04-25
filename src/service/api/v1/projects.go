@@ -434,8 +434,175 @@ func (a *Api) GetProject(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-// TODO delete repo
-// TODO delete milestone
+func (a *Api) DeleteProject(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	_id := vars["id"]
+
+	id, _ := strconv.ParseUint(_id, 10, 64)
+
+	var rep repo.Repo
+
+	if err := a.Repository.Repo.GetOne(
+		context.Background(),
+		bson.M{"id": id},
+		func(sr *mongo.SingleResult) error {
+			return sr.Decode(&rep)
+		},
+		options.FindOne(),
+	); err == mongo.ErrNoDocuments {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(
+			e.Message {
+				Message: "Project not found",
+			},
+		)
+		return
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			e.Message {
+				Message: "Can't delete project",
+			},
+		)
+		prepare("DeleteProject", err).Error()
+		return
+	}
+
+	if err := a.deleteMilestones(
+		context.Background(),
+		rep.ID,
+		a.beforeDelete,
+	); err != nil {
+		// TODO
+	}
+
+	if err := a.Repository.Repo.DeleteOne(
+		context.Background(),
+		bson.M{"id": id},
+		func(dr *mongo.DeleteResult) error {
+			if dr.DeletedCount == 0 {
+				return mongo.ErrNoDocuments
+			}
+
+			return nil
+		},
+		options.Delete(),
+	); err == mongo.ErrNoDocuments {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(
+			e.Message {
+				Message: "Project not found",
+			},
+		)
+		return
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			e.Message {
+				Message: "Can't delete project",
+			},
+		)
+		prepare("DeleteProject", err).Error()
+		return
+	}
+
+
+}
+
+// Return deleted milestone and error
+func (a *Api) deleteMilestones(
+	ctx context.Context, 
+	repoid uint64,
+	// switch type of argument to estimate and functtask
+	beforeDelete beforeDeleteFunc,
+) (error) {
+	var ms []milestone.Milestone
+
+	if err := a.Repository.Milestone.GetAllFiltered(
+		ctx,
+		bson.M{"repoid": repoid},
+		func(c *mongo.Cursor) error {
+			if err := c.All(
+				ctx,
+				&ms,
+			); err != nil {
+				return err
+			}
+
+			return c.Err()
+		},
+		options.Find(),
+	); err != nil {
+		return err
+	}
+
+	if err := beforeDelete(ms); err != nil {
+		return err
+	}
+
+	if err := a.deleteEstimates(
+		ctx,
+		func(ms []milestone.Milestone) []uint64 {
+			var ids []uint64
+
+			for _, m := range ms {
+				ids = append(ids, m.ID)
+			}
+
+			return ids
+		}(ms),
+		beforeDelete,
+	); err != nil {
+		return err
+	}
+
+	if err := a.deleteFuncTasks(
+		ctx,
+		func(ms []milestone.Milestone) []uint64 {
+			var ids []uint64
+
+			for _, m := range ms {
+				ids = append(ids, m.ID)
+			}
+
+			return ids
+		}(ms),
+		beforeDelete,
+	); err != nil {
+		return err
+	}
+
+	if err := a.Repository.Milestone.DeleteMany(
+		ctx,
+		bson.M{"repoid": repoid},
+		func(dr *mongo.DeleteResult) error {
+			if dr.DeletedCount == 0 {
+				return mongo.ErrNoDocuments
+			}
+
+			return nil
+		},
+		options.Delete(),
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *Api) deleteTags(ctx context.Context, repoid uint64) error {
+	if err := a.Repository.Tag.DeleteMany(
+		ctx,
+		bson.M{"repoi_d": repoid},
+		nil,
+		options.Delete(),
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func (a *Api) getProjs(reps []repo.Repo) ([]repoasproj.RepoAsProj, error) {
 	var projs []repoasproj.RepoAsProj

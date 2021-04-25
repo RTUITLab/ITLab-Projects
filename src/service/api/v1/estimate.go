@@ -160,3 +160,84 @@ func (a *Api) DeleteEstimate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (a *Api) deleteEstimate(
+	ctx context.Context, 
+	milestoneid uint64,
+	beforeDelete beforeDeleteFunc,
+	) (error) {
+	var est estimate.Estimate
+
+	if err := a.Repository.Estimate.GetOne(
+		ctx,
+		bson.M{"milestone_id": milestoneid},
+		func(sr *mongo.SingleResult) error {
+			return sr.Decode(&est)
+		},
+		options.FindOne(),
+	); err != nil {
+		return err
+	}
+
+	if err := beforeDelete(est); err != nil {
+		return err
+	}
+
+	if err := a.Repository.Estimate.DeleteOne(
+		ctx,
+		bson.M{"milestone_id": milestoneid},
+		func(dr *mongo.DeleteResult) error {
+			if dr.DeletedCount == 0 {
+				return mongo.ErrNoDocuments
+			}
+
+			return nil
+		},
+		options.Delete(),
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *Api) deleteEstimates(
+	ctx context.Context, 
+	milestonesid []uint64,
+	beforeDelete beforeDeleteFunc,
+	) (error) {
+	var ests []estimate.Estimate
+
+	if err := a.Repository.Estimate.GetAllFiltered(
+		ctx,
+		bson.M{"milestone_id": bson.M{"$in": milestonesid}},
+		func(c *mongo.Cursor) error {
+			if err := c.All(
+				ctx,
+				&ests,
+			); err != nil {
+				return err
+			}
+
+			return c.Err()
+		},
+		options.Find(),
+	); err != nil {
+		return err
+	}
+
+	if err := beforeDelete(ests); err != nil {
+		return err
+	}
+
+	if err := a.Repository.Estimate.DeleteMany(
+		ctx,
+		bson.M{"milestone_id": bson.M{"$in": milestonesid}},
+		nil,
+		options.Delete(),
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
