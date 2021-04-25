@@ -37,7 +37,7 @@ import (
 // 
 // @Success 200
 // 
-// @Failure 502 {object} e.Err
+// @Failure 409 {object} e.Err
 // 
 // @Failure 500 {object} e.Message
 func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
@@ -56,12 +56,12 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	} else if err == githubreq.ErrForbiden || err == githubreq.ErrUnatorizared {
 		logError("Can't get repositories", "UpdateAllProjects", err)
-		w.WriteHeader(http.StatusBadGateway)
+		w.WriteHeader(http.StatusConflict)
 		json.NewEncoder(w).Encode(
 			e.Err {
 				Err: err.Error(),
 				Message: e.Message{
-					Message: "Can't get repositories",
+					Message: "Failed to update",
 				},
 			},
 		)
@@ -153,7 +153,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		select {
 		case <- ctx.Done():
 			err := <- errChan
-			w.WriteHeader(http.StatusBadGateway)
+			w.WriteHeader(http.StatusConflict)
 			json.NewEncoder(w).Encode(
 				e.Err{
 					Err: err.Error(),
