@@ -10,6 +10,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type beforeDeleteFunc func(interface{}) error
+
 type Api struct {
 	Repository *repositories.Repositories
 	Requester githubreq.Requester
@@ -35,6 +37,7 @@ func (a *Api) Build(r *mux.Router) {
 	requester.HandleFunc("/estimate/{milestone_id:[0-9]+}", a.DeleteEstimate).Methods("DELETE")
 	requester.HandleFunc("/", a.GetProjects).Methods("GET")
 	requester.HandleFunc("/{id:[0-9]+}", a.GetProject).Methods("GET")
+	requester.HandleFunc("/{id:[0-9]+}", a.DeleteProject).Methods("DELETE")
 }
 
 
@@ -51,6 +54,11 @@ func getUint(v url.Values, name string) uint64 {
 	}
 
 	return value
+}
+
+func (a *Api) beforeDelete(v interface{}) error {
+	// TODO
+	return nil
 }
 
 func logError(message, Handler string, err error) {
