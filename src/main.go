@@ -21,6 +21,7 @@ func main() {
 		v1.New(
 			app.Repository,
 			app.Requester,
+			app.MFSRequester,
 		),
 	)
 
