@@ -29,7 +29,7 @@ func New(
 		funcTaskCollection: collection,
 	}
 
-	ft := model.FuncTask{}
+	ft := model.FuncTaskFile{}
 
 	ftr.Getter = getter.New(
 		collection,
@@ -69,7 +69,7 @@ func (ftr *FuncTaskRepository) DeleteFuncTasksNotIn(ms []milestone.MilestoneInRe
 }
 
 func (ftr *FuncTaskRepository) save(v interface{}) error {
-	functask, _ := v.(model.FuncTask)
+	functask, _ := v.(model.FuncTaskFile)
 
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"milestone_id": functask.MilestoneID}

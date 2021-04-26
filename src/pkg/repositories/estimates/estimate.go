@@ -31,7 +31,7 @@ func New(
 		estimateColletion: collection,
 	}
 
-	e := estimate.Estimate{}
+	e := estimate.EstimateFile{}
 
 	er.Getter = getter.New(
 		collection,
@@ -70,7 +70,7 @@ func (er *EstimateRepository) DeleteEstimatesNotIn(ms []milestone.MilestoneInRep
 }
 
 func (er *EstimateRepository) save(v interface{}) error {
-	estimate, _ := v.(model.Estimate)
+	estimate, _ := v.(model.EstimateFile)
 
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"milestone_id": estimate.MilestoneID}
