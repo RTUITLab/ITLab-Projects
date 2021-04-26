@@ -10,9 +10,18 @@ import (
 )
 
 type Config struct {
-	DB 		*DBConfig		`json:"DbOptions"`
-	Auth 	*AuthConfig		`json:"AuthOptions"`
-	App 	*AppConfig		`json:"AppOptions"`
+	DB 			*DBConfig		`json:"DbOptions"`
+	Auth 		*AuthConfig		`json:"AuthOptions"`
+	App 		*AppConfig		`json:"AppOptions"`
+	Services	*OtherServicesConfig
+}
+
+type OtherServicesConfig struct {
+	MFS		*MFSConfig
+}
+
+type MFSConfig struct {
+	BaseURL		string `envconfig:"ITLAB_PROJECTS_MFSURL"`
 }
 
 type DBConfig struct {
