@@ -123,7 +123,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/estimate.Estimate"
+                            "$ref": "#/definitions/estimate.EstimateFile"
                         }
                     }
                 ],
@@ -210,7 +210,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/functask.FuncTask"
+                            "$ref": "#/definitions/functask.FuncTaskFile"
                         }
                     }
                 ],
@@ -367,10 +367,32 @@ var doc = `{
                 }
             }
         },
+        "estimate.EstimateFile": {
+            "type": "object",
+            "properties": {
+                "file_id": {
+                    "type": "string"
+                },
+                "milestone_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "functask.FuncTask": {
             "type": "object",
             "properties": {
                 "func_task_url": {
+                    "type": "string"
+                },
+                "milestone_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "functask.FuncTaskFile": {
+            "type": "object",
+            "properties": {
+                "file_id": {
                     "type": "string"
                 },
                 "milestone_id": {

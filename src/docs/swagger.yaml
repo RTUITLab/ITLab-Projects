@@ -29,9 +29,23 @@ definitions:
       milestone_id:
         type: integer
     type: object
+  estimate.EstimateFile:
+    properties:
+      file_id:
+        type: string
+      milestone_id:
+        type: integer
+    type: object
   functask.FuncTask:
     properties:
       func_task_url:
+        type: string
+      milestone_id:
+        type: integer
+    type: object
+  functask.FuncTaskFile:
+    properties:
+      file_id:
         type: string
       milestone_id:
         type: integer
@@ -313,7 +327,7 @@ paths:
         name: estimate
         required: true
         schema:
-          $ref: '#/definitions/estimate.Estimate'
+          $ref: '#/definitions/estimate.EstimateFile'
       produces:
       - application/json
       responses:
@@ -372,7 +386,7 @@ paths:
         name: functask
         required: true
         schema:
-          $ref: '#/definitions/functask.FuncTask'
+          $ref: '#/definitions/functask.FuncTaskFile'
       produces:
       - application/json
       responses:
