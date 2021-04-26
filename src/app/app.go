@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/ITLab-Projects/pkg/mfsreq"
 	"fmt"
 	"net/http"
 
@@ -14,10 +15,11 @@ import (
 )
 
 type App struct {
-	Router 	*mux.Router
-	Repository *repositories.Repositories
-	Requester githubreq.Requester
-	Port 	string
+	Router 			*mux.Router
+	Repository 		*repositories.Repositories
+	Requester 		githubreq.Requester
+	MFSRequester	mfsreq.Requester
+	Port 			string
 }
 
 func New(cfg *config.Config) *App {
@@ -42,6 +44,12 @@ func New(cfg *config.Config) *App {
 	app.Requester = githubreq.New(&githubreq.Config{
 		AccessToken: cfg.Auth.Github.AccessToken,
 	})
+
+	app.MFSRequester = mfsreq.New(
+		&mfsreq.Config{
+			BaseURL: cfg.Services.MFS.BaseURL,
+		},
+	)
 
 	app.Router = mux.NewRouter()
 
