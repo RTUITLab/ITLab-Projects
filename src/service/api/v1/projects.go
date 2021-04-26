@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/ITLab-Projects/pkg/mfsreq"
 	"sort"
 	"strconv"
 	"github.com/gorilla/mux"
@@ -447,7 +448,11 @@ func (a *Api) DeleteProject(w http.ResponseWriter, r *http.Request) {
 		context.Background(),
 		bson.M{"id": id},
 		func(sr *mongo.SingleResult) error {
-			return sr.Decode(&rep)
+			if err :=  sr.Decode(&rep); err != nil {
+				return err
+			}
+
+			return sr.Err()
 		},
 		options.FindOne(),
 	); err == mongo.ErrNoDocuments {
@@ -473,8 +478,36 @@ func (a *Api) DeleteProject(w http.ResponseWriter, r *http.Request) {
 		context.Background(),
 		rep.ID,
 		a.beforeDelete,
-	); err != nil {
-		// TODO
+	); err == mongo.ErrNoDocuments {
+		// Pass
+	} else if errors.Is(err, mfsreq.NetError) {
+		w.WriteHeader(http.StatusConflict)
+		json.NewEncoder(w).Encode(
+			e.Message{
+				Message: "Faield to delete project",
+			},
+		)
+		prepare("DeleteProject", err).Error()
+		return
+	} else if errors.Is(err, mfsreq.ErrUnexpectedCode) {
+		uce := err.(*mfsreq.UnexpectedCodeErr)
+			w.WriteHeader(http.StatusConflict)
+			json.NewEncoder(w).Encode(
+				e.Message {
+					Message: fmt.Sprintf("Unecxpected code: %v", uce.Code),
+				},
+			)
+			prepare("DeleteProject", err).Error()
+			return
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			e.Message{
+				Message: "Failed to delete project",
+			},
+		)
+		prepare("DeleteProject", err).Error()
+		return
 	}
 
 	if err := a.Repository.Repo.DeleteOne(
@@ -530,7 +563,15 @@ func (a *Api) deleteMilestones(
 				return err
 			}
 
-			return c.Err()
+			if err := c.Err(); err != nil {
+				return err
+			}
+
+			if ms == nil {
+				return mongo.ErrNoDocuments
+			}
+
+			return nil
 		},
 		options.Find(),
 	); err != nil {
@@ -794,7 +835,7 @@ func (a *Api) getCompatcProj(repos []repo.Repo) ([]repoasproj.RepoAsProjCompact,
 
 func (a *Api) getAssetsForMilestones(ctx context.Context, ms *[]milestone.Milestone) error {
 	for i, m := range *ms {
-		var e estimate.Estimate
+		var e estimate.EstimateFile
 		if err := a.Repository.Estimate.GetOne(
 			ctx,
 			bson.M{"milestone_id": m.ID},
@@ -805,10 +846,13 @@ func (a *Api) getAssetsForMilestones(ctx context.Context, ms *[]milestone.Milest
 		); err != mongo.ErrNoDocuments && err != nil {
 			return err
 		} else if err != mongo.ErrNoDocuments {
-			(*ms)[i].Estimate = &e
+			(*ms)[i].Estimate = &estimate.Estimate{
+				MilestoneID: e.MilestoneID,
+				EstimateURL: a.MFSRequester.GenerateDownloadLink(e.FileID),
+			}
 		}
 
-		var f functask.FuncTask
+		var f functask.FuncTaskFile
 
 		if err := a.Repository.FuncTask.GetOne(
 			ctx,
@@ -820,7 +864,10 @@ func (a *Api) getAssetsForMilestones(ctx context.Context, ms *[]milestone.Milest
 		); err != mongo.ErrNoDocuments && err != nil {
 			return err
 		} else if err != mongo.ErrNoDocuments {
-			(*ms)[i].FuncTask = &f
+			(*ms)[i].FuncTask = &functask.FuncTask{
+				MilestoneID: f.MilestoneID,
+				FuncTaskURL: a.MFSRequester.GenerateDownloadLink(f.FileID),
+			}
 		}
 	}
 

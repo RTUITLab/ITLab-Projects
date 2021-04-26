@@ -1,6 +1,9 @@
 package v1
 
 import (
+	"fmt"
+	"github.com/ITLab-Projects/pkg/mfsreq"
+	"errors"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -31,7 +34,7 @@ import (
 //
 // @Produce json
 //
-// @Param functask body functask.FuncTask true "function task that you want to add"
+// @Param functask body functask.FuncTaskFile true "function task that you want to add"
 //
 // @Success 201
 //
@@ -41,7 +44,7 @@ import (
 //
 // @Failure 404 {object} e.Message "Don't find milestone with this id"
 func (a *Api) AddFuncTask(w http.ResponseWriter, r *http.Request) {
-	var fntask functask.FuncTask
+	var fntask functask.FuncTaskFile
 	if err := json.NewDecoder(r.Body).Decode(&fntask); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(
@@ -130,16 +133,10 @@ func (a *Api) DeleteFuncTask(w http.ResponseWriter, r *http.Request) {
 	)
 	defer cancel()
 
-	if err := a.Repository.FuncTask.DeleteOne(
+	if err := a.deleteFuncTask(
 		ctx,
-		bson.M{"milestone_id": milestoneID},
-		func(dr *mongo.DeleteResult) error {
-			if dr.DeletedCount == 0 {
-				return mongo.ErrNoDocuments
-			}
-			return nil
-		},
-		options.Delete(),
+		milestoneID,
+		a.beforeDelete,
 	); err == mongo.ErrNoDocuments {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(
@@ -148,6 +145,25 @@ func (a *Api) DeleteFuncTask(w http.ResponseWriter, r *http.Request) {
 			},
 		)
 		return
+	} else if errors.Is(err, mfsreq.NetError) {
+		w.WriteHeader(http.StatusConflict)
+		json.NewEncoder(w).Encode(
+			e.Message{
+				Message: "Faield to delete functask",
+			},
+		)
+		prepare("DeleteFuncTask", err).Error()
+		return 
+	} else if errors.Is(err, mfsreq.ErrUnexpectedCode) {
+		uce := err.(*mfsreq.UnexpectedCodeErr)
+			w.WriteHeader(http.StatusConflict)
+			json.NewEncoder(w).Encode(
+				e.Message {
+					Message: fmt.Sprintf("Unecxpected code: %v", uce.Code),
+				},
+			)
+			prepare("DeleteFuncTask", err).Error()
+			return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
@@ -165,7 +181,7 @@ func (a *Api) deleteFuncTask(
 	milestoneid uint64,
 	beforeDelete beforeDeleteFunc,
 	) (error) {
-	var task functask.FuncTask
+	var task functask.FuncTaskFile
 
 	if err := a.Repository.FuncTask.GetOne(
 		ctx,
@@ -200,12 +216,13 @@ func (a *Api) deleteFuncTask(
 	return nil
 }
 
+// Ignore 404 status code
 func (a *Api) deleteFuncTasks(
 	ctx context.Context, 
 	milestonesid []uint64,
 	beforeDelete beforeDeleteFunc,
 	) (error) {
-	var tasks []functask.FuncTask
+	var tasks []functask.FuncTaskFile
 
 	if err := a.Repository.FuncTask.GetAllFiltered(
 		ctx,

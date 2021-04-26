@@ -1,46 +1,50 @@
 package v1
 
 import (
-	"github.com/ITLab-Projects/pkg/models/estimate"
-	e "github.com/ITLab-Projects/pkg/err"
-	"encoding/json"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/bson"
-	"time"
 	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
+
+	e "github.com/ITLab-Projects/pkg/err"
+	"github.com/ITLab-Projects/pkg/mfsreq"
+	"github.com/ITLab-Projects/pkg/models/estimate"
 	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // AddEstimate
-// 
+//
 // @Tags estimate
-// 
+//
 // @Summary add estimate to milestone
-// 
+//
 // @Description add estimate to milestone
-// 
+//
 // @Description if estimate is exist for milesotne will replace it
-// 
+//
 // @Router /api/v1/projects/estimate [post]
-// 
+//
 // @Accept json
-// 
+//
 // @Produce json
-// 
-// @Param estimate body estimate.Estimate true "estimate that you want to add"
-// 
+//
+// @Param estimate body estimate.EstimateFile true "estimate that you want to add"
+//
 // @Success 201
-// 
+//
 // @Failure 400 {object} e.Message "Unexpected body"
-// 
+//
 // @Failure 500 {object} e.Message "Failed to save estimate"
-// 
+//
 // @Failure 404 {object} e.Message "Don't find milestone with this id"
 func (a *Api) AddEstimate(w http.ResponseWriter, r *http.Request) {
-	var est estimate.Estimate
+	var est estimate.EstimateFile
 	if err := json.NewDecoder(r.Body).Decode(&est); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(
@@ -130,17 +134,10 @@ func (a *Api) DeleteEstimate(w http.ResponseWriter, r *http.Request) {
 	)
 	defer cancel()
 
-	if err := a.Repository.Estimate.DeleteOne(
+	if err := a.deleteEstimate(
 		ctx,
-		bson.M{"milestone_id": milestoneID},
-		func(dr *mongo.DeleteResult) error {
-			if dr.DeletedCount == 0 {
-				return mongo.ErrNoDocuments
-			}
-
-			return nil
-		},
-		options.Delete(),
+		milestoneID,
+		a.beforeDelete,
 	); err == mongo.ErrNoDocuments {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(
@@ -149,6 +146,25 @@ func (a *Api) DeleteEstimate(w http.ResponseWriter, r *http.Request) {
 			},
 		)
 		return
+	} else if errors.Is(err, mfsreq.NetError) {
+		w.WriteHeader(http.StatusConflict)
+		json.NewEncoder(w).Encode(
+			e.Message{
+				Message: "Faield to delete estimate",
+			},
+		)
+		prepare("DeleteEstimate", err).Error()
+		return
+	} else if errors.Is(err, mfsreq.ErrUnexpectedCode) {
+		uce := err.(*mfsreq.UnexpectedCodeErr)
+			w.WriteHeader(http.StatusConflict)
+			json.NewEncoder(w).Encode(
+				e.Message {
+					Message: fmt.Sprintf("Unecxpected code: %v", uce.Code),
+				},
+			)
+			prepare("DeleteEstimate", err).Error()
+			return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
@@ -166,7 +182,7 @@ func (a *Api) deleteEstimate(
 	milestoneid uint64,
 	beforeDelete beforeDeleteFunc,
 	) (error) {
-	var est estimate.Estimate
+	var est estimate.EstimateFile
 
 	if err := a.Repository.Estimate.GetOne(
 		ctx,
@@ -206,7 +222,7 @@ func (a *Api) deleteEstimates(
 	milestonesid []uint64,
 	beforeDelete beforeDeleteFunc,
 	) (error) {
-	var ests []estimate.Estimate
+	var ests []estimate.EstimateFile
 
 	if err := a.Repository.Estimate.GetAllFiltered(
 		ctx,

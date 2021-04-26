@@ -11,15 +11,19 @@ import (
 	"time"
 
 	"github.com/ITLab-Projects/pkg/githubreq"
+	"github.com/ITLab-Projects/pkg/mfsreq"
 	"github.com/ITLab-Projects/pkg/models/estimate"
 	"github.com/ITLab-Projects/pkg/models/functask"
 	"github.com/ITLab-Projects/pkg/models/milestone"
+	"github.com/ITLab-Projects/pkg/models/milestonefile"
+	"github.com/ITLab-Projects/pkg/models/repo"
 	"github.com/ITLab-Projects/pkg/models/repoasproj"
 	"github.com/ITLab-Projects/pkg/repositories"
 	v1 "github.com/ITLab-Projects/service/api/v1"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var API *v1.Api
@@ -58,6 +62,12 @@ func init() {
 	API = &v1.Api{
 		Requester:  requster,
 		Repository: _r,
+		MFSRequester: mfsreq.New(
+			&mfsreq.Config{
+				BaseURL:  "mfs_url",
+				TestMode: true,
+			},
+		),
 	}
 
 	Router = mux.NewRouter()
@@ -76,7 +86,6 @@ func TestFunc_UpdateAllProjects(t *testing.T) {
 		t.Log(w.Result().StatusCode)
 		t.FailNow()
 	}
-
 
 }
 
@@ -138,9 +147,11 @@ func TestFunc_GetPanic(t *testing.T) {
 }
 
 func TestFunc_AddFuncTask_NotFound(t *testing.T) {
-	f := functask.FuncTask{
-		MilestoneID: 1,
-		FuncTaskURL: "some_url",
+	f := functask.FuncTaskFile{
+		milestonefile.MilestoneFile{
+			MilestoneID: 1,
+			FileID:      primitive.NewObjectID(),
+		},
 	}
 
 	data, err := json.Marshal(f)
@@ -178,9 +189,11 @@ func TestFunc_AddTestFunc(t *testing.T) {
 		t.FailNow()
 	}
 
-	f := functask.FuncTask{
-		MilestoneID: 2,
-		FuncTaskURL: "some_url",
+	f := functask.FuncTaskFile{
+		milestonefile.MilestoneFile{
+			MilestoneID: 2,
+			FileID:      primitive.NewObjectID(),
+		},
 	}
 
 	data, err := json.Marshal(f)
@@ -219,9 +232,11 @@ func TestFunc_AddTask_BadRequest(t *testing.T) {
 }
 
 func TestFunc_AddEstimate_NotFound(t *testing.T) {
-	f := estimate.Estimate{
-		MilestoneID: 1,
-		EstimateURL: "some_url",
+	f := estimate.EstimateFile{
+		milestonefile.MilestoneFile{
+			MilestoneID: 1,
+			FileID:      primitive.NewObjectID(),
+		},
 	}
 
 	data, err := json.Marshal(f)
@@ -259,9 +274,11 @@ func TestFunc_AddEstimate(t *testing.T) {
 		t.FailNow()
 	}
 
-	f := estimate.Estimate{
-		MilestoneID: 2,
-		EstimateURL: "some_url",
+	f := estimate.EstimateFile{
+		milestonefile.MilestoneFile{
+			MilestoneID: 2,
+			FileID:      primitive.NewObjectID(),
+		},
 	}
 
 	data, err := json.Marshal(f)
@@ -418,7 +435,13 @@ func TestFunc_GetProjectsByName(t *testing.T) {
 }
 
 func TestFunc_GetProject(t *testing.T) {
-	req := httptest.NewRequest("GET", "/api/v1/projects/358569413", nil)
+	API.Repository.Estimate.Save(estimate.EstimateFile{
+		MilestoneFile: milestonefile.MilestoneFile{
+			MilestoneID: 5916375,
+			FileID: primitive.NewObjectID(),
+		},
+	})
+	req := httptest.NewRequest("GET", "/api/v1/projects/144718606", nil)
 
 	w := httptest.NewRecorder()
 
@@ -461,4 +484,66 @@ func TestFunc_ParseTime(t *testing.T) {
 	}
 
 	t.Log(parsed.String())
+}
+
+func TestFunc_DeleteProject(t *testing.T) {
+	rep := repo.Repo {
+		ID: 12,
+		Name: "Mock-Repo",
+	}
+
+	if err := API.Repository.Repo.Save(rep); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	m := milestone.MilestoneInRepo {
+		RepoID: 12,
+		Milestone: milestone.Milestone{
+			MilestoneFromGH: milestone.MilestoneFromGH{
+				ID: 3,
+				Title: "Mock-milestone",
+			},
+		},
+	}
+
+	if err := API.Repository.Milestone.Save(m); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	task := functask.FuncTaskFile {
+		MilestoneFile: milestonefile.MilestoneFile{
+			MilestoneID: 3,
+			FileID: primitive.NewObjectID(),
+		},
+	}
+
+	if err := API.Repository.FuncTask.Save(task); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	est := estimate.EstimateFile {
+		MilestoneFile: milestonefile.MilestoneFile{
+			MilestoneID: 3,
+			FileID: primitive.NewObjectID(),
+		},
+	}
+
+	if err := API.Repository.Estimate.Save(est); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	req := httptest.NewRequest("DELETE", "/api/v1/projects/12", nil)
+
+	w := httptest.NewRecorder()
+
+	Router.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusOK {
+		t.Log(w.Result().StatusCode)
+		t.FailNow()
+	}
 }

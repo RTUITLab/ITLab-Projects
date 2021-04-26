@@ -3,8 +3,12 @@ package v1
 import (
 	"net/url"
 	"strconv"
+
 	"github.com/ITLab-Projects/pkg/apibuilder"
 	"github.com/ITLab-Projects/pkg/githubreq"
+	"github.com/ITLab-Projects/pkg/mfsreq"
+	"github.com/ITLab-Projects/pkg/models/estimate"
+	"github.com/ITLab-Projects/pkg/models/functask"
 	"github.com/ITLab-Projects/pkg/repositories"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -13,17 +17,20 @@ import (
 type beforeDeleteFunc func(interface{}) error
 
 type Api struct {
-	Repository *repositories.Repositories
-	Requester githubreq.Requester
+	Repository 		*repositories.Repositories
+	Requester 		githubreq.Requester
+	MFSRequester	mfsreq.Requester
 }
 
 func New(
 	Repository *repositories.Repositories,
 	Requester githubreq.Requester,
+	MFSRequester	mfsreq.Requester,
 	) apibuilder.ApiBulder {
 	return &Api{
 		Repository: Repository,
 		Requester: Requester,
+		MFSRequester: MFSRequester,
 	}
 }
 
@@ -57,7 +64,34 @@ func getUint(v url.Values, name string) uint64 {
 }
 
 func (a *Api) beforeDelete(v interface{}) error {
-	// TODO
+	log.Info("Before delete!")
+	switch v.(type) {
+	case estimate.EstimateFile:
+		est, _ := v.(estimate.EstimateFile)
+		if err := a.MFSRequester.DeleteFile(est.FileID); err != nil {
+			return err
+		}
+	case []estimate.EstimateFile:
+		ests, _ := v.([]estimate.EstimateFile)
+		for _, est := range ests {
+			if err := a.MFSRequester.DeleteFile(est.FileID); err != nil {
+				return err
+			}
+		}
+	case functask.FuncTaskFile:
+		task, _ := v.(functask.FuncTaskFile)
+		if err := a.MFSRequester.DeleteFile(task.FileID); err != nil {
+			return err
+		}
+	case []functask.FuncTaskFile:
+		tasks, _ := v.([]functask.FuncTaskFile)
+		for _, task := range tasks {
+			if err := a.MFSRequester.DeleteFile(task.FileID); err != nil {
+				return err
+			}
+		}
+	default:
+	}
 	return nil
 }
 
