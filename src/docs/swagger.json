@@ -164,6 +164,12 @@
                             "$ref": "#/definitions/err.Message"
                         }
                     },
+                    "409": {
+                        "description": "some problems with microfileservice",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
                     "500": {
                         "description": "Failed to delete estimate",
                         "schema": {
@@ -251,6 +257,12 @@
                             "$ref": "#/definitions/err.Message"
                         }
                     },
+                    "409": {
+                        "description": "some problems with microfileservice",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
                     "500": {
                         "description": "Failed to delete func task",
                         "schema": {
@@ -288,6 +300,45 @@
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "delete project by id and all milestones in it",
+                "tags": [
+                    "projects"
+                ],
+                "summary": "delete project by id",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "id of project",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "409": {
+                        "description": "some problems with microfileservice",
                         "schema": {
                             "$ref": "#/definitions/err.Message"
                         }
@@ -353,7 +404,7 @@
         "estimate.EstimateFile": {
             "type": "object",
             "properties": {
-                "file_id": {
+                "id": {
                     "type": "string"
                 },
                 "milestone_id": {
@@ -375,7 +426,7 @@
         "functask.FuncTaskFile": {
             "type": "object",
             "properties": {
-                "file_id": {
+                "id": {
                     "type": "string"
                 },
                 "milestone_id": {

@@ -435,6 +435,25 @@ func (a *Api) GetProject(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
+// DeleteProjects
+// 
+// @Summary delete project by id
+// 
+// @Description delete project by id and all milestones in it
+// 
+// @Tags projects
+// 
+// @Router /api/v1/projects/{id} [delete]
+// 
+// @Param id path integer true "id of project"
+// 
+// @Success 200
+// 
+// @Failure 404 {object} e.Message
+// 
+// @Failure 500 {object} e.Message
+// 
+// @Failure 409 {object} e.Message "some problems with microfileservice"
 func (a *Api) DeleteProject(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 

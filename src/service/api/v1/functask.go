@@ -120,6 +120,8 @@ func (a *Api) AddFuncTask(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} e.Message "func task not found"
 // 
 // @Failure 500 {object} e.Message "Failed to delete func task"
+// 
+// @Failure 409 {object} e.Message "some problems with microfileservice"
 func (a *Api) DeleteFuncTask(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 

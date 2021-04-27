@@ -31,7 +31,7 @@ definitions:
     type: object
   estimate.EstimateFile:
     properties:
-      file_id:
+      id:
         type: string
       milestone_id:
         type: integer
@@ -45,7 +45,7 @@ definitions:
     type: object
   functask.FuncTaskFile:
     properties:
-      file_id:
+      id:
         type: string
       milestone_id:
         type: integer
@@ -288,6 +288,32 @@ paths:
       tags:
       - projects
   /api/v1/projects/{id}:
+    delete:
+      description: delete project by id and all milestones in it
+      parameters:
+      - description: id of project
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: ""
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/err.Message'
+        "409":
+          description: some problems with microfileservice
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: delete project by id
+      tags:
+      - projects
     get:
       description: return a project according to id value in path
       parameters:
@@ -366,6 +392,10 @@ paths:
           description: estimate not found
           schema:
             $ref: '#/definitions/err.Message'
+        "409":
+          description: some problems with microfileservice
+          schema:
+            $ref: '#/definitions/err.Message'
         "500":
           description: Failed to delete estimate
           schema:
@@ -423,6 +453,10 @@ paths:
           description: ""
         "404":
           description: func task not found
+          schema:
+            $ref: '#/definitions/err.Message'
+        "409":
+          description: some problems with microfileservice
           schema:
             $ref: '#/definitions/err.Message'
         "500":

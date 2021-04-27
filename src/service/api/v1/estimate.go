@@ -121,6 +121,8 @@ func (a *Api) AddEstimate(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} e.Message "estimate not found"
 // 
 // @Failure 500 {object} e.Message "Failed to delete estimate"
+// 
+// @Failure 409 {object} e.Message "some problems with microfileservice"
 func (a *Api) DeleteEstimate(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
