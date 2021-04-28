@@ -104,6 +104,49 @@ definitions:
       user:
         $ref: '#/definitions/user.User'
     type: object
+  milestone.IssuesWithMilestoneID:
+    properties:
+      assignees:
+        items:
+          $ref: '#/definitions/assignee.Assignee'
+        type: array
+      body:
+        type: string
+      closed_at:
+        type: string
+      created_at:
+        type: string
+      deleted:
+        type: boolean
+      html_url:
+        type: string
+      id:
+        type: integer
+      labels:
+        items:
+          $ref: '#/definitions/label.Label'
+        type: array
+      milestone_id:
+        type: integer
+      number:
+        type: integer
+      project_path:
+        type: string
+      pull_request:
+        $ref: '#/definitions/pullrequest.PullRequest'
+      repo_id:
+        type: integer
+      reppath:
+        type: string
+      state:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/user.User'
+    type: object
   milestone.Milestone:
     properties:
       closed_issues:
@@ -403,6 +446,37 @@ paths:
       summary: delete estimate from database
       tags:
       - estimate
+  /api/v1/projects/issues:
+    get:
+      description: return issues according to query params
+      parameters:
+      - description: represent how mush skip first issues
+        in: query
+        name: start
+        type: integer
+      - description: set limit of getting issues
+        in: query
+        name: count
+        type: integer
+      - description: search to name of issues, title of milestones and repository
+          names
+        in: query
+        name: name
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/milestone.IssuesWithMilestoneID'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: return issues
+      tags:
+      - issues
   /api/v1/projects/tags:
     get:
       description: return all tags

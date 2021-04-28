@@ -196,6 +196,52 @@ var doc = `{
                 }
             }
         },
+        "/api/v1/projects/issues": {
+            "get": {
+                "description": "return issues according to query params",
+                "tags": [
+                    "issues"
+                ],
+                "summary": "return issues",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "represent how mush skip first issues",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "set limit of getting issues",
+                        "name": "count",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "search to name of issues, title of milestones and repository names",
+                        "name": "name",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/milestone.IssuesWithMilestoneID"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/projects/tags": {
             "get": {
                 "description": "return all tags",
@@ -544,6 +590,71 @@ var doc = `{
                 },
                 "pull_request": {
                     "$ref": "#/definitions/pullrequest.PullRequest"
+                },
+                "reppath": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/user.User"
+                }
+            }
+        },
+        "milestone.IssuesWithMilestoneID": {
+            "type": "object",
+            "properties": {
+                "assignees": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/assignee.Assignee"
+                    }
+                },
+                "body": {
+                    "type": "string"
+                },
+                "closed_at": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "deleted": {
+                    "type": "boolean"
+                },
+                "html_url": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "labels": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/label.Label"
+                    }
+                },
+                "milestone_id": {
+                    "type": "integer"
+                },
+                "number": {
+                    "type": "integer"
+                },
+                "project_path": {
+                    "type": "string"
+                },
+                "pull_request": {
+                    "$ref": "#/definitions/pullrequest.PullRequest"
+                },
+                "repo_id": {
+                    "type": "integer"
                 },
                 "reppath": {
                     "type": "string"
