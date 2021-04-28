@@ -22,7 +22,7 @@ type MilestoneFromGH struct {
 
 type Milestone struct {
 	MilestoneFromGH						`bson:",inline"`
-	Issues 			[]Issue				`json:"issues"`
+	Issues 			[]Issue				`json:"issues" bson:"-"`
 	Estimate 		*estimate.Estimate 	`json:"estimate" bson:"-"`
 	FuncTask		*functask.FuncTask	`json:"func_task" bson:"-"`
 	Deleted			bool				`json:"deleted" bson:"deleted"`
@@ -68,4 +68,5 @@ type IssueFromGH struct {
 type IssuesWithMilestoneID struct {
 	MilestoneID			uint64		`json:"milestone_id" bson:"milestone_id"`
 	Issue							`bson:",inline"`
+	Deleted				bool		`json:"deleted" bson:"deleted"`
 }
