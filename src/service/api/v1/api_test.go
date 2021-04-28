@@ -567,3 +567,27 @@ func TestFunc_GetTags(t *testing.T) {
 	t.Log(tags)
 	t.Log(len(tags))
 }
+
+func TestFunc_GetIssues(t *testing.T) {
+	req := httptest.NewRequest("GET", "/api/v1/projects/issues?start=0&count=10", nil)
+
+	w := httptest.NewRecorder()
+
+	Router.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusOK {
+		t.Log(w.Result().StatusCode)
+		t.FailNow()
+	}
+
+	var is []milestone.IssuesWithMilestoneID
+
+	json.NewDecoder(w.Body).Decode(&is)
+
+	for _, i := range is {
+		t.Log(i.CreatedAt)
+	}
+
+	t.Log(len(is))
+
+}
