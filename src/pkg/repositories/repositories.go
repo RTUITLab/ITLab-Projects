@@ -1,18 +1,20 @@
 package repositories
 
 import (
-	"github.com/ITLab-Projects/pkg/repositories/tags"
+	"context"
+	"errors"
+	"time"
+
 	"github.com/ITLab-Projects/pkg/repositories/estimates"
 	"github.com/ITLab-Projects/pkg/repositories/functasks"
-	"github.com/ITLab-Projects/pkg/repositories/realeses"
+	"github.com/ITLab-Projects/pkg/repositories/issues"
 	"github.com/ITLab-Projects/pkg/repositories/milestones"
-	"errors"
+	"github.com/ITLab-Projects/pkg/repositories/realeses"
 	"github.com/ITLab-Projects/pkg/repositories/repos"
+	"github.com/ITLab-Projects/pkg/repositories/tags"
 	"github.com/ITLab-Projects/pkg/repositories/utils"
-	"time"
-	"context"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 
@@ -23,6 +25,7 @@ type Repositories struct {
 	FuncTask 	functasks.FuncTaskRepositorier
 	Estimate 	estimates.EstimateRepositorier
 	Tag			tags.Tager
+	Issue		issues.Issuer
 }
 
 type Config struct {
@@ -61,6 +64,7 @@ func New(cfg *Config) (*Repositories, error) {
 	estimeCollection := client.Database(dbName).Collection("estimate")
 	funcTaskCollection := client.Database(dbName).Collection("functask")
 	tagCollection := client.Database(dbName).Collection("tags")
+	issueCollection := client.Database(dbName).Collection("issues")
 	return &Repositories{
 		Repo: repos.New(reposCollection),
 		Milestone: milestones.New(milestoneCollection),
@@ -68,6 +72,7 @@ func New(cfg *Config) (*Repositories, error) {
 		Estimate: estimates.New(estimeCollection),
 		FuncTask: functasks.New(funcTaskCollection),
 		Tag: tags.New(tagCollection),
+		Issue: issues.New(issueCollection),
 	}, 
 	nil
 }

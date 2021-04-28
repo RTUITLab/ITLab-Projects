@@ -377,3 +377,63 @@ func TestFunc_SaveAndDeleteUnfindTags(t *testing.T) {
 		t.FailNow()
 	}
 }
+
+func TestFunc_SaveAndDeleteUnfindTIssue(t *testing.T) {
+	Repositories.Issue.DeleteOne(
+		context.Background(),
+		bson.M{"id": 1},
+		nil,
+		options.Delete(),	
+	)
+	var issues []milestone.IssuesWithMilestoneID
+	if err := Repositories.Issue.GetAll(&issues); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if err := Repositories.Issue.Save(
+		milestone.IssuesWithMilestoneID {
+			MilestoneID: 12,
+			Issue: milestone.Issue{
+				Title: "Mock-Issue",
+				ID: 1,
+			},
+		},
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	ctx, _ := context.WithTimeout(
+		context.Background(),
+		10*time.Second,
+	)
+
+	if err := Repositories.Issue.SaveAndUpdatenUnfind(
+		ctx,
+		issues,
+		bson.M{"$set": bson.M{"deleted": true}},
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	var issue milestone.IssuesWithMilestoneID
+
+	if err := Repositories.Issue.GetOne(
+		context.Background(),
+		bson.M{"id": 1},
+		func(sr *mongo.SingleResult) error {
+			return sr.Decode(&issue)
+		},
+		options.FindOne(),
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if !issue.Deleted {
+		t.Log("Failed assert")
+		t.FailNow()
+	}
+}
