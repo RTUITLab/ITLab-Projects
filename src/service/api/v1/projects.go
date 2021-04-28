@@ -668,15 +668,42 @@ func (a *Api) deleteMilestones(
 		return err
 	}
 
+	if err := a.deleteTags(
+		ctx,
+		repoid,
+	); err != nil {
+		return err
+	}
+
+	if err := a.deleteIssues(
+		ctx,
+		repoid,
+	); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (a *Api) deleteTags(ctx context.Context, repoid uint64) error {
 	if err := a.Repository.Tag.DeleteMany(
 		ctx,
-		bson.M{"repoi_d": repoid},
+		bson.M{"repo_id": repoid},
 		nil,
 		options.Delete(),
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *Api) deleteIssues(ctx context.Context, repoid uint64) error {
+	if err := a.Repository.Issue.DeleteMany(
+		ctx,
+		bson.M{"repo_id": repoid},
+		nil,
+		options.Delete(),	
 	); err != nil {
 		return err
 	}
