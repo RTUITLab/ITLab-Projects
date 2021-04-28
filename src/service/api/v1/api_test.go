@@ -439,7 +439,7 @@ func TestFunc_GetProject(t *testing.T) {
 	API.Repository.Estimate.Save(estimate.EstimateFile{
 		MilestoneFile: milestonefile.MilestoneFile{
 			MilestoneID: 5916375,
-			FileID: primitive.NewObjectID(),
+			FileID:      primitive.NewObjectID(),
 		},
 	})
 	req := httptest.NewRequest("GET", "/api/v1/projects/144718606", nil)
@@ -492,8 +492,8 @@ func TestFunc_ParseTime(t *testing.T) {
 }
 
 func TestFunc_DeleteProject(t *testing.T) {
-	rep := repo.Repo {
-		ID: 12,
+	rep := repo.Repo{
+		ID:   12,
 		Name: "Mock-Repo",
 	}
 
@@ -502,11 +502,11 @@ func TestFunc_DeleteProject(t *testing.T) {
 		t.FailNow()
 	}
 
-	m := milestone.MilestoneInRepo {
+	m := milestone.MilestoneInRepo{
 		RepoID: 12,
 		Milestone: milestone.Milestone{
 			MilestoneFromGH: milestone.MilestoneFromGH{
-				ID: 3,
+				ID:    3,
 				Title: "Mock-milestone",
 			},
 		},
@@ -517,10 +517,10 @@ func TestFunc_DeleteProject(t *testing.T) {
 		t.FailNow()
 	}
 
-	task := functask.FuncTaskFile {
+	task := functask.FuncTaskFile{
 		MilestoneFile: milestonefile.MilestoneFile{
 			MilestoneID: 3,
-			FileID: primitive.NewObjectID(),
+			FileID:      primitive.NewObjectID(),
 		},
 	}
 
@@ -529,10 +529,10 @@ func TestFunc_DeleteProject(t *testing.T) {
 		t.FailNow()
 	}
 
-	est := estimate.EstimateFile {
+	est := estimate.EstimateFile{
 		MilestoneFile: milestonefile.MilestoneFile{
 			MilestoneID: 3,
-			FileID: primitive.NewObjectID(),
+			FileID:      primitive.NewObjectID(),
 		},
 	}
 
@@ -573,7 +573,7 @@ func TestFunc_GetTags(t *testing.T) {
 }
 
 func TestFunc_GetIssues(t *testing.T) {
-	req := httptest.NewRequest("GET", "/api/v1/projects/issues?start=0&count=10", nil)
+	req := httptest.NewRequest("GET", "/api/v1/projects/issues?start=0&count=177&name=WebVRShoot", nil)
 
 	w := httptest.NewRecorder()
 
