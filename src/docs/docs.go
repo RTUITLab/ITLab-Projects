@@ -199,6 +199,9 @@ var doc = `{
         "/api/v1/projects/issues": {
             "get": {
                 "description": "return issues according to query params",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "issues"
                 ],

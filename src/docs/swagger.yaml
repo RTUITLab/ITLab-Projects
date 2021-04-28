@@ -463,6 +463,8 @@ paths:
         in: query
         name: name
         type: string
+      produces:
+      - application/json
       responses:
         "200":
           description: OK

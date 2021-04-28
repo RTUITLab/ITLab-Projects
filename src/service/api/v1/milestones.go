@@ -21,6 +21,8 @@ import (
 // 
 // @Tags issues
 // 
+// @Produce json
+// 
 // @Description return issues according to query params
 // 
 // @Router /api/v1/projects/issues [get]
