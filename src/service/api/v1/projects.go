@@ -938,13 +938,14 @@ func getIssuesFromMilestone(ms []milestone.MilestoneInRepo) []milestone.IssuesWi
 	for _, m := range ms {
 		for i, _ := range m.Issues {
 			wg.Add(1)
-			go func(wg *sync.WaitGroup, i *milestone.Issue, MID uint64) {
+			go func(wg *sync.WaitGroup, i *milestone.Issue, MID , RepoID uint64) {
 				defer wg.Done()
 				is = append(is, milestone.IssuesWithMilestoneID{
 					MilestoneID: MID,
+					RepoID: RepoID,
 					Issue: *i,
 				})
-			}(&wg, &m.Issues[i], m.ID)
+			}(&wg, &m.Issues[i], m.ID, m.RepoID)
 		}
 	}
 	wg.Wait()
