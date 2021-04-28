@@ -18,6 +18,7 @@ import (
 	"github.com/ITLab-Projects/pkg/models/milestonefile"
 	"github.com/ITLab-Projects/pkg/models/repo"
 	"github.com/ITLab-Projects/pkg/models/repoasproj"
+	"github.com/ITLab-Projects/pkg/models/tag"
 	"github.com/ITLab-Projects/pkg/repositories"
 	v1 "github.com/ITLab-Projects/service/api/v1"
 	"github.com/gorilla/mux"
@@ -546,4 +547,23 @@ func TestFunc_DeleteProject(t *testing.T) {
 		t.Log(w.Result().StatusCode)
 		t.FailNow()
 	}
+}
+
+func TestFunc_GetTags(t *testing.T) {
+	req := httptest.NewRequest("GET", "/api/v1/projects/tags", nil)
+
+	w := httptest.NewRecorder()
+
+	Router.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusOK {
+		t.Log(w.Result().StatusCode)
+		t.FailNow()
+	}
+
+	var tags []tag.Tag
+	json.NewDecoder(w.Body).Decode(&tags)
+
+	t.Log(tags)
+	t.Log(len(tags))
 }

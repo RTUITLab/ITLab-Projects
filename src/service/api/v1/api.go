@@ -45,6 +45,7 @@ func (a *Api) Build(r *mux.Router) {
 	requester.HandleFunc("/", a.GetProjects).Methods("GET")
 	requester.HandleFunc("/{id:[0-9]+}", a.GetProject).Methods("GET")
 	requester.HandleFunc("/{id:[0-9]+}", a.DeleteProject).Methods("DELETE")
+	requester.HandleFunc("/tags", a.GetTags).Methods("GET")
 }
 
 
