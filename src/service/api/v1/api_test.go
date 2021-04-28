@@ -459,7 +459,11 @@ func TestFunc_GetProject(t *testing.T) {
 		t.FailNow()
 	}
 
-	t.Log(proj)
+	for _, m := range proj.Milestones {
+		t.Log(m.Title)
+		t.Log(m.Issues)
+		t.Log(len(m.Issues))
+	}
 }
 
 func TestFunc_GetProject_NotFound(t *testing.T) {

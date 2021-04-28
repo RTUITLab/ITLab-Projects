@@ -1,45 +1,47 @@
 package v1
 
 import (
-	"github.com/ITLab-Projects/pkg/mfsreq"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
 	"sort"
 	"strconv"
-	"github.com/gorilla/mux"
-	"fmt"
-	"github.com/ITLab-Projects/pkg/models/repoasproj"
-	"github.com/ITLab-Projects/pkg/models/estimate"
 	"strings"
-	"github.com/ITLab-Projects/pkg/models/functask"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/bson"
-	"errors"
-	"github.com/ITLab-Projects/pkg/models/repo"
+	"sync"
 	_ "time"
-	"github.com/ITLab-Projects/pkg/models/tag"
-	"github.com/ITLab-Projects/pkg/models/realese"
-	"github.com/ITLab-Projects/pkg/models/milestone"
-	"encoding/json"
-	"github.com/ITLab-Projects/pkg/githubreq"
+
 	e "github.com/ITLab-Projects/pkg/err"
-	"context"
-	"net/http"
+	"github.com/ITLab-Projects/pkg/githubreq"
+	"github.com/ITLab-Projects/pkg/mfsreq"
+	"github.com/ITLab-Projects/pkg/models/estimate"
+	"github.com/ITLab-Projects/pkg/models/functask"
+	"github.com/ITLab-Projects/pkg/models/milestone"
+	"github.com/ITLab-Projects/pkg/models/realese"
+	"github.com/ITLab-Projects/pkg/models/repo"
+	"github.com/ITLab-Projects/pkg/models/repoasproj"
+	"github.com/ITLab-Projects/pkg/models/tag"
+	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // UpdateAllProjects
-// 
+//
 // @Tags projects
-// 
+//
 // @Summary Update all projects
-// 
+//
 // @Description make all request to github to update repositories, milestones
-// 
+//
 // @Router /api/v1/projects/ [post]
-// 
+//
 // @Success 200
-// 
+//
 // @Failure 409 {object} e.Err
-// 
+//
 // @Failure 500 {object} e.Message
 func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 	repos, err := a.Requester.GetRepositories()
@@ -198,6 +200,24 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 			},
 		)
 		prepare("UpdateAllProjects", err).Error("Can't save milestones")
+		return
+	}
+
+	// Get issues from milestones
+	is := getIssuesFromMilestone(ms)
+
+	if err := a.Repository.Issue.SaveAndUpdatenUnfind(
+		context.Background(),
+		is,
+		bson.M{"$set": bson.M{"deleted": true}},
+	); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			e.Message{
+				Message: "Can't save issues",
+			},
+		)
+		prepare("UpdateAllProjects", err).Error("Can't save issues")
 		return
 	}
 
@@ -872,7 +892,6 @@ func (a *Api) getAssetsForMilestones(ctx context.Context, ms *[]milestone.Milest
 		}
 
 		var f functask.FuncTaskFile
-
 		if err := a.Repository.FuncTask.GetOne(
 			ctx,
 			bson.M{"milestone_id": m.ID},
@@ -888,9 +907,49 @@ func (a *Api) getAssetsForMilestones(ctx context.Context, ms *[]milestone.Milest
 				FuncTaskURL: a.MFSRequester.GenerateDownloadLink(f.FileID),
 			}
 		}
+
+		var issues []milestone.Issue
+		if err := a.Repository.Issue.GetAllFiltered(
+			ctx,
+			bson.M{"milestone_id": m.ID},
+			func(c *mongo.Cursor) error {
+				return c.All(
+					ctx,
+					&issues,
+				)
+			},
+		); err == mongo.ErrNoDocuments {
+			// Pass
+		} else if err != nil {
+			return err
+		} else {
+			(*ms)[i].Issues = issues
+		}
 	}
 
 	return nil
+}
+
+func getIssuesFromMilestone(ms []milestone.MilestoneInRepo) []milestone.IssuesWithMilestoneID {
+	var is []milestone.IssuesWithMilestoneID
+
+	var wg sync.WaitGroup
+
+	for _, m := range ms {
+		for i, _ := range m.Issues {
+			wg.Add(1)
+			go func(wg *sync.WaitGroup, i *milestone.Issue, MID uint64) {
+				defer wg.Done()
+				is = append(is, milestone.IssuesWithMilestoneID{
+					MilestoneID: MID,
+					Issue: *i,
+				})
+			}(&wg, &m.Issues[i], m.ID)
+		}
+	}
+	wg.Wait()
+
+	return is
 }
 
 func (a *Api) buildFilterForTags(ctx context.Context, t string) (bson.M, error) {

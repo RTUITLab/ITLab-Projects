@@ -14,8 +14,7 @@ import (
 )
 
 func (a *Api) GetIssues(w http.ResponseWriter, r *http.Request) {
-	var ms []milestone.MilestoneInRepo
-
+	var issues []milestone.IssuesWithMilestoneID
 	values := r.URL.Query()
 
 	start := getUint(values, "start")
@@ -27,7 +26,7 @@ func (a *Api) GetIssues(w http.ResponseWriter, r *http.Request) {
 
 	ctx := context.Background()
 
-	if err := a.Repository.Milestone.GetAllFiltered(
+	if err := a.Repository.Issue.GetAllFiltered(
 		ctx,
 		bson.M{
 			"state": "open",
@@ -35,7 +34,7 @@ func (a *Api) GetIssues(w http.ResponseWriter, r *http.Request) {
 		func(c *mongo.Cursor) error {
 			if err := c.All(
 				ctx,
-				&ms,
+				&issues,
 			); err != nil {
 				return err
 			}
@@ -43,6 +42,7 @@ func (a *Api) GetIssues(w http.ResponseWriter, r *http.Request) {
 			return c.Err()
 		},
 		options.Find().
+		SetSort(bson.D{ {"createdat", -1}, {"deleted", 1}} ).
 		SetSkip(int64(start)).
 		SetLimit(int64(count)),
 	); err == mongo.ErrNoDocuments {
@@ -58,32 +58,7 @@ func (a *Api) GetIssues(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var is []milestone.IssuesWithMilestoneID
-
-	if len(ms) == 0 {
-		json.NewEncoder(w).Encode(
-			is,
-		)
-		return
-	}
-
-	for _, m := range ms {
-		for _, i := range m.Issues {
-			if i.State == "closed" {
-				continue
-			}
-
-			is = append(
-				is, 
-				milestone.IssuesWithMilestoneID{
-					MilestoneID: m.ID,
-					Issue: i,
-				},
-			)
-		}
-	}
-
 	json.NewEncoder(w).Encode(
-		is,
+		issues,
 	)	
 }
