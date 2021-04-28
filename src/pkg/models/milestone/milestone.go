@@ -64,3 +64,8 @@ type IssueFromGH struct {
 	Issue
 	Milestone *MilestoneFromGH 				`json:"milestone,omitempty"`
 }
+
+type IssuesWithMilestoneID struct {
+	MilestoneID			uint64		`json:"milestone_id" bson:"milestone_id"`
+	Issue							`bson:",inline"`
+}
