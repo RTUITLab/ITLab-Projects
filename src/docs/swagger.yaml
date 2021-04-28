@@ -403,6 +403,25 @@ paths:
       summary: delete estimate from database
       tags:
       - estimate
+  /api/v1/projects/tags:
+    get:
+      description: return all tags
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/tag.Tag'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: return all tags
+      tags:
+      - tags
   /api/v1/projects/task:
     post:
       consumes:
