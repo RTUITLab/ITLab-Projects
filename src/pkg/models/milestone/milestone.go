@@ -67,6 +67,7 @@ type IssueFromGH struct {
 
 type IssuesWithMilestoneID struct {
 	MilestoneID			uint64		`json:"milestone_id" bson:"milestone_id"`
+	RepoID				uint64		`json:"repo_id" bson:"repo_id"`
 	Issue							`bson:",inline"`
 	Deleted				bool		`json:"deleted" bson:"deleted"`
 }
