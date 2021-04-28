@@ -23,7 +23,7 @@ type GetOner interface {
 }
 
 type GetAller interface {
-	GetAll(reps interface{}) error
+	GetAll(interface{}) error
 }
 
 type GetAllerFiltered interface {
