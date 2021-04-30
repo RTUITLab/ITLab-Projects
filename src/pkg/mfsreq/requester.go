@@ -7,14 +7,33 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
-	"github.com/ITLab-Projects/pkg/clientwrapper"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+var mfsclient *http.Client
+
+func init() {
+	mfsclient =  &http.Client{
+	 	Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			MaxIdleConnsPerHost: 20,
+		},
+	}
+}
+
 type Requester interface {
-	DeleteFile(ID primitive.ObjectID) error
+	NewRequests(req *http.Request) Requests
 	GenerateDownloadLink(ID primitive.ObjectID) string
+}
+
+type Requests interface {
+	FileDeleter
+}
+
+type FileDeleter interface {
+	DeleteFile(ID primitive.ObjectID) error
 }
 
 type Config struct {
@@ -25,41 +44,32 @@ type Config struct {
 type MFSRequester struct {
 	baseURL		string
 
-	clientWithWrap *clientwrapper.ClientWithWrap
-
-	client *http.Client
-	// TODO send user token
 	TestMode	bool
 }
 
-func New(cfg *Config) *MFSRequester {
-	r := &MFSRequester{
-		baseURL: cfg.BaseURL,
-		client: &http.Client{
-			Timeout: 10 * time.Second,
-			Transport: &http.Transport{
-				MaxIdleConnsPerHost: 20,
-			},
-		},
-	}
+type MFSRequests struct {
+	baseURL 	string
 
-	r.clientWithWrap = clientwrapper.New(r.client)
-	r.TestMode = cfg.TestMode
+	req *http.Request
 
-	return r
+	TestMode	bool
 }
 
-func (r *MFSRequester) DeleteFile(ID primitive.ObjectID) error {
-	if r.TestMode {
+func (mfs *MFSRequests) DeleteFile(ID primitive.ObjectID) error {
+	if mfs.TestMode {
+		logrus.Info("TestMode activated")
+		logrus.Info(mfs.req.Header)
 		return nil
 	}
 
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/delete/%s", r.baseURL, ID.Hex()), nil)
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/delete/%s", mfs.baseURL, ID.Hex()), nil)
 	if err != nil {
 		return err
 	}
 
-	resp, err := r.clientWithWrap.Do(req)
+	req.Header = mfs.req.Header.Clone()
+
+	resp, err := mfsclient.Do(req)
 	if _, ok := err.(net.Error); ok {
 		return errors.Wrapf(NetError, "%v", err)
 	} else if err != nil {
@@ -73,6 +83,25 @@ func (r *MFSRequester) DeleteFile(ID primitive.ObjectID) error {
 		}
 	}
 	return nil
+}
+
+
+func New(cfg *Config) *MFSRequester {
+	r := &MFSRequester{
+		baseURL: cfg.BaseURL,
+	}
+
+	r.TestMode = cfg.TestMode
+
+	return r
+}
+
+func (r *MFSRequester) NewRequests(req *http.Request) Requests {
+	return &MFSRequests {
+		baseURL: r.baseURL,
+		TestMode: r.TestMode,
+		req: req,
+	}
 }
 
 func (r *MFSRequester) GenerateDownloadLink(ID primitive.ObjectID) string {
