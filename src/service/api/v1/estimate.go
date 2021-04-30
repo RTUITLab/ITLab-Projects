@@ -150,7 +150,7 @@ func (a *Api) DeleteEstimate(w http.ResponseWriter, r *http.Request) {
 	if err := a.deleteEstimate(
 		ctx,
 		milestoneID,
-		a.beforeDelete,
+		a.beforeDeleteWithReq(r),
 	); err == mongo.ErrNoDocuments {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(

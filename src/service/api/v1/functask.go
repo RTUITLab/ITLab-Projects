@@ -149,7 +149,7 @@ func (a *Api) DeleteFuncTask(w http.ResponseWriter, r *http.Request) {
 	if err := a.deleteFuncTask(
 		ctx,
 		milestoneID,
-		a.beforeDelete,
+		a.beforeDeleteWithReq(r),
 	); err == mongo.ErrNoDocuments {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(

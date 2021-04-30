@@ -516,7 +516,7 @@ func (a *Api) DeleteProject(w http.ResponseWriter, r *http.Request) {
 	if err := a.deleteMilestones(
 		context.Background(),
 		rep.ID,
-		a.beforeDelete,
+		a.beforeDeleteWithReq(r),
 	); err == mongo.ErrNoDocuments {
 		// Pass
 	} else if errors.Is(err, mfsreq.NetError) {
