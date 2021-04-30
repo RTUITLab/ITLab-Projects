@@ -19,6 +19,10 @@ func main() {
 	app := app.New(cfg)
 	app.AddApi(
 		v1.New(
+			v1.Config{
+				cfg.App.TestMode,
+				*cfg.Auth,
+			},
 			app.Repository,
 			app.Requester,
 			app.MFSRequester,
