@@ -61,6 +61,7 @@ func init() {
 	logrus.Info(token)
 
 	API = &v1.Api{
+		Testmode: true,
 		Requester:  requster,
 		Repository: _r,
 		MFSRequester: mfsreq.New(
