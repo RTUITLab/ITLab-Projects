@@ -56,6 +56,17 @@ func (a *Api) AddEstimate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if est.FileID.IsZero() {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(
+			e.Message {
+				Message: "id is not an objectid",
+			},
+		)
+		prepare("AddEstimate", fmt.Errorf("id is not an objectid")).Warn()
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
 		10 * time.Second,
