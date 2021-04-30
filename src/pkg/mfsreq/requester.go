@@ -28,7 +28,7 @@ type MFSRequester struct {
 	clientWithWrap *clientwrapper.ClientWithWrap
 
 	client *http.Client
-
+	// TODO send user token
 	TestMode	bool
 }
 
