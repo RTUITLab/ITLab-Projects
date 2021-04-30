@@ -32,7 +32,13 @@ type AuthConfig struct {
 	Audience	string		`envconfig:"ITLABPROJ_AUDIENCE" json:"audience"`
 	Issuer		string		`envconfig:"ITLABPROJ_ISSUER" json:"issuer"`
 	Scope		string		`envconfig:"ITLABPROJ_SCOPE" json:"scope"`
+	*RolesConfig
 	Github		Github		`json:"Github"`
+}
+
+type RolesConfig struct {
+	// looks like roles = "admin user" parse to ["admin", "user"]
+	Roles string			`envconfig:"ITLABPROJ_ROLES" json:"roles"`
 }
 
 type Github struct {
