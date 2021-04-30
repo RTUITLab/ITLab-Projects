@@ -337,6 +337,7 @@ func TestFunc_DeleteFuncTask_NotFound(t *testing.T) {
 func TestFunc_DeleteFuncTask(t *testing.T) {
 	req := httptest.NewRequest("DELETE", "/api/v1/projects/task/2", nil)
 
+	req.Header.Add("Test", "OOOOO")
 	w := httptest.NewRecorder()
 
 	Router.ServeHTTP(w, req)
