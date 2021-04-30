@@ -48,6 +48,7 @@ func New(cfg *config.Config) *App {
 	app.MFSRequester = mfsreq.New(
 		&mfsreq.Config{
 			BaseURL: cfg.Services.MFS.BaseURL,
+			TestMode: cfg.App.TestMode,
 		},
 	)
 
