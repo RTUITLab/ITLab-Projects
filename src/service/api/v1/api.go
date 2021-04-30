@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"github.com/ITLab-Projects/pkg/config"
+	"github.com/ITLab-Projects/service/middleware/auth"
 	"net/url"
 	"strconv"
 
@@ -20,33 +22,61 @@ type Api struct {
 	Repository 		*repositories.Repositories
 	Requester 		githubreq.Requester
 	MFSRequester	mfsreq.Requester
+	Testmode		bool
+	Auth auth.AuthMiddleware
+}
+
+type Config struct {
+	Testmode bool
+	Config config.AuthConfig
 }
 
 func New(
+	cfg Config,
 	Repository *repositories.Repositories,
 	Requester githubreq.Requester,
 	MFSRequester	mfsreq.Requester,
 	) apibuilder.ApiBulder {
-	return &Api{
+	a := &Api{
 		Repository: Repository,
 		Requester: Requester,
 		MFSRequester: MFSRequester,
 	}
+
+	a.Auth = auth.New(cfg.Config)
+	a.Testmode = cfg.Testmode
+
+	return a
 }
 
 func (a *Api) Build(r *mux.Router) {
-	requester := r.PathPrefix("/api/v1/projects").Subrouter()
 
-	requester.HandleFunc("/", a.UpdateAllProjects).Methods("POST")
-	requester.HandleFunc("/task", a.AddFuncTask).Methods("POST")
-	requester.HandleFunc("/estimate", a.AddEstimate).Methods("POST")
-	requester.HandleFunc("/task/{milestone_id:[0-9]+}", a.DeleteFuncTask).Methods("DELETE")
-	requester.HandleFunc("/estimate/{milestone_id:[0-9]+}", a.DeleteEstimate).Methods("DELETE")
-	requester.HandleFunc("/", a.GetProjects).Methods("GET")
-	requester.HandleFunc("/{id:[0-9]+}", a.GetProject).Methods("GET")
-	requester.HandleFunc("/{id:[0-9]+}", a.DeleteProject).Methods("DELETE")
-	requester.HandleFunc("/tags", a.GetTags).Methods("GET")
-	requester.HandleFunc("/issues", a.GetIssues).Methods("GET")
+	projects := r.PathPrefix("/api/v1/projects").Subrouter()
+	admin := projects.NewRoute().Subrouter()
+
+	admin.HandleFunc("/", a.UpdateAllProjects).Methods("POST")
+	admin.HandleFunc("/task", a.AddFuncTask).Methods("POST")
+	admin.HandleFunc("/estimate", a.AddEstimate).Methods("POST")
+	admin.HandleFunc("/task/{milestone_id:[0-9]+}", a.DeleteFuncTask).Methods("DELETE")
+	admin.HandleFunc("/estimate/{milestone_id:[0-9]+}", a.DeleteEstimate).Methods("DELETE")
+	admin.HandleFunc("/{id:[0-9]+}", a.DeleteProject).Methods("DELETE")
+	
+	projects.HandleFunc("/", a.GetProjects).Methods("GET")
+	projects.HandleFunc("/{id:[0-9]+}", a.GetProject).Methods("GET")
+
+
+	projects.HandleFunc("/tags", a.GetTags).Methods("GET")
+	projects.HandleFunc("/issues", a.GetIssues).Methods("GET")
+
+	if !a.Testmode {
+		projects.Use(
+			mux.MiddlewareFunc(a.Auth),
+		)
+		
+		admin.Use(
+			auth.AdminMiddleware,
+		)
+	}
 }
 
 
