@@ -70,6 +70,12 @@ var doc = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
                     "500": {
                         "description": "Failed to get repositories",
                         "schema": {
@@ -87,6 +93,18 @@ var doc = `{
                 "responses": {
                     "200": {
                         "description": ""
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "403": {
+                        "description": "if you are nor admin",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
                     },
                     "409": {
                         "description": "Conflict",
@@ -137,6 +155,18 @@ var doc = `{
                             "$ref": "#/definitions/err.Message"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "403": {
+                        "description": "if you are nor admin",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
                     "404": {
                         "description": "Don't find milestone with this id",
                         "schema": {
@@ -174,6 +204,18 @@ var doc = `{
                 "responses": {
                     "200": {
                         "description": ""
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "403": {
+                        "description": "if you are nor admin",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
                     },
                     "404": {
                         "description": "estimate not found",
@@ -236,6 +278,12 @@ var doc = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -263,6 +311,12 @@ var doc = `{
                             "items": {
                                 "$ref": "#/definitions/tag.Tag"
                             }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
                         }
                     },
                     "500": {
@@ -308,6 +362,18 @@ var doc = `{
                             "$ref": "#/definitions/err.Message"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "403": {
+                        "description": "if you are nor admin",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
                     "404": {
                         "description": "Don't find milestone with this id",
                         "schema": {
@@ -345,6 +411,18 @@ var doc = `{
                 "responses": {
                     "200": {
                         "description": ""
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "403": {
+                        "description": "if you are nor admin",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
                     },
                     "404": {
                         "description": "func task not found",
@@ -393,6 +471,12 @@ var doc = `{
                             "$ref": "#/definitions/repoasproj.RepoAsProj"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -425,6 +509,18 @@ var doc = `{
                 "responses": {
                     "200": {
                         "description": ""
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "403": {
+                        "description": "if you are nor admin",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
                     },
                     "404": {
                         "description": "Not Found",

@@ -307,6 +307,10 @@ paths:
             items:
               $ref: '#/definitions/repoasproj.RepoAsProjCompact'
             type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
         "500":
           description: Failed to get repositories
           schema:
@@ -319,6 +323,14 @@ paths:
       responses:
         "200":
           description: ""
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "403":
+          description: if you are nor admin
+          schema:
+            $ref: '#/definitions/err.Message'
         "409":
           description: Conflict
           schema:
@@ -342,6 +354,14 @@ paths:
       responses:
         "200":
           description: ""
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "403":
+          description: if you are nor admin
+          schema:
+            $ref: '#/definitions/err.Message'
         "404":
           description: Not Found
           schema:
@@ -372,6 +392,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/repoasproj.RepoAsProj'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
         "404":
           description: Not Found
           schema:
@@ -406,6 +430,14 @@ paths:
           description: Unexpected body
           schema:
             $ref: '#/definitions/err.Message'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "403":
+          description: if you are nor admin
+          schema:
+            $ref: '#/definitions/err.Message'
         "404":
           description: Don't find milestone with this id
           schema:
@@ -431,6 +463,14 @@ paths:
       responses:
         "200":
           description: ""
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "403":
+          description: if you are nor admin
+          schema:
+            $ref: '#/definitions/err.Message'
         "404":
           description: estimate not found
           schema:
@@ -472,6 +512,10 @@ paths:
             items:
               $ref: '#/definitions/milestone.IssuesWithMilestoneID'
             type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
         "500":
           description: Internal Server Error
           schema:
@@ -491,6 +535,10 @@ paths:
             items:
               $ref: '#/definitions/tag.Tag'
             type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
         "500":
           description: Internal Server Error
           schema:
@@ -521,6 +569,14 @@ paths:
           description: Unexpected body
           schema:
             $ref: '#/definitions/err.Message'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "403":
+          description: if you are nor admin
+          schema:
+            $ref: '#/definitions/err.Message'
         "404":
           description: Don't find milestone with this id
           schema:
@@ -546,6 +602,14 @@ paths:
       responses:
         "200":
           description: ""
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "403":
+          description: if you are nor admin
+          schema:
+            $ref: '#/definitions/err.Message'
         "404":
           description: func task not found
           schema:
