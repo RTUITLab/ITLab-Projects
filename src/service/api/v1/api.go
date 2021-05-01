@@ -1,10 +1,11 @@
 package v1
 
 import (
+	swag "github.com/swaggo/http-swagger"
 	"net/http"
 	"net/url"
 	"strconv"
-
+	_ "github.com/ITLab-Projects/docs"
 	"github.com/ITLab-Projects/pkg/config"
 	"github.com/ITLab-Projects/service/middleware/auth"
 
@@ -55,6 +56,7 @@ func New(
 }
 
 func (a *Api) Build(r *mux.Router) {
+	docs := r.PathPrefix("/swagger")
 
 	projects := r.PathPrefix("/api/v1/projects").Subrouter()
 	admin := projects.NewRoute().Subrouter()
@@ -81,7 +83,18 @@ func (a *Api) Build(r *mux.Router) {
 		admin.Use(
 			auth.AdminMiddleware,
 		)
+
+		docs.Handler(
+			a.Auth(
+				swag.WrapHandler,
+			),
+		)
+	} else {
+		docs.Handler(
+			swag.WrapHandler,
+		)
 	}
+	
 }
 
 
