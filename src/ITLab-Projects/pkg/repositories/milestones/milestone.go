@@ -90,7 +90,9 @@ func (m *MilestoneRepository) save(v interface{}) error {
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"id": milestone.ID}
 
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	
 	_, err := m.milestoneCollection.ReplaceOne(ctx, filter, milestone, opts)
 	if err != nil {
 		return err

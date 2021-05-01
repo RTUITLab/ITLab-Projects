@@ -54,10 +54,11 @@ func New(
 func (er *EstimateRepository) DeleteEstimatesNotIn(ms []milestone.MilestoneInRepo) error {
 	ids := milestone.GetIDS(ms)
 
-	ctx, _ := context.WithTimeout(
+	ctx, cancel := context.WithTimeout(
 		context.Background(),
 		10*time.Second,
 	)
+	defer cancel()
 
 	return er.DeleteMany(
 		ctx,
@@ -75,7 +76,9 @@ func (er *EstimateRepository) save(v interface{}) error {
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"milestone_id": estimate.MilestoneID}
 
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	
 	_, err := er.estimateColletion.ReplaceOne(ctx, filter, estimate, opts)
 	if err != nil {
 		return err

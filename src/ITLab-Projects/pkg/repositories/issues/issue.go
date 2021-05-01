@@ -77,7 +77,9 @@ func (i *IssueRepository) save(v interface{}) error {
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"id": issue.ID}
 
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	
 	_, err := i.issueCollection.ReplaceOne(ctx, filter, issue, opts)
 	if err != nil {
 		return err

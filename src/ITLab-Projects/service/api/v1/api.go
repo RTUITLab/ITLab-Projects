@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"net/http/pprof"
 	swag "github.com/swaggo/http-swagger"
 	"net/http"
 	"net/url"
@@ -93,6 +94,13 @@ func (a *Api) Build(r *mux.Router) {
 		docs.Handler(
 			swag.WrapHandler,
 		)
+		r.PathPrefix("/debug/").Handler(http.DefaultServeMux)
+		
+		r.HandleFunc("/debug/pprof/", pprof.Index)
+		r.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+		r.HandleFunc("/debug/pprof/profile", pprof.Profile)
+		r.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+		r.HandleFunc("/debug/pprof/trace", pprof.Trace)
 	}
 	
 }

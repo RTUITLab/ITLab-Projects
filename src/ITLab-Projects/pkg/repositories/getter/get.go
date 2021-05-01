@@ -62,14 +62,17 @@ func (g *Get) GetAll(reps interface{}) error {
 	}
 	
 	opts := options.Find()
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	cur, err := g.collection.Find(ctx, bson.M{}, opts)
 	if err != nil {
 		return err
 	}
 	defer cur.Close(context.Background())
 
-	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	if err := cur.All(ctx, reps); err != nil {
 		return err
 	}

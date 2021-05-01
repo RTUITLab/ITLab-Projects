@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	e "github.com/ITLab-Projects/pkg/err"
 	"github.com/sirupsen/logrus"
@@ -16,28 +17,28 @@ import (
 )
 
 // GetIssues
-// 
+//
 // @Summary return issues
-// 
+//
 // @Tags issues
-// 
+//
 // @Produce json
-// 
+//
 // @Description return issues according to query params
-// 
+//
 // @Router /api/v1/projects/issues [get]
-// 
+//
 // @Param start query integer false "represent how mush skip first issues"
-// 
+//
 // @Param count query integer false "set limit of getting issues"
-// 
+//
 // @Param name query string false "search to name of issues, title of milestones and repository names"
-// 
+//
 // @Success 200 {array} milestone.IssuesWithMilestoneID
-// 
+//
 // @Failure 500 {object} e.Message
-// 
-// @Failure 401 {object} e.Message 
+//
+// @Failure 401 {object} e.Message
 func (a *Api) GetIssues(w http.ResponseWriter, r *http.Request) {
 	var issues []milestone.IssuesWithMilestoneID
 	values := r.URL.Query()
@@ -55,7 +56,12 @@ func (a *Api) GetIssues(w http.ResponseWriter, r *http.Request) {
 
 	name := values.Get("name")
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		5*time.Second,
+	)
+
+	defer cancel()
 
 	if name != "" {
 		if _filter, err := a.buildFilterByNameForIssues(

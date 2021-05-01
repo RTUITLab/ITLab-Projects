@@ -38,7 +38,11 @@ func New(cfg *Config) (*Repositories, error) {
 		return nil, err
 	}
 
-	client, err := mongo.NewClient(options.Client().ApplyURI(URI))
+	client, err := mongo.NewClient(
+		options.Client().
+			ApplyURI(URI).SetMaxPoolSize(50).
+			SetMaxConnIdleTime(1*time.Minute),
+	)
 	if err != nil {
 		return nil, errors.New("Error on created client")
 	}

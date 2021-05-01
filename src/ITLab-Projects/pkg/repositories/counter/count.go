@@ -23,7 +23,9 @@ func (c *Count) Count() int64 {
 }
 
 func (c *Count) UpdateCount() (int64, error) {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	
 	count, err := c.collection.CountDocuments(ctx, bson.M{})
 	if err != nil {
 		return 0, err

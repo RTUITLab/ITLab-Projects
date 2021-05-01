@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 	_ "time"
 
 	e "github.com/ITLab-Projects/pkg/err"
@@ -43,9 +44,9 @@ import (
 // @Failure 409 {object} e.Err
 //
 // @Failure 500 {object} e.Message
-// 
-// @Failure 401 {object} e.Message 
-// 
+//
+// @Failure 401 {object} e.Message
+//
 // @Failure 403 {object} e.Message "if you are nor admin"
 func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 	repos, err := a.Requester.GetRepositories()
@@ -179,8 +180,12 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	close(msChan)
+	close(rsChan)
+	close(tgsChan)
+
 	if err := a.Repository.Repo.SaveAndUpdatenUnfind(
-		context.Background(),
+		ctx,
 		repo.ToRepo(repos),
 		bson.M{"$set": bson.M{"deleted": true}},
 	); err != nil {
@@ -193,7 +198,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := a.Repository.Milestone.SaveAndUpdatenUnfind(
-		context.Background(),
+		ctx,
 		ms,
 		bson.M{"$set": bson.M{"deleted": true}},
 	); err != nil {
@@ -211,7 +216,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 	is := getIssuesFromMilestone(ms)
 
 	if err := a.Repository.Issue.SaveAndUpdatenUnfind(
-		context.Background(),
+		ctx,
 		is,
 		bson.M{"$set": bson.M{"deleted": true}},
 	); err != nil {
@@ -289,7 +294,10 @@ func (a *Api) GetProjects(w http.ResponseWriter, r *http.Request) {
 	tag := values.Get("tag")
 	name := values.Get("name")
 
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(
+		context.Background(),
+	)
+	defer cancel()
 
 	if count == 0 {
 		count = uint64(a.Repository.Repo.Count())
@@ -329,7 +337,7 @@ func (a *Api) GetProjects(w http.ResponseWriter, r *http.Request) {
 		filter,
 		func(c *mongo.Cursor) error {
 			c.All(
-				context.Background(),
+				ctx,
 				&repos,
 			)
 			return c.Err()
@@ -398,7 +406,11 @@ func (a *Api) GetProject(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseUint(_id, 10, 64)
 
 	var repos []repo.Repo
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		5 * time.Second,
+	)
+	defer cancel()
 
 	if err := a.Repository.Repo.GetAllFiltered(
 		ctx,

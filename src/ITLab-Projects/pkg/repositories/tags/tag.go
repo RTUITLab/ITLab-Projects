@@ -75,10 +75,12 @@ func (tg *TagRepository) save(v interface{}) error {
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"repo_id": tag.RepoID}
 
-	ctx, _ := context.WithTimeout(
+	ctx, cancel := context.WithTimeout(
 		context.Background(),
 		10*time.Second,
 	)
+	defer cancel()
+	
 	_, err := tg.tagCollection.ReplaceOne(ctx, filter, tag, opts)
 	if err != nil {
 		return err

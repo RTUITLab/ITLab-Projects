@@ -53,10 +53,11 @@ func New(
 func (ftr *FuncTaskRepository) DeleteFuncTasksNotIn(ms []milestone.MilestoneInRepo) error {
 	ids := milestone.GetIDS(ms)
 
-	ctx, _ := context.WithTimeout(
+	ctx, cancel := context.WithTimeout(
 		context.Background(),
 		10*time.Second,
 	)
+	defer cancel()
 
 	return ftr.DeleteMany(
 		ctx,
@@ -74,7 +75,8 @@ func (ftr *FuncTaskRepository) save(v interface{}) error {
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"milestone_id": functask.MilestoneID}
 
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	_, err := ftr.funcTaskCollection.ReplaceOne(ctx, filter, functask, opts)
 	if err != nil {
 		return err
@@ -87,7 +89,8 @@ func (ftr *FuncTaskRepository) Delete(MilestoneID uint64) error {
 	opts := options.Delete()
 	filter := bson.M{"milestone_id": MilestoneID}
 
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	_, err := ftr.funcTaskCollection.DeleteOne(
 		ctx,
 		filter,
