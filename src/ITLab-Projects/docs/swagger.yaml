@@ -1,0 +1,628 @@
+definitions:
+  assignee.Assignee:
+    properties:
+      avatar_url:
+        type: string
+      html_url:
+        type: string
+      id:
+        type: integer
+      login:
+        type: string
+    type: object
+  err.Err:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  err.Message:
+    properties:
+      message:
+        type: string
+    type: object
+  estimate.Estimate:
+    properties:
+      estimate_url:
+        type: string
+      milestone_id:
+        type: integer
+    type: object
+  estimate.EstimateFile:
+    properties:
+      id:
+        type: string
+      milestone_id:
+        type: integer
+    type: object
+  functask.FuncTask:
+    properties:
+      func_task_url:
+        type: string
+      milestone_id:
+        type: integer
+    type: object
+  functask.FuncTaskFile:
+    properties:
+      id:
+        type: string
+      milestone_id:
+        type: integer
+    type: object
+  label.Label:
+    properties:
+      color:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      node_id:
+        type: string
+      type:
+        type: string
+      url:
+        type: string
+    type: object
+  milestone.Issue:
+    properties:
+      assignees:
+        items:
+          $ref: '#/definitions/assignee.Assignee'
+        type: array
+      body:
+        type: string
+      closed_at:
+        type: string
+      created_at:
+        type: string
+      html_url:
+        type: string
+      id:
+        type: integer
+      labels:
+        items:
+          $ref: '#/definitions/label.Label'
+        type: array
+      number:
+        type: integer
+      project_path:
+        type: string
+      pull_request:
+        $ref: '#/definitions/pullrequest.PullRequest'
+      reppath:
+        type: string
+      state:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/user.User'
+    type: object
+  milestone.IssuesWithMilestoneID:
+    properties:
+      assignees:
+        items:
+          $ref: '#/definitions/assignee.Assignee'
+        type: array
+      body:
+        type: string
+      closed_at:
+        type: string
+      created_at:
+        type: string
+      deleted:
+        type: boolean
+      html_url:
+        type: string
+      id:
+        type: integer
+      labels:
+        items:
+          $ref: '#/definitions/label.Label'
+        type: array
+      milestone_id:
+        type: integer
+      number:
+        type: integer
+      project_path:
+        type: string
+      pull_request:
+        $ref: '#/definitions/pullrequest.PullRequest'
+      repo_id:
+        type: integer
+      reppath:
+        type: string
+      state:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/user.User'
+    type: object
+  milestone.Milestone:
+    properties:
+      closed_issues:
+        type: integer
+      creator:
+        $ref: '#/definitions/user.User'
+      deleted:
+        type: boolean
+      description:
+        type: string
+      estimate:
+        $ref: '#/definitions/estimate.Estimate'
+      func_task:
+        $ref: '#/definitions/functask.FuncTask'
+      id:
+        type: integer
+      issues:
+        items:
+          $ref: '#/definitions/milestone.Issue'
+        type: array
+      number:
+        type: integer
+      open_issues:
+        type: integer
+      state:
+        type: string
+      title:
+        type: string
+    type: object
+  pullrequest.PullRequest:
+    properties:
+      diff_url:
+        type: string
+      html_url:
+        type: string
+      patch_url:
+        type: string
+      url:
+        type: string
+    type: object
+  realese.Realese:
+    properties:
+      html_url:
+        type: string
+      id:
+        type: integer
+      url:
+        type: string
+    type: object
+  repo.Repo:
+    properties:
+      archived:
+        type: boolean
+      contributors:
+        items:
+          $ref: '#/definitions/user.User'
+        type: array
+      created_at:
+        type: string
+      deleted:
+        type: boolean
+      description:
+        type: string
+      html_url:
+        description: "Path\t\t\t\tstring\t\t\t`json:\"path_with_namespace,omitempty\"`"
+        type: string
+      id:
+        type: integer
+      language:
+        type: string
+      languages:
+        additionalProperties:
+          type: integer
+        type: object
+      name:
+        type: string
+      pushed_at:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  repoasproj.RepoAsProj:
+    properties:
+      last_realese:
+        $ref: '#/definitions/realese.Realese'
+      milestones:
+        items:
+          $ref: '#/definitions/milestone.Milestone'
+        type: array
+      repo:
+        $ref: '#/definitions/repo.Repo'
+      tags:
+        items:
+          $ref: '#/definitions/tag.Tag'
+        type: array
+    type: object
+  repoasproj.RepoAsProjCompact:
+    properties:
+      completed:
+        type: number
+      repo:
+        $ref: '#/definitions/repo.Repo'
+      tags:
+        items:
+          $ref: '#/definitions/tag.Tag'
+        type: array
+    type: object
+  tag.Tag:
+    properties:
+      tag:
+        type: string
+    type: object
+  user.User:
+    properties:
+      avatar_url:
+        type: string
+      html_url:
+        type: string
+      id:
+        type: integer
+      login:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: This is a server to get projects from github
+  title: ITLab-Projects API
+  version: "1.0"
+paths:
+  /api/v1/projects/:
+    get:
+      description: |-
+        return a projects you can filter count of them
+        tags, name
+      parameters:
+      - description: represents the number of skiped projects
+        in: query
+        name: start
+        type: integer
+      - description: represent a limit of projects
+        in: query
+        name: count
+        type: integer
+      - description: use to filter projects by tag
+        in: query
+        name: tag
+        type: string
+      - description: use to filter by name
+        in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/repoasproj.RepoAsProjCompact'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Failed to get repositories
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: return projects according to query value
+      tags:
+      - projects
+    post:
+      description: make all request to github to update repositories, milestones
+      responses:
+        "200":
+          description: ""
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "403":
+          description: if you are nor admin
+          schema:
+            $ref: '#/definitions/err.Message'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/err.Err'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: Update all projects
+      tags:
+      - projects
+  /api/v1/projects/{id}:
+    delete:
+      description: delete project by id and all milestones in it
+      parameters:
+      - description: id of project
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: ""
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "403":
+          description: if you are nor admin
+          schema:
+            $ref: '#/definitions/err.Message'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/err.Message'
+        "409":
+          description: some problems with microfileservice
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: delete project by id
+      tags:
+      - projects
+    get:
+      description: return a project according to id value in path
+      parameters:
+      - description: a uint value of repository id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/repoasproj.RepoAsProj'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: return project according to id
+      tags:
+      - projects
+  /api/v1/projects/estimate:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        add estimate to milestone
+        if estimate is exist for milesotne will replace it
+      parameters:
+      - description: estimate that you want to add
+        in: body
+        name: estimate
+        required: true
+        schema:
+          $ref: '#/definitions/estimate.EstimateFile'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: ""
+        "400":
+          description: Unexpected body
+          schema:
+            $ref: '#/definitions/err.Message'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "403":
+          description: if you are nor admin
+          schema:
+            $ref: '#/definitions/err.Message'
+        "404":
+          description: Don't find milestone with this id
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Failed to save estimate
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: add estimate to milestone
+      tags:
+      - estimate
+  /api/v1/projects/estimate/{milestone_id}:
+    delete:
+      description: delete estimate from database
+      parameters:
+      - description: should be uint
+        in: path
+        name: milestone_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "403":
+          description: if you are nor admin
+          schema:
+            $ref: '#/definitions/err.Message'
+        "404":
+          description: estimate not found
+          schema:
+            $ref: '#/definitions/err.Message'
+        "409":
+          description: some problems with microfileservice
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Failed to delete estimate
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: delete estimate from database
+      tags:
+      - estimate
+  /api/v1/projects/issues:
+    get:
+      description: return issues according to query params
+      parameters:
+      - description: represent how mush skip first issues
+        in: query
+        name: start
+        type: integer
+      - description: set limit of getting issues
+        in: query
+        name: count
+        type: integer
+      - description: search to name of issues, title of milestones and repository
+          names
+        in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/milestone.IssuesWithMilestoneID'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: return issues
+      tags:
+      - issues
+  /api/v1/projects/tags:
+    get:
+      description: return all tags
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/tag.Tag'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: return all tags
+      tags:
+      - tags
+  /api/v1/projects/task:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        add func task to milestone
+        if func task is exist for milesotne will replace it
+      parameters:
+      - description: function task that you want to add
+        in: body
+        name: functask
+        required: true
+        schema:
+          $ref: '#/definitions/functask.FuncTaskFile'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: ""
+        "400":
+          description: Unexpected body
+          schema:
+            $ref: '#/definitions/err.Message'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "403":
+          description: if you are nor admin
+          schema:
+            $ref: '#/definitions/err.Message'
+        "404":
+          description: Don't find milestone with this id
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Failed to save functask
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: add func task to milestone
+      tags:
+      - functask
+  /api/v1/projects/task/{milestone_id}:
+    delete:
+      description: delete functask from database
+      parameters:
+      - description: should be uint
+        in: path
+        name: milestone_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "403":
+          description: if you are nor admin
+          schema:
+            $ref: '#/definitions/err.Message'
+        "404":
+          description: func task not found
+          schema:
+            $ref: '#/definitions/err.Message'
+        "409":
+          description: some problems with microfileservice
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Failed to delete func task
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: delete functask from database
+      tags:
+      - functask
+swagger: "2.0"

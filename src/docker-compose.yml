@@ -10,3 +10,19 @@ services:
             MONGO_INITDB_ROOT_USERNAME: "${MONGO_INITDB_ROOT_USERNAME}"
             MONGO_INITDB_ROOT_PASSWORD: "${MONGO_INITDB_ROOT_PASSWORD}"
             MONGO_INITDB_DATABASE:      "${MONGO_INITDB_DATABASE}"
+        networks: 
+            - database
+    api:
+        build: "./ITLab-Projects"
+        container_name: "api"
+        volumes: 
+            - ./.env:/root/.env
+        ports: 
+            - 8080:8080
+        networks: 
+            - database
+
+
+networks: 
+    database:
+        driver: "bridge"
