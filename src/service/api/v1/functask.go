@@ -43,6 +43,9 @@ import (
 // @Failure 500 {object} e.Message "Failed to save functask"
 //
 // @Failure 404 {object} e.Message "Don't find milestone with this id"
+// @Failure 401 {object} e.Message 
+// 
+// @Failure 403 {object} e.Message "if you are nor admin"
 func (a *Api) AddFuncTask(w http.ResponseWriter, r *http.Request) {
 	var fntask functask.FuncTaskFile
 	if err := json.NewDecoder(r.Body).Decode(&fntask); err != nil {
@@ -133,6 +136,10 @@ func (a *Api) AddFuncTask(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} e.Message "Failed to delete func task"
 // 
 // @Failure 409 {object} e.Message "some problems with microfileservice"
+// 
+// @Failure 401 {object} e.Message 
+// 
+// @Failure 403 {object} e.Message "if you are nor admin"
 func (a *Api) DeleteFuncTask(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 

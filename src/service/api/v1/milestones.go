@@ -36,6 +36,8 @@ import (
 // @Success 200 {array} milestone.IssuesWithMilestoneID
 // 
 // @Failure 500 {object} e.Message
+// 
+// @Failure 401 {object} e.Message 
 func (a *Api) GetIssues(w http.ResponseWriter, r *http.Request) {
 	var issues []milestone.IssuesWithMilestoneID
 	values := r.URL.Query()

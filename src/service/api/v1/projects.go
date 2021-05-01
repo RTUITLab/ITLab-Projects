@@ -43,6 +43,10 @@ import (
 // @Failure 409 {object} e.Err
 //
 // @Failure 500 {object} e.Message
+// 
+// @Failure 401 {object} e.Message 
+// 
+// @Failure 403 {object} e.Message "if you are nor admin"
 func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 	repos, err := a.Requester.GetRepositories()
 	if err == githubreq.ErrGetLastPage {
@@ -275,6 +279,8 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} e.Message "Failed to get projects"
 // 
 // @Failure 500 {object} e.Message "Failed to get repositories"
+// 
+// @Failure 401 {object} e.Message 
 func (a *Api) GetProjects(w http.ResponseWriter, r *http.Request) {
 	values := r.URL.Query()
 
@@ -382,6 +388,8 @@ func (a *Api) GetProjects(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} e.Message
 // 
 // @Failure 500 {object} e.Message
+// 
+// @Failure 401 {object} e.Message 
 func (a *Api) GetProject(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
@@ -474,6 +482,10 @@ func (a *Api) GetProject(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} e.Message
 // 
 // @Failure 409 {object} e.Message "some problems with microfileservice"
+// 
+// @Failure 401 {object} e.Message 
+// 
+// @Failure 403 {object} e.Message "if you are nor admin"
 func (a *Api) DeleteProject(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 

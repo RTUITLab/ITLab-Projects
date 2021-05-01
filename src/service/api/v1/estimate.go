@@ -19,7 +19,7 @@ import (
 )
 
 // AddEstimate
-//
+// 
 // @Tags estimate
 //
 // @Summary add estimate to milestone
@@ -43,6 +43,10 @@ import (
 // @Failure 500 {object} e.Message "Failed to save estimate"
 //
 // @Failure 404 {object} e.Message "Don't find milestone with this id"
+// 
+// @Failure 401 {object} e.Message 
+// 
+// @Failure 403 {object} e.Message "if you are nor admin"
 func (a *Api) AddEstimate(w http.ResponseWriter, r *http.Request) {
 	var est estimate.EstimateFile
 	if err := json.NewDecoder(r.Body).Decode(&est); err != nil {
@@ -134,6 +138,10 @@ func (a *Api) AddEstimate(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} e.Message "Failed to delete estimate"
 // 
 // @Failure 409 {object} e.Message "some problems with microfileservice"
+// 
+// @Failure 401 {object} e.Message 
+// 
+// @Failure 403 {object} e.Message "if you are nor admin"
 func (a *Api) DeleteEstimate(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 

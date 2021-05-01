@@ -27,6 +27,8 @@ import (
 // @Success 200 {array} tag.Tag
 // 
 // @Failure 500 {object} e.Message
+// 
+// @Failure 401 {object} e.Message 
 func (a *Api) GetTags(w http.ResponseWriter, r *http.Request) {
 	var tags []tag.Tag
 
