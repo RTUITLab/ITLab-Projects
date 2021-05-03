@@ -75,6 +75,7 @@ func (mfs *MFSRequests) DeleteFile(ID primitive.ObjectID) error {
 	} else if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return &UnexpectedCodeErr{
