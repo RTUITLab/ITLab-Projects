@@ -31,6 +31,7 @@ func (g *Get) GetAllFiltered(
 	if err != nil {
 		return err
 	}
+	defer cur.Close(ctx)
 
 	if err := f(cur); err != nil {
 		return err
@@ -69,10 +70,8 @@ func (g *Get) GetAll(reps interface{}) error {
 	if err != nil {
 		return err
 	}
-	defer cur.Close(context.Background())
+	defer cur.Close(ctx)
 
-	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	if err := cur.All(ctx, reps); err != nil {
 		return err
 	}
