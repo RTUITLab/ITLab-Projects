@@ -7,3 +7,5 @@
 .DS_Store
 .*
 **/docker-compose.metrics.yml
+
+**/pprof
