@@ -59,7 +59,6 @@ func init() {
 			AccessToken: token,
 		},
 	)
-
 	logrus.Info(token)
 }
 
@@ -85,7 +84,7 @@ func TestFunc_SaveRepoAndDeleteInfind(t *testing.T) {
 
 	t.Log(repos[0:10])
 
-	ctx, _ := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	if err := Repositories.Repo.SaveAndDeletedUnfind(
 		ctx,
 		repo.ToRepo(repos[0:10]),
@@ -143,17 +142,21 @@ func TestFunc_SaveMilestonesAndDeleteUnfind(t *testing.T) {
 		t.FailNow()
 	}
 
-	ms := requster.GetAllMilestonesForRepoWithID(
+	ms, err := requster.GetAllMilestonesForRepoWithID(
 		context.Background(),
-		repo.ToRepo(repos), 
+		repo.ToRepo(repos),
 		func(e error) {
 			t.Log(e)
 		},
 	)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
 
 	ctx, _ := context.WithTimeout(
 		context.Background(),
-		10 * time.Second,
+		10*time.Second,
 	)
 
 	t.Log(ms)
@@ -187,16 +190,19 @@ func TestFunc_SaveRealese(t *testing.T) {
 		t.FailNow()
 	}
 
-	realse := requster.GetLastsRealeseWithRepoID(
+	realse, err := requster.GetLastsRealeseWithRepoID(
 		context.Background(),
 		repo.ToRepo(repos),
 		func(e error) {
 			t.Log(e)
 		},
 	)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
 
-	if err := Repositories.Realese.Save(realse);
-	err != nil {
+	if err := Repositories.Realese.Save(realse); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -209,24 +215,26 @@ func TestFunc_SaveRealeseAndDeleteUnfind(t *testing.T) {
 		t.FailNow()
 	}
 
-	realse := requster.GetLastsRealeseWithRepoID(
+	realse, err := requster.GetLastsRealeseWithRepoID(
 		context.Background(),
 		repo.ToRepo(repos),
 		func(e error) {
 			t.Log(e)
 		},
 	)
+	if err != nil {
+		t.Log(err)
+	}
 
 	ctx, _ := context.WithTimeout(
 		context.Background(),
-		10 * time.Second,
+		10*time.Second,
 	)
 
 	if err := Repositories.Realese.SaveAndDeletedUnfind(
 		ctx,
 		realse,
-	);
-	err != nil {
+	); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -237,7 +245,7 @@ func TestFunc_GetRealse(t *testing.T) {
 	var rel realese.RealeseInRepo
 	err := Repositories.Realese.GetOne(
 		context.Background(),
-		bson.M{"repoid": 1},
+		bson.M{"repoid": 174697113},
 		func(sr *mongo.SingleResult) error {
 			return sr.Decode(&rel)
 		},
@@ -289,7 +297,6 @@ func TestFunc_DeleteTaskFunc(t *testing.T) {
 	}
 }
 
-
 func TestFunc_SaveEstimate(t *testing.T) {
 	e := estimate.Estimate{
 		MilestoneID: 2,
@@ -334,13 +341,17 @@ func TestFunc_SaveTags(t *testing.T) {
 		t.FailNow()
 	}
 
-	tags := requster.GetAllTagsForRepoWithID(
+	tags, err := requster.GetAllTagsForRepoWithID(
 		context.Background(),
 		repo.ToRepo(repos),
 		func(e error) {
 			t.Log(e)
 		},
 	)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
 
 	if err := Repositories.Tag.Save(tags); err != nil {
 		t.Log(err)
@@ -356,13 +367,18 @@ func TestFunc_SaveAndDeleteUnfindTags(t *testing.T) {
 		t.FailNow()
 	}
 
-	tags := requster.GetAllTagsForRepoWithID(
+	tags, err := requster.GetAllTagsForRepoWithID(
 		context.Background(),
 		repo.ToRepo(repos),
 		func(e error) {
 			t.Log(e)
 		},
 	)
+
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
 
 	ctx, _ := context.WithTimeout(
 		context.Background(),
@@ -383,7 +399,7 @@ func TestFunc_SaveAndDeleteUnfindTIssue(t *testing.T) {
 		context.Background(),
 		bson.M{"id": 1},
 		nil,
-		options.Delete(),	
+		options.Delete(),
 	)
 	var issues []milestone.IssuesWithMilestoneID
 	if err := Repositories.Issue.GetAll(&issues); err != nil {
@@ -392,11 +408,11 @@ func TestFunc_SaveAndDeleteUnfindTIssue(t *testing.T) {
 	}
 
 	if err := Repositories.Issue.Save(
-		milestone.IssuesWithMilestoneID {
+		milestone.IssuesWithMilestoneID{
 			MilestoneID: 12,
 			Issue: milestone.Issue{
 				Title: "Mock-Issue",
-				ID: 1,
+				ID:    1,
 			},
 		},
 	); err != nil {
