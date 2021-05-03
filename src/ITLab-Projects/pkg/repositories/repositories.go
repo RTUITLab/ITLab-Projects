@@ -40,8 +40,10 @@ func New(cfg *Config) (*Repositories, error) {
 
 	client, err := mongo.NewClient(
 		options.Client().
-			ApplyURI(URI).SetMaxPoolSize(50).
-			SetMaxConnIdleTime(1*time.Minute),
+			ApplyURI(URI).
+			SetMaxPoolSize(50).
+			SetMaxConnIdleTime(0).
+			SetLocalThreshold(10*time.Millisecond),
 	)
 	if err != nil {
 		return nil, errors.New("Error on created client")
@@ -62,13 +64,18 @@ func New(cfg *Config) (*Repositories, error) {
 		return nil, err
 	}
 
-	reposCollection := client.Database(dbName).Collection("repos")
-	milestoneCollection := client.Database(dbName).Collection("milestones")
-	realeseCollection := client.Database(dbName).Collection("realese")
-	estimeCollection := client.Database(dbName).Collection("estimate")
-	funcTaskCollection := client.Database(dbName).Collection("functask")
-	tagCollection := client.Database(dbName).Collection("tags")
-	issueCollection := client.Database(dbName).Collection("issues")
+	db := client.Database(
+		dbName, 
+		options.Database(),
+	)
+
+	reposCollection := db.Collection("repos")
+	milestoneCollection := db.Collection("milestones")
+	realeseCollection := db.Collection("realese")
+	estimeCollection := db.Collection("estimate")
+	funcTaskCollection := db.Collection("functask")
+	tagCollection := db.Collection("tags")
+	issueCollection := db.Collection("issues")
 	return &Repositories{
 		Repo: repos.New(reposCollection),
 		Milestone: milestones.New(milestoneCollection),
