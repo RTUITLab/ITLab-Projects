@@ -91,7 +91,8 @@ func (er *EstimateRepository) Delete(MilestoneID uint64) error {
 	opts := options.Delete()
 	filter := bson.M{"milestone_id": MilestoneID}
 
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	_, err := er.estimateColletion.DeleteOne(
 		ctx,
 		filter,
