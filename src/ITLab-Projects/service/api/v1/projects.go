@@ -89,14 +89,16 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 	rsChan := make(chan []realese.RealeseInRepo, 1)
 	tgsChan := make(chan []tag.Tag, 1)
 	errChan := make(chan error, 1)
-	ctx, cancel := context.WithCancel(
+	ctx, cancel := context.WithTimeout(
 		context.Background(),
+		20*time.Second,
 	)
+	defer cancel()
 
 	go func() {
 		// TODO delete in prod
 		// time.Sleep(1*time.Second)
-		ms := a.Requester.GetAllMilestonesForRepoWithID(
+		ms, err := a.Requester.GetAllMilestonesForRepoWithID(
 			ctx,
 			repo.ToRepo(repos),
 			func(err error) {
@@ -109,13 +111,17 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 				}
 			},
 		)
+		if err != nil {
+			return
+		}
+
 		msChan <- ms
 	}()
 
 	go func() {
 		// TODO delete in prod
 		// time.Sleep(2*time.Second)
-		rs := a.Requester.GetLastsRealeseWithRepoID(
+		rs, err := a.Requester.GetLastsRealeseWithRepoID(
 			ctx,
 			repo.ToRepo(repos),
 			func(err error) {
@@ -130,13 +136,16 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 				}
 			},
 		)
+		if err != nil {
+			return
+		}
 		rsChan <- rs
 	}()
 
 	go func() {
 		// TODO delete in prod
 		// time.Sleep(3*time.Second)
-		tgs := a.Requester.GetAllTagsForRepoWithID(
+		tgs, err := a.Requester.GetAllTagsForRepoWithID(
 			ctx,
 			repo.ToRepo(repos),
 			func(err error) {
@@ -148,6 +157,10 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 				prepare("UpdateAllProjects", err).Warn("Faield to get tag")
 			},
 		)
+		if err != nil {
+			return
+		}
+
 		tgsChan <- tgs
 	}()
 	var (
@@ -294,8 +307,9 @@ func (a *Api) GetProjects(w http.ResponseWriter, r *http.Request) {
 	tag := values.Get("tag")
 	name := values.Get("name")
 
-	ctx, cancel := context.WithCancel(
+	ctx, cancel := context.WithTimeout(
 		context.Background(),
+		1*time.Second,
 	)
 	defer cancel()
 
@@ -506,9 +520,14 @@ func (a *Api) DeleteProject(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.ParseUint(_id, 10, 64)
 
 	var rep repo.Repo
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		3*time.Second,
+	)
+	defer cancel()
 
 	if err := a.Repository.Repo.GetOne(
-		context.Background(),
+		ctx,
 		bson.M{"id": id},
 		func(sr *mongo.SingleResult) error {
 			if err :=  sr.Decode(&rep); err != nil {
@@ -538,7 +557,7 @@ func (a *Api) DeleteProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := a.deleteMilestones(
-		context.Background(),
+		ctx,
 		rep.ID,
 		a.beforeDeleteWithReq(r),
 	); err == mongo.ErrNoDocuments {
@@ -574,7 +593,7 @@ func (a *Api) DeleteProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := a.Repository.Repo.DeleteOne(
-		context.Background(),
+		ctx,
 		bson.M{"id": id},
 		func(dr *mongo.DeleteResult) error {
 			if dr.DeletedCount == 0 {
@@ -833,10 +852,9 @@ func (a *Api) getProjs(reps []repo.Repo) ([]repoasproj.RepoAsProj, error) {
 }
 
 func (a *Api) getCompatcProj(repos []repo.Repo) ([]repoasproj.RepoAsProjCompact, error) {
-	var projs []repoasproj.RepoAsProjCompact
-
-	ctx, cancel := context.WithCancel(
+	ctx, cancel := context.WithTimeout(
 		context.Background(),
+		10*time.Second,
 	)
 	defer cancel()
 
@@ -846,9 +864,9 @@ func (a *Api) getCompatcProj(repos []repo.Repo) ([]repoasproj.RepoAsProjCompact,
 	var count uint
 	for i := range repos {
 		count++
-		go func(r *repo.Repo) {
+		go func(r repo.Repo) {
 			proj := repoasproj.RepoAsProjCompact{
-				Repo: *r,
+				Repo: r,
 			}
 
 			if err := a.Repository.Milestone.GetAllFiltered(
@@ -907,8 +925,9 @@ func (a *Api) getCompatcProj(repos []repo.Repo) ([]repoasproj.RepoAsProjCompact,
 			}
 
 			projChan <- []repoasproj.RepoAsProjCompact{proj}
-		}(&repos[i])
+		}(repos[i])
 	}
+	var projs []repoasproj.RepoAsProjCompact
 
 	for i := uint(0); i < count; i++ {
 		select {
@@ -989,14 +1008,14 @@ func getIssuesFromMilestone(ms []milestone.MilestoneInRepo) []milestone.IssuesWi
 	for _, m := range ms {
 		for i, _ := range m.Issues {
 			wg.Add(1)
-			go func(wg *sync.WaitGroup, i *milestone.Issue, MID , RepoID uint64) {
+			go func(wg *sync.WaitGroup, i milestone.Issue, MID , RepoID uint64) {
 				defer wg.Done()
 				is = append(is, milestone.IssuesWithMilestoneID{
 					MilestoneID: MID,
 					RepoID: RepoID,
-					Issue: *i,
+					Issue: i,
 				})
-			}(&wg, &m.Issues[i], m.ID, m.RepoID)
+			}(&wg, m.Issues[i], m.ID, m.RepoID)
 		}
 	}
 	wg.Wait()
