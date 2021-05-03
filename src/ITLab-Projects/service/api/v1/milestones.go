@@ -117,7 +117,7 @@ func (a *Api) GetIssues(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(
 		issues,
-	)	
+	)
 }
 
 func (a *Api) buildFilterByNameForIssues(ctx context.Context, filter bson.M, name string) (bson.M, error) {
