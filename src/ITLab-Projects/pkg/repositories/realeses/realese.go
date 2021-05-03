@@ -84,17 +84,6 @@ func (r *RealeseRepo) save(v interface{}) error {
 	return nil
 }
 
-func (r *RealeseRepo) saveAll(rls []model.RealeseInRepo) error {
-	for _, rl := range rls {
-		if err := r.save(rl); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-
 func (r *RealeseRepo) SaveAndDeletedUnfind(ctx context.Context, rls interface{}) error {
 	if err := r.Saver.SaveAndDeletedUnfind(ctx, rls); err != nil {
 		return err
