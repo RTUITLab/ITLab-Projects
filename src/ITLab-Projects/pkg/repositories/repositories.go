@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"github.com/ITLab-Projects/pkg/repositories/database"
 	"context"
 	"errors"
 	"time"
@@ -86,4 +87,44 @@ func New(cfg *Config) (*Repositories, error) {
 		Issue: issues.New(issueCollection),
 	}, 
 	nil
+}
+
+func NewDB(cfg Config) (*database.DB, error) {
+	URI, err := utils.GetDBURIWithoutName(cfg.DBURI)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := mongo.NewClient(
+		options.Client().
+			ApplyURI(URI).
+			SetMaxPoolSize(50).
+			SetMaxConnIdleTime(0).
+			SetLocalThreshold(10*time.Millisecond),
+	)
+	if err != nil {
+		return nil, errors.New("Error on created client")
+	}
+
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	if err = client.Connect(ctx); err != nil {
+		return nil, errors.New("Error on connection")
+	}
+
+	ctx, _ = context.WithTimeout(context.Background(), 60*time.Second)
+	if err = client.Ping(ctx, nil); err != nil {
+		return nil, errors.New("Error on ping")
+	}
+
+	dbName, err := utils.GetDbNameByReg(cfg.DBURI)
+	if err != nil {
+		return nil, err
+	}
+
+	db := client.Database(
+		dbName, 
+		options.Database(),
+	)
+
+	return database.New(db), nil
 }
