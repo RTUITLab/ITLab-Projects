@@ -127,13 +127,17 @@ func TestFunc_GetLastRealese(t *testing.T) {
 		t.FailNow()
 	}
 
-	rls := requster.GetLastsRealeseWithRepoID(
+	rls, err := requster.GetLastsRealeseWithRepoID(
 		context.Background(),
 		repo.ToRepo(repos),
 		func(e error) {
 			t.Log(e)
 		},
 	)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
 	t.Log(rls)
 }
 
@@ -149,7 +153,7 @@ func TestFunc_GetAllMilestonesForRepoWithID(t *testing.T) {
 	msChan := make(chan []milestone.MilestoneInRepo, 1)
 	go func() {
 		defer close(msChan)
-		ms := requster.GetAllMilestonesForRepoWithID(
+		ms, err := requster.GetAllMilestonesForRepoWithID(
 			context.Background(),
 			repo.ToRepo(repos), 
 			func(e error) {
@@ -160,6 +164,9 @@ func TestFunc_GetAllMilestonesForRepoWithID(t *testing.T) {
 				).Error()
 			},
 		)
+		if err != nil {
+			return
+		}
 		msChan <- ms
 	}()
 
@@ -173,13 +180,17 @@ func TestFunc_GetTagsForRepos(t *testing.T) {
 		t.FailNow()
 	}
 
-	tags := requster.GetAllTagsForRepoWithID(
+	tags, err := requster.GetAllTagsForRepoWithID(
 		context.Background(),
 		repo.ToRepo(repos),
 		func(e error) {
 			t.Log(e)
 		},
 	)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
 
 	t.Log(tags)
 }

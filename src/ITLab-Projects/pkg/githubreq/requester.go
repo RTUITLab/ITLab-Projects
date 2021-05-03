@@ -45,7 +45,7 @@ type Requester interface {
 		// error handling
 		// if error is nil would'nt call
 		f func(error),
-	) ([]realese.RealeseInRepo)
+	) ([]realese.RealeseInRepo, error)
 	GetLastRealeseWithRepoID(rep repo.Repo) (realese.RealeseInRepo, error)
 	GetRepositories() ([]repo.RepoWithURLS, error)
 	GetAllMilestonesForRepoWithID(
@@ -54,13 +54,13 @@ type Requester interface {
 		// error handling
 		// if error is nil would'nt call
 		f func(error),
-	) ([]milestone.MilestoneInRepo)
+	) ([]milestone.MilestoneInRepo, error)
 	GetAllTagsForRepoWithID(
 		ctx context.Context,
 		reps []repo.Repo,
 		// if f nill would'nt call
 		f func(error),
-	) ([]tag.Tag)
+	) ([]tag.Tag, error)
 }
 
 func New(cfg *Config) Requester {
@@ -167,15 +167,15 @@ func (r *GHRequester) GetAllMilestonesForRepoWithID(
 	// error handling
 	// if error is nil would'nt call
 	f func(error),
-) ([]milestone.MilestoneInRepo) {
+) ([]milestone.MilestoneInRepo, error) {
 	var ms []milestone.MilestoneInRepo
 	msChan := make(chan []milestone.MilestoneInRepo)
 
 	var count int = 0
 	for i, _ := range reps {
 		count++
-		go func(rep *repo.Repo){
-			m, err := r.GetMilestonesForRepoWithID(*rep)
+		go func(rep repo.Repo){
+			m, err := r.GetMilestonesForRepoWithID(rep)
 			if err != nil && f != nil {
 				f(err)
 				msChan <- nil
@@ -183,19 +183,19 @@ func (r *GHRequester) GetAllMilestonesForRepoWithID(
 			}
 
 			msChan <- m
-		}(&reps[i])
+		}(reps[i])
 	}
 
 	for i := 0; i < count; i++ {
 		select {
 		case <-ctx.Done():
-			return nil
+			return nil, ctx.Err()
 		case m := <- msChan:
 			ms = append(ms, m...)
 		}
 	}
 
-	return ms
+	return ms, nil
 }
 
 func (r *GHRequester) GetAllTagsForRepoWithID(
@@ -204,7 +204,7 @@ func (r *GHRequester) GetAllTagsForRepoWithID(
 	// if f nil would'nt call
 	// if canceled return nil
 	f func(error),
-) ([]tag.Tag) {
+) ([]tag.Tag, error) {
 	var tags []tag.Tag
 
 	tgsChan := make(chan []tag.Tag)
@@ -212,8 +212,8 @@ func (r *GHRequester) GetAllTagsForRepoWithID(
 	var count = 0
 	for i, _ := range reps {
 		count++
-		go func(rep *repo.Repo) {
-			c, err := r.getLandingForRepo(*rep)
+		go func(rep repo.Repo) {
+			c, err := r.getLandingForRepo(rep)
 			if err != nil && f != nil {
 				f(err)
 				tgsChan <- nil
@@ -228,19 +228,19 @@ func (r *GHRequester) GetAllTagsForRepoWithID(
 			}
 
 			tgsChan <- t
-		}(&reps[i])
+		}(reps[i])
 	}
 
 	for i := 0; i < count; i++ {
 		select {
 		case <-ctx.Done():
-			return nil
+			return nil, ctx.Err()
 		case t := <- tgsChan:
 			tags = append(tags, t...)
 		}
 	}
 
-	return tags
+	return tags, nil
 }
 
 func (r *GHRequester) getTagsByURL(c content.Content) ([]tag.Tag, error) {
@@ -388,7 +388,7 @@ func (r *GHRequester) GetLastsRealeseWithRepoID(
 	ctx context.Context,
 	reps []repo.Repo,
 	f func(error),
-) ([]realese.RealeseInRepo) {
+) ([]realese.RealeseInRepo, error) {
 	var rls []realese.RealeseInRepo
 
 	rlChan := make(chan realese.RealeseInRepo)
@@ -410,7 +410,7 @@ func (r *GHRequester) GetLastsRealeseWithRepoID(
 	for i := 0; i < count; i++ {
 		select {
 		case <-ctx.Done():
-			return nil
+			return nil, ctx.Err()
 		case rl := <- rlChan:
 			if rl.RepoID != 0 {
 				rls = append(rls, rl)
@@ -418,7 +418,7 @@ func (r *GHRequester) GetLastsRealeseWithRepoID(
 		}
 	}
 
-	return rls
+	return rls, nil
 }
 
 func (r *GHRequester) GetLastRealeseWithRepoID(rep repo.Repo) (realese.RealeseInRepo, error) {
