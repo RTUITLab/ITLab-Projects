@@ -97,7 +97,17 @@ func TestFunc_SaveRepoAndDeleteInfind(t *testing.T) {
 
 func TestFunc_GetAllRepos(t *testing.T) {
 	var repos []repo.Repo
-	err := Repositories.Repo.GetAll(&repos)
+	err := Repositories.Repo.GetAllFiltered(
+		context.Background(),
+		bson.M{},
+		func(c *mongo.Cursor) error {
+			return c.All(
+				context.Background(),
+				&repos,
+			)
+		},
+		options.Find(),
+	)
 	if err != nil {
 		t.Log(err)
 		t.FailNow()
@@ -174,7 +184,17 @@ func TestFunc_SaveMilestonesAndDeleteUnfind(t *testing.T) {
 
 func TestFunc_GetAllMilestones(t *testing.T) {
 	var ms []milestone.MilestoneInRepo
-	err := Repositories.Milestone.GetAll(&ms)
+	err := Repositories.Milestone.GetAllFiltered(
+		context.Background(),
+		bson.M{},
+		func(c *mongo.Cursor) error {
+			return c.All(
+				context.Background(),
+				&ms,
+			)
+		},
+		options.Find(),
+	)
 	if err != nil {
 		t.Log(err)
 		t.FailNow()
@@ -402,7 +422,16 @@ func TestFunc_SaveAndDeleteUnfindTIssue(t *testing.T) {
 		options.Delete(),
 	)
 	var issues []milestone.IssuesWithMilestoneID
-	if err := Repositories.Issue.GetAll(&issues); err != nil {
+	if err := Repositories.Issue.GetAllFiltered(
+		context.Background(),
+		bson.M{},
+		func(c *mongo.Cursor) error {
+			return c.All(
+				context.Background(),
+				&issues,
+			)
+		},
+	); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -452,4 +481,24 @@ func TestFunc_SaveAndDeleteUnfindTIssue(t *testing.T) {
 		t.Log("Failed assert")
 		t.FailNow()
 	}
+}
+
+func TestFunc_GetMilestone(t *testing.T) {
+	var m milestone.MilestoneInRepo
+
+	if err := Repositories.Milestone.GetOne(
+		context.Background(),
+		bson.M{"id": 1},
+		func(sr *mongo.SingleResult) error {
+			if err := sr.Err(); err != nil {
+				return err
+			}
+			return sr.Decode(&m)
+		},
+		options.FindOne(),
+	); err != nil {
+		t.Log(err)
+	}
+
+	t.Log(m)
 }
