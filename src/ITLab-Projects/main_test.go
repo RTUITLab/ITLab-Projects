@@ -14,7 +14,7 @@ func TestFubc_Bench(t *testing.T) {
 		t.Log(err)
 	}
 	wg := sync.WaitGroup{}
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		go func(t *testing.T, req *http.Request, wg *sync.WaitGroup) {
 			time.Sleep(10 * time.Millisecond)
