@@ -3,6 +3,7 @@ module github.com/ITLab-Projects
 go 1.15
 
 require (
+	github.com/Kamva/mgm v1.2.3
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/auth0-community/go-auth0 v1.0.0
 	github.com/aws/aws-sdk-go v1.38.23 // indirect
