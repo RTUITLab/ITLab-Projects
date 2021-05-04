@@ -18,7 +18,6 @@ import (
 
 type ReposRepository struct {
 	repoCollection 		*mongo.Collection
-	CountOfDocuments	int64
 	counter.Counter
 	getter.Getter
 	Saver 				saver.SaverWithDelUpdate
