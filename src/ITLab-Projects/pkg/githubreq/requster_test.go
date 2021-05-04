@@ -105,6 +105,65 @@ func TestFunc_GetMilestonesWithRepoID(t *testing.T) {
 	wg.Wait()
 }
 
+
+func TestFunc_GetIssues(t *testing.T) {
+	repos, err := requster.GetRepositories()
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	ms, err := requster.GetAllMilestonesForRepoWithID(
+		context.Background(),
+		repo.ToRepo(repos),
+		func(e error) {
+			t.Log(e)
+		},
+	)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	count := 0
+	for _, m := range ms {
+		count += len(m.Issues)
+	}
+
+	t.Log(count)
+	t.Log("milestone count: ", len(ms))
+
+
+	var is []milestone.IssuesWithMilestoneID
+
+	isChan := make(chan milestone.IssuesWithMilestoneID)
+
+	count = 0
+	for j, _ := range ms {
+		for i, _ := range ms[j].Issues {
+			count++
+			go func(i milestone.Issue, MID , RepoID uint64) {
+				isChan <- milestone.IssuesWithMilestoneID{
+					MilestoneID: MID,
+					RepoID: RepoID,
+					Issue: i,
+				}
+			}(ms[j].Issues[i], ms[j].Milestone.ID, ms[j].RepoID)
+		}
+	}
+
+	for i := 0; i < count; i++ {
+		select{
+		case issue := <- isChan:
+			is = append(is, issue)
+		}
+	}
+
+	t.Log("Operations: ", count)
+
+	t.Log(len(is))
+}
+
 func TestFunc_URL(t *testing.T) {
 	baseUrl := url.URL{
 		Scheme: "https",
