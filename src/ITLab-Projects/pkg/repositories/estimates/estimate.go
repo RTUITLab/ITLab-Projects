@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/ITLab-Projects/pkg/models/estimate"
 	model "github.com/ITLab-Projects/pkg/models/estimate"
 	"github.com/ITLab-Projects/pkg/models/milestone"
 	"github.com/ITLab-Projects/pkg/repositories/deleter"
@@ -31,7 +30,7 @@ func New(
 		estimateColletion: collection,
 	}
 
-	e := estimate.EstimateFile{}
+	e := model.EstimateFile{}
 
 	er.Getter = getter.New(
 		collection,
