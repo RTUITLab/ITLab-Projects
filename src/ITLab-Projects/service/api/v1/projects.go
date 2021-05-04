@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 	_ "time"
 
@@ -209,7 +208,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		prepare("UpdateAllProjects", err).Error("Can't save repositories")
 		return
 	}
-
+	
 	if err := a.Repository.Milestone.SaveAndUpdatenUnfind(
 		ctx,
 		ms,
@@ -227,7 +226,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 
 	// Get issues from milestones
 	is := getIssuesFromMilestone(ms)
-
+	
 	if err := a.Repository.Issue.SaveAndUpdatenUnfind(
 		ctx,
 		is,
@@ -1003,22 +1002,28 @@ func (a *Api) getAssetsForMilestones(ctx context.Context, ms *[]milestone.Milest
 func getIssuesFromMilestone(ms []milestone.MilestoneInRepo) []milestone.IssuesWithMilestoneID {
 	var is []milestone.IssuesWithMilestoneID
 
-	var wg sync.WaitGroup
+	isChan := make(chan milestone.IssuesWithMilestoneID)
 
-	for _, m := range ms {
-		for i, _ := range m.Issues {
-			wg.Add(1)
-			go func(wg *sync.WaitGroup, i milestone.Issue, MID , RepoID uint64) {
-				defer wg.Done()
-				is = append(is, milestone.IssuesWithMilestoneID{
+	count := 0
+	for j, _ := range ms {
+		for i, _ := range ms[j].Issues {
+			count++
+			go func(i milestone.Issue, MID , RepoID uint64) {
+				isChan <- milestone.IssuesWithMilestoneID{
 					MilestoneID: MID,
 					RepoID: RepoID,
 					Issue: i,
-				})
-			}(&wg, m.Issues[i], m.ID, m.RepoID)
+				}
+			}(ms[j].Issues[i], ms[j].Milestone.ID, ms[j].RepoID)
 		}
 	}
-	wg.Wait()
+
+	for i := 0; i < count; i++ {
+		select{
+		case issue := <- isChan:
+			is = append(is, issue)
+		}
+	}
 
 	return is
 }
