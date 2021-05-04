@@ -65,7 +65,7 @@ func (m *MilestoneRepository) buildFilter(v interface{}) interface{} {
 
 	var ids []uint64
 	for _, m := range ms {
-		ids = append(ids, m.ID)
+		ids = append(ids, m.Milestone.ID)
 	}
 
 	return bson.M{"id": bson.M{"$nin": ids}}
@@ -88,7 +88,7 @@ func (m *MilestoneRepository) save(v interface{}) error {
 	milestone, _ := v.(model.MilestoneInRepo)
 
 	opts := options.Replace().SetUpsert(true)
-	filter := bson.M{"id": milestone.ID}
+	filter := bson.M{"id": milestone.Milestone.ID}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
