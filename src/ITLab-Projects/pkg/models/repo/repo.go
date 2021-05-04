@@ -2,9 +2,11 @@ package repo
 
 import (
 	. "github.com/ITLab-Projects/pkg/models/user"
+	"github.com/Kamva/mgm"
 )
 
 type Repo struct {
+	mgm.DefaultModel					`json:"-" bson:",inline"`
 	ID          		uint64 			`json:"id"`
 	Name        		string 			`json:"name"`
 	Contributors		[]User			`json:"contributors"`
@@ -34,4 +36,8 @@ func ToRepo(repos []RepoWithURLS) []Repo {
 	}
 	
 	return reps
+}
+
+func (r *Repo) CollectionName() string {
+	return "repos"
 }

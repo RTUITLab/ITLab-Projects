@@ -12,3 +12,7 @@ type FuncTask struct {
 type FuncTaskFile struct {
 	milestonefile.MilestoneFile	`bson:",inline"`
 }
+
+func (f *FuncTaskFile) CollectionName() string {
+	return "functask"
+}

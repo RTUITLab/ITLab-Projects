@@ -1,12 +1,13 @@
 package milestone
 
 import (
-	"github.com/ITLab-Projects/pkg/models/functask"
-	"github.com/ITLab-Projects/pkg/models/estimate"
-	"github.com/ITLab-Projects/pkg/models/pullrequest"
-	"github.com/ITLab-Projects/pkg/models/label"
 	"github.com/ITLab-Projects/pkg/models/assignee"
+	"github.com/ITLab-Projects/pkg/models/estimate"
+	"github.com/ITLab-Projects/pkg/models/functask"
+	"github.com/ITLab-Projects/pkg/models/label"
+	"github.com/ITLab-Projects/pkg/models/pullrequest"
 	"github.com/ITLab-Projects/pkg/models/user"
+	"github.com/Kamva/mgm"
 )
 
 type MilestoneFromGH struct {
@@ -29,14 +30,19 @@ type Milestone struct {
 }
 
 type MilestoneInRepo struct {
+	mgm.DefaultModel				`json:"-" bson:",inline"`
 	RepoID				uint64		`json:"repo_id"`
 	Milestone						`bson:",inline"`
+}
+
+func (m *MilestoneInRepo) CollectionName() string {
+	return "milestones"
 }
 
 func GetIDS(ms []MilestoneInRepo) []uint64 {
 	var ids []uint64
 	for _, m := range ms {
-		ids = append(ids, m.ID)
+		ids = append(ids, m.Milestone.ID)
 	}
 
 	return ids
@@ -66,8 +72,13 @@ type IssueFromGH struct {
 }
 
 type IssuesWithMilestoneID struct {
+	mgm.DefaultModel				`bson:",inline"`
 	MilestoneID			uint64		`json:"milestone_id" bson:"milestone_id"`
 	RepoID				uint64		`json:"repo_id" bson:"repo_id"`
 	Issue							`bson:",inline"`
 	Deleted				bool		`json:"deleted" bson:"deleted"`
+}
+
+func (i *IssuesWithMilestoneID) CollectionName() string {
+	return "issues"
 }
