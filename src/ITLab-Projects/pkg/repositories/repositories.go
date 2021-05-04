@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"github.com/ITLab-Projects/pkg/repositories/database"
+	"github.com/Kamva/mgm"
 	"context"
 	"errors"
 	"time"
@@ -20,7 +20,7 @@ import (
 
 
 type Repositories struct {
-	Repo repos.	ReposRepositorier
+	Repo 		repos.ReposRepositorier
 	Milestone 	milestones.Milestoner
 	Realese 	realeses.Realeser
 	FuncTask 	functasks.FuncTaskRepositorier
@@ -50,6 +50,8 @@ func New(cfg *Config) (*Repositories, error) {
 		return nil, errors.New("Error on created client")
 	}
 
+	
+
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	if err = client.Connect(ctx); err != nil {
 		return nil, errors.New("Error on connection")
@@ -64,67 +66,24 @@ func New(cfg *Config) (*Repositories, error) {
 	if err != nil {
 		return nil, err
 	}
+	
+	if err := mgm.SetDefaultConfig(
+		nil,
+		dbName,
+		options.Client().ApplyURI(URI),
+	); err != nil {
+		return nil, err
+	}
 
-	db := client.Database(
-		dbName, 
-		options.Database(),
-	)
-
-	reposCollection := db.Collection("repos")
-	milestoneCollection := db.Collection("milestones")
-	realeseCollection := db.Collection("realese")
-	estimeCollection := db.Collection("estimate")
-	funcTaskCollection := db.Collection("functask")
-	tagCollection := db.Collection("tags")
-	issueCollection := db.Collection("issues")
+	
 	return &Repositories{
-		Repo: repos.New(reposCollection),
-		Milestone: milestones.New(milestoneCollection),
-		Realese: realeses.New(realeseCollection),
-		Estimate: estimates.New(estimeCollection),
-		FuncTask: functasks.New(funcTaskCollection),
-		Tag: tags.New(tagCollection),
-		Issue: issues.New(issueCollection),
+		Repo: repos.NewByType(),
+		Milestone: milestones.NewByType(),
+		Realese: realeses.NewByType(),
+		Estimate: estimates.NewByType(),
+		FuncTask: functasks.NewByType(),
+		Tag: tags.NewByType(),
+		Issue: issues.NewByType(),
 	}, 
 	nil
-}
-
-func NewDB(cfg Config) (*database.DB, error) {
-	URI, err := utils.GetDBURIWithoutName(cfg.DBURI)
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := mongo.NewClient(
-		options.Client().
-			ApplyURI(URI).
-			SetMaxPoolSize(50).
-			SetMaxConnIdleTime(0).
-			SetLocalThreshold(10*time.Millisecond),
-	)
-	if err != nil {
-		return nil, errors.New("Error on created client")
-	}
-
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	if err = client.Connect(ctx); err != nil {
-		return nil, errors.New("Error on connection")
-	}
-
-	ctx, _ = context.WithTimeout(context.Background(), 60*time.Second)
-	if err = client.Ping(ctx, nil); err != nil {
-		return nil, errors.New("Error on ping")
-	}
-
-	dbName, err := utils.GetDbNameByReg(cfg.DBURI)
-	if err != nil {
-		return nil, err
-	}
-
-	db := client.Database(
-		dbName, 
-		options.Database(),
-	)
-
-	return database.New(db), nil
 }
