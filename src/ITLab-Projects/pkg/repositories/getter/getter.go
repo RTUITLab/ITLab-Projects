@@ -9,7 +9,6 @@ import (
 
 type Getter interface {
 	GetOner
-	GetAller
 	GetAllerFiltered
 }
 
@@ -20,10 +19,6 @@ type GetOner interface {
 		f func(*mongo.SingleResult) error, 
 		opts ...*options.FindOneOptions,
 	) error
-}
-
-type GetAller interface {
-	GetAll(interface{}) error
 }
 
 type GetAllerFiltered interface {

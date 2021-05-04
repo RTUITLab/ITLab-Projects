@@ -2,8 +2,6 @@ package getter
 
 import (
 	"github.com/ITLab-Projects/pkg/repositories/typechecker"
-	"time"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo"
 	"context"
@@ -54,28 +52,6 @@ func (g *Get) GetOne(
 	if err := f(single); err != nil {
 		return err
 	}
-	return nil
-}
-
-func (g *Get) GetAll(reps interface{}) error {
-	if err := g.checker(reps); err != nil {
-		return err
-	}
-	
-	opts := options.Find()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	cur, err := g.collection.Find(ctx, bson.M{}, opts)
-	if err != nil {
-		return err
-	}
-	defer cur.Close(ctx)
-
-	if err := cur.All(ctx, reps); err != nil {
-		return err
-	}
-	
 	return nil
 }
 
