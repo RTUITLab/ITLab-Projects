@@ -21,6 +21,7 @@ import (
 	"github.com/ITLab-Projects/pkg/models/user"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/ITLab-Projects/pkg/models/repo"
@@ -175,9 +176,12 @@ func (r *GHRequester) GetAllMilestonesForRepoWithID(
 	for i, _ := range reps {
 		count++
 		go func(rep repo.Repo){
+			defer catchPanic()
 			m, err := r.GetMilestonesForRepoWithID(rep)
-			if err != nil && f != nil {
-				f(err)
+			if err != nil {
+				if f != nil {
+					f(err)
+				}
 				msChan <- nil
 				return
 			}
@@ -186,11 +190,16 @@ func (r *GHRequester) GetAllMilestonesForRepoWithID(
 		}(reps[i])
 	}
 
+	getIssues := 0
 	for i := 0; i < count; i++ {
 		select {
 		case <-ctx.Done():
+			close(msChan)
 			return nil, ctx.Err()
 		case m := <- msChan:
+			for i, _ := range m {
+				getIssues += len(m[i].Issues)
+			}
 			ms = append(ms, m...)
 		}
 	}
@@ -213,16 +222,21 @@ func (r *GHRequester) GetAllTagsForRepoWithID(
 	for i, _ := range reps {
 		count++
 		go func(rep repo.Repo) {
+			defer catchPanic()
 			c, err := r.getLandingForRepo(rep)
-			if err != nil && f != nil {
-				f(err)
+			if err != nil {
+				if f != nil {
+					f(err)
+				}
 				tgsChan <- nil
 				return
 			}
 
 			t, err := r.getTagsByURL(*c)
-			if err != nil && f != nil {
-				f(err)
+			if err != nil {
+				if f != nil {
+					f(err)
+				}
 				tgsChan <- nil
 				return
 			}
@@ -234,6 +248,7 @@ func (r *GHRequester) GetAllTagsForRepoWithID(
 	for i := 0; i < count; i++ {
 		select {
 		case <-ctx.Done():
+			close(tgsChan)
 			return nil, ctx.Err()
 		case t := <- tgsChan:
 			tags = append(tags, t...)
@@ -318,10 +333,13 @@ func (r *GHRequester) getLandingForRepo(
 }
 
 func (r *GHRequester) getAllIssues(repName string) ([]milestone.IssueFromGH, error) {
+	// TODO add to parse all pages
+	// with query value page
 	url := r.baseUrl
 	url.Path += fmt.Sprintf("repos/%s/%s/issues", orgName, repName)
 	q := url.Query()
 	q.Add("state", "all")
+	q.Add("milestone", "*")
 	url.RawQuery = q.Encode()
 	req, err := http.NewRequest("GET", url.String(), nil)
 	if err != nil {
@@ -672,4 +690,15 @@ func checkStatusIfForbiddenOrUnathorizated(resp *http.Response) error {
 	}
 
 	return nil
+}
+
+func catchPanic() {
+	if r := recover(); r != nil {
+		logrus.WithFields(
+			log.Fields{
+				"package": "requster",
+				"err": r,
+			},
+		).Info("Catch panic")
+	}
 }
