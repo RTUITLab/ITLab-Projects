@@ -56,9 +56,9 @@ func New(cfg *config.Config) *App {
 	app.Router = mux.NewRouter()
 
 	if !cfg.App.TestMode {
-		log.SetLevel(log.WarnLevel)
+		log.SetLevel(log.InfoLevel)
 	}
-	
+
 	return app
 }
 
