@@ -2,7 +2,6 @@ package milestones
 
 import (
 	"context"
-	"time"
 
 	"github.com/ITLab-Projects/pkg/repositories/deleter"
 	"github.com/ITLab-Projects/pkg/repositories/saver"
@@ -71,8 +70,8 @@ func (m *MilestoneRepository) buildFilter(v interface{}) interface{} {
 	return bson.M{"id": bson.M{"$nin": ids}}
 }
 
-func (m *MilestoneRepository) Save(milestone interface{}) error {
-	err := m.Saver.Save(milestone)
+func (m *MilestoneRepository) Save(ctx context.Context, milestone interface{}) error {
+	err := m.Saver.Save(ctx, milestone)
 	if err != nil {
 		return err
 	}
@@ -84,28 +83,15 @@ func (m *MilestoneRepository) Save(milestone interface{}) error {
 	return nil
 }
 
-func (m *MilestoneRepository) save(v interface{}) error {
+func (m *MilestoneRepository) save(ctx context.Context, v interface{}) error {
 	milestone, _ := v.(model.MilestoneInRepo)
 
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"id": milestone.Milestone.ID}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	
 	_, err := m.milestoneCollection.ReplaceOne(ctx, filter, milestone, opts)
 	if err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func (m *MilestoneRepository) saveAll(milestones []model.MilestoneInRepo) error {
-	for _, milestone := range milestones {
-		if err := m.save(milestone); err != nil {
-			return err
-		}
 	}
 
 	return nil

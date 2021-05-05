@@ -16,8 +16,8 @@ type SaveByType struct {
 	t			reflect.Type
 }
 
-func (s *SaveByType) Save(v interface{}) error {
-	return s.save(v)
+func (s *SaveByType) Save(ctx context.Context, v interface{}) error {
+	return s.save(ctx, v)
 }
 
 func NewSaverByType(
@@ -43,19 +43,19 @@ func NewSaverByType(
 	}
 	s.t = t
 
-	saveFunc := func(v interface{}) error {
+	saveFunc := func(ctx context.Context, v interface{}) error {
 		typeOfV := reflect.TypeOf(v)
 
 		if typeOfV.AssignableTo(t) {
-			return fun(v)
+			return fun(ctx, v)
 		} else if typeOfV.AssignableTo(reflect.PtrTo(t)) {
 			v = reflect.ValueOf(v).Elem().Interface()
-			return fun(v)
+			return fun(ctx, v)
 		} else if typeOfV.AssignableTo(reflect.SliceOf(t)) {
 			slice := reflect.ValueOf(v)
 			for i := 0; i < slice.Len(); i++ {
 				value := slice.Index(i).Interface()
-				if err := fun(value); err != nil {
+				if err := fun(ctx, value); err != nil {
 					return err
 				}
 			}
@@ -122,7 +122,7 @@ func (swd *SaveWithDeleteByType) SaveAndDeletedUnfind(
 	ctx context.Context, 
 	v interface{},
 ) error {
-	if err := swd.s.Save(v); err != nil {
+	if err := swd.s.Save(ctx, v); err != nil {
 		return err
 	}
 
@@ -154,8 +154,8 @@ func (swd *SaveWithDeleteByType) SaveAndDeletedUnfind(
 	return nil
 }
 
-func (swd *SaveWithDeleteByType) Save(v interface{}) error {
-	return swd.s.Save(v)
+func (swd *SaveWithDeleteByType) Save(ctx context.Context,v interface{}) error {
+	return swd.s.Save(ctx, v)
 }
 
 type SaveWithUpdateByType struct {
@@ -190,7 +190,7 @@ func(swu *SaveWithUpdateByType) SaveAndUpdatenUnfind(
 	v interface{},	// value that we  
 	updateFilter interface{},	// filter where you change field
 ) error {
-	if err := swu.s.Save(v); err != nil {
+	if err := swu.s.Save(ctx, v); err != nil {
 		return err
 	}
 

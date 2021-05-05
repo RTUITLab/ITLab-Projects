@@ -2,7 +2,6 @@ package issues
 
 import (
 	"github.com/ITLab-Projects/pkg/repositories/counter"
-	"time"
 	"context"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/bson"
@@ -71,14 +70,13 @@ func (i *IssueRepository) buildFilter(v interface{}) interface{} {
 	return bson.M{"id": bson.M{"$nin": ids}}
 }
 
-func (i *IssueRepository) save(v interface{}) error {
+func (i *IssueRepository) save(
+	ctx context.Context, 
+	v interface{}) error {
 	issue, _ := v.(model.IssuesWithMilestoneID)
 
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"id": issue.ID}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	
 	_, err := i.issueCollection.ReplaceOne(ctx, filter, issue, opts)
 	if err != nil {
@@ -88,8 +86,8 @@ func (i *IssueRepository) save(v interface{}) error {
 	return nil
 }
 
-func (i *IssueRepository) Save(issue interface{}) error {
-	err := i.Saver.Save(issue)
+func (i *IssueRepository) Save(ctx context.Context, issue interface{}) error {
+	err := i.Saver.Save(ctx, issue)
 	if err != nil {
 		return err
 	}

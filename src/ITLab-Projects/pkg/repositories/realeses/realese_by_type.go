@@ -2,7 +2,6 @@ package realeses
 
 import (
 	"go.mongodb.org/mongo-driver/bson"
-	"time"
 	"context"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	model "github.com/ITLab-Projects/pkg/models/realese"
@@ -46,13 +45,11 @@ func NewByType(
 	return rt
 }
 
-func (r *RealeseByType) save(v interface{}) error {
+func (r *RealeseByType) save(ctx context.Context, v interface{}) error {
 	real, _ := v.(model.RealeseInRepo)
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"id": real.ID}
 	
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	
 	_, err := mgm.Coll(r.model).ReplaceOne(ctx, filter, real, opts)
 	if err != nil {

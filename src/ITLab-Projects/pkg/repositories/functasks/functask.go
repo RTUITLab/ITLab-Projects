@@ -69,14 +69,12 @@ func (ftr *FuncTaskRepository) DeleteFuncTasksNotIn(ms []milestone.MilestoneInRe
 	)
 }
 
-func (ftr *FuncTaskRepository) save(v interface{}) error {
+func (ftr *FuncTaskRepository) save(ctx context.Context, v interface{}) error {
 	functask, _ := v.(model.FuncTaskFile)
 
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"milestone_id": functask.MilestoneID}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	_, err := ftr.funcTaskCollection.ReplaceOne(ctx, filter, functask, opts)
 	if err != nil {
 		return err

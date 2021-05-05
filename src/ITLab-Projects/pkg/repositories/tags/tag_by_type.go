@@ -3,7 +3,6 @@ package tags
 import (
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
-	"time"
 	"context"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	model "github.com/ITLab-Projects/pkg/models/tag"
@@ -47,16 +46,11 @@ func NewByType(
 	return tt
 }
 
-func (tg *TagsByType) save(v interface{}) error {
+func (tg *TagsByType) save(ctx context.Context, v interface{}) error {
 	tag, _ := v.(model.Tag)
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"repo_id": tag.RepoID}
 
-	ctx, cancel := context.WithTimeout(
-		context.Background(),
-		10*time.Second,
-	)
-	defer cancel()
 	
 	_, err := mgm.Coll(tg.model).ReplaceOne(ctx, filter, tag, opts)
 	if err != nil {

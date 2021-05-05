@@ -44,14 +44,11 @@ func NewByType() *EstimateRepoByType {
 	return er
 }
 
-func (er *EstimateRepoByType) save(v interface{}) error {
+func (er *EstimateRepoByType) save(ctx context.Context, v interface{}) error {
 	estimate, _ := v.(model.EstimateFile)
 
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"milestone_id": estimate.MilestoneID}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	
 	_, err := mgm.Coll(er.model).ReplaceOne(ctx, filter, estimate, opts)
 	if err != nil {

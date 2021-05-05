@@ -3,7 +3,6 @@ package issues
 import (
 	"github.com/sirupsen/logrus"
 	"context"
-	"time"
 
 	model "github.com/ITLab-Projects/pkg/models/milestone"
 	"github.com/ITLab-Projects/pkg/repositories/counter"
@@ -53,14 +52,12 @@ func NewByType(
 	return it
 }
 
-func (i *IssueByType) save(v interface{}) error {
+func (i *IssueByType) save(ctx context.Context, v interface{}) error {
 	issue, _ := v.(model.IssuesWithMilestoneID)
 
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"id": issue.ID}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	
 	_, err := mgm.Coll(i.model).ReplaceOne(ctx, filter, issue, opts)
 	if err != nil {
@@ -89,8 +86,8 @@ func (i *IssueByType) buildFilter(v interface{}) interface{} {
 	return bson.M{"id": bson.M{"$nin": ids}}
 }
 
-func (i *IssueByType) Save(issue interface{}) error {
-	err := i.SaverWithDelUpdate.Save(issue)
+func (i *IssueByType) Save(ctx context.Context, issue interface{}) error {
+	err := i.SaverWithDelUpdate.Save(ctx, issue)
 	if err != nil {
 		return err
 	}

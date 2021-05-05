@@ -2,7 +2,6 @@ package milestones
 
 import (
 	"github.com/sirupsen/logrus"
-	"time"
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -53,8 +52,8 @@ func NewByType(
 	return mt
 }
 
-func (m *MilestoneByType) Save(milestone interface{}) error {
-	if err := m.SaverWithDelUpdate.Save(milestone); err != nil {
+func (m *MilestoneByType) Save(ctx context.Context, milestone interface{}) error {
+	if err := m.SaverWithDelUpdate.Save(ctx, milestone); err != nil {
 		return err
 	}
 
@@ -119,14 +118,11 @@ func (m *MilestoneByType) buildFilter(v interface{}) interface{} {
 	return bson.M{"id": bson.M{"$nin": ids}}
 }
 
-func (m *MilestoneByType) save(v interface{}) error {
+func (m *MilestoneByType) save(ctx context.Context, v interface{}) error {
 	milestone, _ := v.(model.MilestoneInRepo)
 
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"id": milestone.Milestone.ID}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	
 	_, err := mgm.Coll(m.model).ReplaceOne(ctx, filter, milestone, opts)
 	if err != nil {

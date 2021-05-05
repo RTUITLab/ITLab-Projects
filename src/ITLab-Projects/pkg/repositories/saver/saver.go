@@ -5,7 +5,7 @@ import (
 )
 
 type Saver interface {
-	Save(interface{}) error
+	Save(context.Context, interface{}) error
 }
 
 type SaverWithDelete interface {

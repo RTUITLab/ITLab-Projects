@@ -2,7 +2,6 @@ package realeses
 
 import (
 	"context"
-	"time"
 
 	model "github.com/ITLab-Projects/pkg/models/realese"
 	"github.com/ITLab-Projects/pkg/repositories/deleter"
@@ -58,8 +57,8 @@ func (r *RealeseRepo) buildFilter(v interface{}) interface{} {
 	return bson.M{"id": bson.M{"$nin": ids}}
 }
 
-func (r *RealeseRepo) Save(v interface{}) error {
-	err := r.Saver.Save(v)
+func (r *RealeseRepo) Save(ctx context.Context, v interface{}) error {
+	err := r.Saver.Save(ctx, v)
 
 	if err != nil {
 		return err
@@ -68,13 +67,11 @@ func (r *RealeseRepo) Save(v interface{}) error {
 	return nil
 }
 
-func (r *RealeseRepo) save(v interface{}) error {
+func (r *RealeseRepo) save(ctx context.Context, v interface{}) error {
 	real, _ := v.(model.RealeseInRepo)
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"id": real.ID}
-	
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+
 	
 	_, err := r.realeseCollection.ReplaceOne(ctx, filter, real, opts)
 	if err != nil {

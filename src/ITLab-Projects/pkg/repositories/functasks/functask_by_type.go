@@ -46,14 +46,12 @@ func NewByType(
 	return ft
 }
 
-func (ftr *FuncTaskByType) save(v interface{}) error {
+func (ftr *FuncTaskByType) save(ctx context.Context, v interface{}) error {
 	functask, _ := v.(model.FuncTaskFile)
 
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"milestone_id": functask.MilestoneID}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	_, err := mgm.Coll(ftr.model).ReplaceOne(ctx, filter, functask, opts)
 	if err != nil {
 		return err

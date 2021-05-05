@@ -1,7 +1,6 @@
 package repos
 
 import (
-	"time"
 	"context"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/bson"
@@ -63,14 +62,12 @@ func (r *RepoByType) buildFilter(v interface{}) interface{} {
 	return bson.M{"id": bson.M{"$nin": ids}}
 }
 
-func (r *RepoByType) save(v interface{}) error {
+func (r *RepoByType) save(ctx context.Context, v interface{}) error {
 	repo, _ := v.(model.Repo)
 	
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"id": repo.ID}
 	
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 
 	_, err := mgm.Coll(r.model).ReplaceOne(ctx, filter, repo, opts)
 	if err != nil {
@@ -80,8 +77,8 @@ func (r *RepoByType) save(v interface{}) error {
 	return nil
 }
 
-func (r *RepoByType) Save(repos interface{}) error {
-	if err := r.SaverWithDelUpdate.Save(repos); err != nil {
+func (r *RepoByType) Save(ctx context.Context, repos interface{}) error {
+	if err := r.SaverWithDelUpdate.Save(ctx, repos); err != nil {
 		return err
 	}
 

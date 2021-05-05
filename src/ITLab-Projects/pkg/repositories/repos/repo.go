@@ -2,7 +2,6 @@ package repos
 
 import (
 	"context"
-	"time"
 
 	"github.com/ITLab-Projects/pkg/repositories/counter"
 	"github.com/ITLab-Projects/pkg/repositories/deleter"
@@ -64,8 +63,8 @@ func (r *ReposRepository) buildFilter(v interface{}) interface{} {
 	return bson.M{"id": bson.M{"$nin": ids}}
 }
 
-func (r *ReposRepository) Save(repos interface{}) error {
-	if err := r.Saver.Save(repos); err != nil {
+func (r *ReposRepository) Save(ctx context.Context, repos interface{}) error {
+	if err := r.Saver.Save(ctx, repos); err != nil {
 		return err
 	}
 
@@ -105,14 +104,11 @@ func (r *ReposRepository) SaveAndUpdatenUnfind(
 }
 
 
-func (r *ReposRepository) save(v interface{}) error {
+func (r *ReposRepository) save(ctx context.Context, v interface{}) error {
 	repo, _ := v.(repo.Repo)
 	
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"id": repo.ID}
-	
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 
 	_, err := r.repoCollection.ReplaceOne(ctx, filter, repo, opts)
 	if err != nil {

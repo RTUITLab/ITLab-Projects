@@ -2,7 +2,6 @@ package tags
 
 import (
 	"context"
-	"time"
 
 	model "github.com/ITLab-Projects/pkg/models/tag"
 	"github.com/ITLab-Projects/pkg/repositories/deleter"
@@ -70,16 +69,10 @@ func (tg *TagRepository) buildFilter(v interface{}) interface{} {
 	return bson.M{"repo_id": bson.M{"$nin": ids}}
 }
 
-func (tg *TagRepository) save(v interface{}) error {
+func (tg *TagRepository) save(ctx context.Context, v interface{}) error {
 	tag, _ := v.(model.Tag)
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"repo_id": tag.RepoID}
-
-	ctx, cancel := context.WithTimeout(
-		context.Background(),
-		10*time.Second,
-	)
-	defer cancel()
 	
 	_, err := tg.tagCollection.ReplaceOne(ctx, filter, tag, opts)
 	if err != nil {
