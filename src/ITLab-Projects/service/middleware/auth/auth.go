@@ -1,14 +1,13 @@
 package auth
 
 import (
+	"github.com/ITLab-Projects/pkg/conextvalue/rolecontext"
 	"regexp"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
-
-	"github.com/ITLab-Projects/pkg/conextvalue"
 
 	"github.com/ITLab-Projects/pkg/config"
 	e "github.com/ITLab-Projects/pkg/err"
@@ -46,7 +45,7 @@ func newAuthMiddleware(
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
-				log.Info("auth middleware")
+				log.Debug("auth middleware")
 				client := auth0.NewJWKClient(auth0.JWKClientOptions{URI: cfg.KeyURL}, nil)
 				configuration := auth0.NewConfiguration(client, []string{cfg.Audience}, cfg.Issuer, jose.RS256)
 				validator := auth0.NewValidator(configuration, nil)
@@ -55,7 +54,7 @@ func newAuthMiddleware(
 					log.WithFields(log.Fields{
 						"requiredAlgorithm" : "RS256",
 						"error" : err,
-					}).Warning("Token is not valid!")
+					}).Debug("Token is not valid!")
 
 					w.WriteHeader(http.StatusUnauthorized)
 					json.NewEncoder(w).Encode(
@@ -71,7 +70,7 @@ func newAuthMiddleware(
 					log.WithFields(log.Fields{
 						"requiredClaims" : "iss, aud, sub, role",
 						"error" : err,
-					}).Warning("Invalid claims!")
+					}).Debug("Invalid claims!")
 		
 					w.WriteHeader(http.StatusUnauthorized)
 					json.NewEncoder(w).Encode(
@@ -88,7 +87,7 @@ func newAuthMiddleware(
 						"package" : "middleware/auth",
 						"func": "authMiddleware",
 						"error" : err,
-					}).Warning("Failed to get role")
+					}).Debug("Failed to get role")
 					w.WriteHeader(http.StatusUnauthorized)
 					json.NewEncoder(w).Encode(
 						e.Message{
@@ -98,9 +97,8 @@ func newAuthMiddleware(
 					return
 				}
 
-				ctx := context.WithValue(
+				var ctx context.Context = rolecontext.New(
 					r.Context(),
-					conextvalue.Role,
 					role,
 				)
 
@@ -115,8 +113,16 @@ func newAuthMiddleware(
 func AdminMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			log.Info("admin middleware")
-			role := GetRoleFromCTX(r.Context())
+			log.Debug("admin middleware")
+			role, err := rolecontext.GetRoleFromContext(r.Context())
+			if err != nil {
+				log.WithFields(
+					log.Fields{
+						"package": "middleware/auth",
+						"err": err,
+					},
+				).Panic()
+			}
 
 			re := regexp.MustCompile(`\w+.admin`)
 
@@ -124,7 +130,7 @@ func AdminMiddleware(next http.Handler) http.Handler {
 				w.WriteHeader(http.StatusForbidden)
 				json.NewEncoder(w).Encode(
 					e.Message {
-						Message: "You are nor admin",
+						Message: "You are not admin",
 					},
 				)
 				return
@@ -133,22 +139,6 @@ func AdminMiddleware(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		},
 	)
-}
-
-func GetRoleFromCTX(ctx context.Context) (string) {
-			_role := ctx.Value(conextvalue.Role)
-			role, ok := _role.(string)
-			if !ok {
-				log.WithFields(
-					log.Fields{
-						"package": "middleware/auth",
-						"func": "GetRoleFromCTX",
-						"err": "Failed to cast role to string",
-					},
-				).Panic()
-			}
-
-			return role
 }
 
 type getRoleFromClaim func(map[string]interface{}) (string, error)
