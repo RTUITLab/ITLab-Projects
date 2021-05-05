@@ -15,7 +15,7 @@ import (
 func PutSessionINTOCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			logrus.Info("Session middleware")
+			logrus.Debug("Session middleware")
 			_, client, _, _ := mgm.DefaultConfigs()
 			sess, err := client.StartSession()
 			if err != nil {
