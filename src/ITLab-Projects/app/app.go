@@ -1,9 +1,10 @@
 package app
 
 import (
-	"github.com/ITLab-Projects/pkg/mfsreq"
 	"fmt"
 	"net/http"
+
+	"github.com/ITLab-Projects/pkg/mfsreq"
 
 	"github.com/ITLab-Projects/pkg/apibuilder"
 	"github.com/ITLab-Projects/pkg/config"
@@ -54,6 +55,10 @@ func New(cfg *config.Config) *App {
 
 	app.Router = mux.NewRouter()
 
+	if !cfg.App.TestMode {
+		log.SetLevel(log.WarnLevel)
+	}
+	
 	return app
 }
 
