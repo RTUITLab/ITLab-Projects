@@ -8,10 +8,12 @@ import (
 	"time"
 
 	"github.com/ITLab-Projects/pkg/models/estimate"
+	"github.com/ITLab-Projects/pkg/models/milestonefile"
 
 	"github.com/ITLab-Projects/pkg/models/functask"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -69,7 +71,10 @@ func TestFunc_SaveRepo(t *testing.T) {
 		t.FailNow()
 	}
 
-	if err := Repositories.Repo.Save(repo.ToRepo(repos)); err != nil {
+	if err := Repositories.Repo.Save(
+		context.Background(),
+		repo.ToRepo(repos),
+		); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -137,7 +142,7 @@ func TestFunc_SaveMilestones(t *testing.T) {
 			if err != nil {
 				t.Log(err)
 			}
-			if err := Repositories.Milestone.Save(ms); err != nil {
+			if err := Repositories.Milestone.Save(context.Background(),ms); err != nil {
 				t.Log(err)
 			}
 		}(&repos[i], &wg)
@@ -222,7 +227,7 @@ func TestFunc_SaveRealese(t *testing.T) {
 		t.FailNow()
 	}
 
-	if err := Repositories.Realese.Save(realse); err != nil {
+	if err := Repositories.Realese.Save(context.Background(),realse); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -286,7 +291,10 @@ func TestFunc_SaveFuncTask(t *testing.T) {
 		FuncTaskURL: "some_url",
 	}
 
-	if err := Repositories.FuncTask.Save(ft); err != nil {
+	if err := Repositories.FuncTask.Save(
+		context.Background(),
+		ft,
+		); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -318,12 +326,17 @@ func TestFunc_DeleteTaskFunc(t *testing.T) {
 }
 
 func TestFunc_SaveEstimate(t *testing.T) {
-	e := estimate.Estimate{
-		MilestoneID: 2,
-		EstimateURL: "some_url",
+	e := estimate.EstimateFile{
+		MilestoneFile: milestonefile.MilestoneFile{
+			MilestoneID: 2,
+			FileID: primitive.NewObjectID(),
+		},
 	}
 
-	if err := Repositories.Estimate.Save(e); err != nil {
+	if err := Repositories.Estimate.Save(
+		context.Background(),
+		e,
+		); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -373,7 +386,10 @@ func TestFunc_SaveTags(t *testing.T) {
 		t.FailNow()
 	}
 
-	if err := Repositories.Tag.Save(tags); err != nil {
+	if err := Repositories.Tag.Save(
+		context.Background(),
+		tags,
+		); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -437,6 +453,7 @@ func TestFunc_SaveAndDeleteUnfindTIssue(t *testing.T) {
 	}
 
 	if err := Repositories.Issue.Save(
+		context.Background(),
 		milestone.IssuesWithMilestoneID{
 			MilestoneID: 12,
 			Issue: milestone.Issue{

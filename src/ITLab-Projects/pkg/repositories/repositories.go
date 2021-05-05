@@ -1,10 +1,11 @@
 package repositories
 
 import (
-	"github.com/Kamva/mgm"
 	"context"
 	"errors"
 	"time"
+
+	"github.com/Kamva/mgm"
 
 	"github.com/ITLab-Projects/pkg/repositories/estimates"
 	"github.com/ITLab-Projects/pkg/repositories/functasks"
@@ -49,7 +50,7 @@ func New(cfg *Config) (*Repositories, error) {
 	if err != nil {
 		return nil, errors.New("Error on created client")
 	}
-
+	defer client.Disconnect(context.Background())
 	
 
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
