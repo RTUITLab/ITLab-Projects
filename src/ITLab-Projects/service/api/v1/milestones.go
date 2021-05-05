@@ -50,6 +50,7 @@ func (a *Api) GetIssues(w http.ResponseWriter, r *http.Request) {
 		count = uint64(a.Repository.Issue.Count())
 	}
 
+	// TODO change to bson.D
 	filter := bson.M{
 		"state": "open",
 	}
@@ -57,7 +58,7 @@ func (a *Api) GetIssues(w http.ResponseWriter, r *http.Request) {
 	name := values.Get("name")
 
 	ctx, cancel := context.WithTimeout(
-		context.Background(),
+		r.Context(),
 		5*time.Second,
 	)
 
@@ -131,7 +132,10 @@ func (a *Api) buildFilterByNameForIssues(ctx context.Context, filter bson.M, nam
 	var repoIDs []IDs
 	if err := a.Repository.Repo.GetAllFiltered(
 		ctx,
-		bson.M{"name": bson.M{"$regex": name, "$options": "-i"}},
+		bson.M{
+			"title": bson.M{"$regex": name, "$options": "-i"},
+			"description": bson.M{"$regex": name, "$options": "-i"}, 
+		},
 		func(c *mongo.Cursor) error {
 			return c.All(
 				ctx,

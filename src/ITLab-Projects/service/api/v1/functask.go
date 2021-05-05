@@ -70,7 +70,7 @@ func (a *Api) AddFuncTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx, cancel := context.WithTimeout(
-		context.Background(),
+		r.Context(),
 		10*time.Second,
 	)
 	defer cancel()
@@ -101,7 +101,7 @@ func (a *Api) AddFuncTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := a.Repository.FuncTask.Save(fntask); err != nil {
+	if err := a.Repository.FuncTask.Save(ctx, fntask); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
 			e.Message {
@@ -148,7 +148,7 @@ func (a *Api) DeleteFuncTask(w http.ResponseWriter, r *http.Request) {
 	milestoneID, _ := strconv.ParseUint(_mid, 10, 64)
 
 	ctx, cancel := context.WithTimeout(
-		context.Background(),
+		r.Context(),
 		10 * time.Second,
 	)
 	defer cancel()

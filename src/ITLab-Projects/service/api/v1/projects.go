@@ -89,7 +89,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 	tgsChan := make(chan []tag.Tag, 1)
 	errChan := make(chan error, 1)
 	ctx, cancel := context.WithTimeout(
-		context.Background(),
+		r.Context(),
 		20*time.Second,
 	)
 	defer cancel()
@@ -243,6 +243,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := a.Repository.Realese.Save(
+		ctx,
 		rs,
 	); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -256,6 +257,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := a.Repository.Tag.Save(
+		ctx,
 		tgs,
 	); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -305,12 +307,15 @@ func (a *Api) GetProjects(w http.ResponseWriter, r *http.Request) {
 	count := getUint(values, "count")
 	tag := values.Get("tag")
 	name := values.Get("name")
+	
 
 	ctx, cancel := context.WithTimeout(
-		context.Background(),
-		1*time.Second,
+		r.Context(),
+		5*time.Second,
 	)
 	defer cancel()
+	
+	
 
 	if count == 0 {
 		count = uint64(a.Repository.Repo.Count())
@@ -371,7 +376,7 @@ func (a *Api) GetProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	projs, err := a.getCompatcProj(repos)
+	projs, err := a.GetCompatcProj(ctx, repos)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
@@ -767,9 +772,9 @@ func (a *Api) getProjs(reps []repo.Repo) ([]repoasproj.RepoAsProj, error) {
 	var count uint
 	for i := range reps {
 		count++
-		go func(r *repo.Repo) {
+		go func(r repo.Repo) {
 			proj := repoasproj.RepoAsProj{
-				Repo: *r,
+				Repo: r,
 			}
 
 			if err := a.Repository.Milestone.GetAllFiltered(
@@ -794,11 +799,14 @@ func (a *Api) getProjs(reps []repo.Repo) ([]repoasproj.RepoAsProj, error) {
 				return
 			}
 
-			if err := a.getAssetsForMilestones(ctx, &proj.Milestones); err != nil {
+			ms, err := a.getAssetsForMilestones(ctx, proj.Milestones)
+			if err != nil {
 				cancel()
 				errChan <- err
 				return
 			}
+
+			proj.Milestones = ms
 			
 			var rl realese.RealeseInRepo
 			if err := a.Repository.Realese.GetOne(
@@ -834,7 +842,7 @@ func (a *Api) getProjs(reps []repo.Repo) ([]repoasproj.RepoAsProj, error) {
 			}
 
 			projChan <- []repoasproj.RepoAsProj{proj}
-		}(&reps[i])
+		}(reps[i])
 	}
 
 	for i := uint(0); i < count; i++ {
@@ -850,10 +858,10 @@ func (a *Api) getProjs(reps []repo.Repo) ([]repoasproj.RepoAsProj, error) {
 	return projs, nil
 }
 
-func (a *Api) getCompatcProj(repos []repo.Repo) ([]repoasproj.RepoAsProjCompact, error) {
+func (a *Api) GetCompatcProj(ctx context.Context, repos []repo.Repo) ([]repoasproj.RepoAsProjCompact, error) {
 	ctx, cancel := context.WithTimeout(
-		context.Background(),
-		10*time.Second,
+		ctx,
+		2*time.Second,
 	)
 	defer cancel()
 
@@ -864,6 +872,7 @@ func (a *Api) getCompatcProj(repos []repo.Repo) ([]repoasproj.RepoAsProjCompact,
 	for i := range repos {
 		count++
 		go func(r repo.Repo) {
+			defer catchPanic()
 			proj := repoasproj.RepoAsProjCompact{
 				Repo: r,
 			}
@@ -874,7 +883,7 @@ func (a *Api) getCompatcProj(repos []repo.Repo) ([]repoasproj.RepoAsProjCompact,
 				func(c *mongo.Cursor) error {
 					var mls []milestone.MilestoneInRepo
 					c.All(
-						context.Background(),
+						ctx,
 						&mls,
 					)
 
@@ -933,6 +942,8 @@ func (a *Api) getCompatcProj(repos []repo.Repo) ([]repoasproj.RepoAsProjCompact,
 		case p := <- projChan:
 			projs = append(projs, p...)
 		case <- ctx.Done():
+			close(errChan)
+			close(projChan)
 			err := <- errChan
 			return nil, err
 		}
@@ -941,8 +952,11 @@ func (a *Api) getCompatcProj(repos []repo.Repo) ([]repoasproj.RepoAsProjCompact,
 	return projs, nil
 }
 
-func (a *Api) getAssetsForMilestones(ctx context.Context, ms *[]milestone.Milestone) error {
-	for i, m := range *ms {
+func (a *Api) getAssetsForMilestones(
+	ctx context.Context, 
+	ms []milestone.Milestone,
+) ([]milestone.Milestone, error) {
+	for i, m := range ms {
 		var e estimate.EstimateFile
 		if err := a.Repository.Estimate.GetOne(
 			ctx,
@@ -952,9 +966,9 @@ func (a *Api) getAssetsForMilestones(ctx context.Context, ms *[]milestone.Milest
 			},
 			options.FindOne(),
 		); err != mongo.ErrNoDocuments && err != nil {
-			return err
+			return nil, err
 		} else if err != mongo.ErrNoDocuments {
-			(*ms)[i].Estimate = &estimate.Estimate{
+			ms[i].Estimate = &estimate.Estimate{
 				MilestoneID: e.MilestoneID,
 				EstimateURL: a.MFSRequester.GenerateDownloadLink(e.FileID),
 			}
@@ -969,9 +983,9 @@ func (a *Api) getAssetsForMilestones(ctx context.Context, ms *[]milestone.Milest
 			},
 			options.FindOne(),
 		); err != mongo.ErrNoDocuments && err != nil {
-			return err
+			return nil, err
 		} else if err != mongo.ErrNoDocuments {
-			(*ms)[i].FuncTask = &functask.FuncTask{
+			ms[i].FuncTask = &functask.FuncTask{
 				MilestoneID: f.MilestoneID,
 				FuncTaskURL: a.MFSRequester.GenerateDownloadLink(f.FileID),
 			}
@@ -990,13 +1004,13 @@ func (a *Api) getAssetsForMilestones(ctx context.Context, ms *[]milestone.Milest
 		); err == mongo.ErrNoDocuments {
 			// Pass
 		} else if err != nil {
-			return err
+			return nil, err
 		} else {
-			(*ms)[i].Issues = issues
+			ms[i].Issues = issues
 		}
 	}
 
-	return nil
+	return ms, nil
 }
 
 func getIssuesFromMilestone(ms []milestone.MilestoneInRepo) []milestone.IssuesWithMilestoneID {

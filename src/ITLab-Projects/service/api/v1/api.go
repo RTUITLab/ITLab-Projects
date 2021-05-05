@@ -1,14 +1,16 @@
 package v1
 
 import (
-	"net/http/pprof"
-	swag "github.com/swaggo/http-swagger"
 	"net/http"
+	"net/http/pprof"
 	"net/url"
 	"strconv"
+
 	_ "github.com/ITLab-Projects/docs"
 	"github.com/ITLab-Projects/pkg/config"
 	"github.com/ITLab-Projects/service/middleware/auth"
+	"github.com/ITLab-Projects/service/middleware/mgsess"
+	swag "github.com/swaggo/http-swagger"
 
 	"github.com/ITLab-Projects/pkg/apibuilder"
 	"github.com/ITLab-Projects/pkg/githubreq"
@@ -102,6 +104,10 @@ func (a *Api) Build(r *mux.Router) {
 		r.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 		r.HandleFunc("/debug/pprof/trace", pprof.Trace)
 	}
+
+	projects.Use(
+		mgsess.PutSessionINTOCtx,
+	)
 	
 }
 
@@ -177,4 +183,15 @@ func prepare(Handler string, err error) *log.Entry {
 			"err": err,
 		},
 	)
+}
+
+func catchPanic() {
+	if r := recover(); r != nil {
+		log.WithFields(
+			log.Fields{
+				"package": "api/v1",
+				"panic": r,
+			},
+		).Info()
+	}
 }

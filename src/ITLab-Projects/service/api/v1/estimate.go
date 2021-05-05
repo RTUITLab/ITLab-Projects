@@ -72,7 +72,7 @@ func (a *Api) AddEstimate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx, cancel := context.WithTimeout(
-		context.Background(),
+		r.Context(),
 		10 * time.Second,
 	)
 	defer cancel()
@@ -103,7 +103,7 @@ func (a *Api) AddEstimate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := a.Repository.Estimate.Save(est); err != nil {
+	if err := a.Repository.Estimate.Save(ctx, est); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
 			e.Message {
@@ -150,7 +150,7 @@ func (a *Api) DeleteEstimate(w http.ResponseWriter, r *http.Request) {
 	milestoneID, _ := strconv.ParseUint(_mid, 10, 64)
 
 	ctx, cancel := context.WithTimeout(
-		context.Background(),
+		r.Context(),
 		10 * time.Second,
 	)
 	defer cancel()
