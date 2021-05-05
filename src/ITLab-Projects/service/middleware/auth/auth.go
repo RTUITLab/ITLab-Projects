@@ -46,6 +46,7 @@ func newAuthMiddleware(
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
+				log.Info("auth middleware")
 				client := auth0.NewJWKClient(auth0.JWKClientOptions{URI: cfg.KeyURL}, nil)
 				configuration := auth0.NewConfiguration(client, []string{cfg.Audience}, cfg.Issuer, jose.RS256)
 				validator := auth0.NewValidator(configuration, nil)
@@ -114,6 +115,7 @@ func newAuthMiddleware(
 func AdminMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
+			log.Info("admin middleware")
 			role := GetRoleFromCTX(r.Context())
 
 			re := regexp.MustCompile(`\w+.admin`)
