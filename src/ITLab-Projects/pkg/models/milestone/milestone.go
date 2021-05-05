@@ -72,7 +72,7 @@ type IssueFromGH struct {
 }
 
 type IssuesWithMilestoneID struct {
-	mgm.DefaultModel				`bson:",inline"`
+	mgm.DefaultModel				`json:"-" bson:",inline"`
 	MilestoneID			uint64		`json:"milestone_id" bson:"milestone_id"`
 	RepoID				uint64		`json:"repo_id" bson:"repo_id"`
 	Issue							`bson:",inline"`

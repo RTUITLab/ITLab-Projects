@@ -82,7 +82,7 @@ func (a *Api) GetIssues(w http.ResponseWriter, r *http.Request) {
 			filter = _filter
 		}
 
-		logrus.Info(filter)
+		logrus.Debug(filter)
 	}
 
 	if err := a.Repository.Issue.GetAllFiltered(
@@ -133,8 +133,7 @@ func (a *Api) buildFilterByNameForIssues(ctx context.Context, filter bson.M, nam
 	if err := a.Repository.Repo.GetAllFiltered(
 		ctx,
 		bson.M{
-			"title": bson.M{"$regex": name, "$options": "-i"},
-			"description": bson.M{"$regex": name, "$options": "-i"}, 
+			"name": bson.M{"$regex": name, "$options": "-i"},
 		},
 		func(c *mongo.Cursor) error {
 			return c.All(
@@ -152,7 +151,10 @@ func (a *Api) buildFilterByNameForIssues(ctx context.Context, filter bson.M, nam
 	var milestoneIDs []IDs
 	if err := a.Repository.Milestone.GetAllFiltered(
 		ctx,
-		bson.M{"title": bson.M{"$regex": name, "$options": "-i"}},
+		bson.M{
+			"title": bson.M{"$regex": name, "$options": "-i"},
+		},
+		
 		func(c *mongo.Cursor) error {
 			defer c.Close(ctx)
 			return c.All(
@@ -170,7 +172,10 @@ func (a *Api) buildFilterByNameForIssues(ctx context.Context, filter bson.M, nam
 	array = append(
 		array,
 		bson.D {
-			{"name", bson.M{"$regex": name, "$options": "-i"}},
+			{"title", bson.M{"$regex": name, "$options": "-i"}},
+		},
+		bson.D{
+			{"description", bson.M{"$regex": name, "$options": "-i"}},
 		},
 	)
 
