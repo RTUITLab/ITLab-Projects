@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+
 	"github.com/ITLab-Projects/pkg/githubreq"
 	"github.com/ITLab-Projects/pkg/mfsreq"
 	"github.com/ITLab-Projects/pkg/models/estimate"
@@ -186,7 +187,10 @@ func TestFunc_AddTestFunc(t *testing.T) {
 		},
 	}
 
-	if err := API.Repository.Milestone.Save(milestone); err != nil {
+	if err := API.Repository.Milestone.Save(
+		context.Background(),
+		milestone,
+		); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -271,7 +275,10 @@ func TestFunc_AddEstimate(t *testing.T) {
 		},
 	}
 
-	if err := API.Repository.Milestone.Save(milestone); err != nil {
+	if err := API.Repository.Milestone.Save(
+		context.Background(),
+		milestone,
+		); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -438,7 +445,9 @@ func TestFunc_GetProjectsByName(t *testing.T) {
 }
 
 func TestFunc_GetProject(t *testing.T) {
-	API.Repository.Estimate.Save(estimate.EstimateFile{
+	API.Repository.Estimate.Save(
+		context.Background(),
+		estimate.EstimateFile{
 		MilestoneFile: milestonefile.MilestoneFile{
 			MilestoneID: 5916375,
 			FileID:      primitive.NewObjectID(),
@@ -499,7 +508,7 @@ func TestFunc_DeleteProject(t *testing.T) {
 		Name: "Mock-Repo",
 	}
 
-	if err := API.Repository.Repo.Save(rep); err != nil {
+	if err := API.Repository.Repo.Save(context.Background(),rep); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -514,7 +523,10 @@ func TestFunc_DeleteProject(t *testing.T) {
 		},
 	}
 
-	if err := API.Repository.Milestone.Save(m); err != nil {
+	if err := API.Repository.Milestone.Save(
+		context.Background(),
+		m,
+		); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -526,7 +538,10 @@ func TestFunc_DeleteProject(t *testing.T) {
 		},
 	}
 
-	if err := API.Repository.FuncTask.Save(task); err != nil {
+	if err := API.Repository.FuncTask.Save(
+		context.Background(),
+		task,
+		); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -538,7 +553,10 @@ func TestFunc_DeleteProject(t *testing.T) {
 		},
 	}
 
-	if err := API.Repository.Estimate.Save(est); err != nil {
+	if err := API.Repository.Estimate.Save(
+		context.Background(),
+		est,
+		); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
