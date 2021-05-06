@@ -24,7 +24,7 @@ func main() {
 			app.Repository,
 			app.Requester,
 			app.MFSRequester,
-		),
+		).WithUpdater(cfg.App.UpdateTime),
 	)
 
 	app.Start()

@@ -23,6 +23,7 @@ import (
 	"github.com/ITLab-Projects/pkg/models/repoasproj"
 	"github.com/ITLab-Projects/pkg/models/tag"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -48,6 +49,8 @@ import (
 //
 // @Failure 403 {object} e.Message "if you are nor admin"
 func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
+	a.resetUpdater()
+	defer a.resetUpdater()
 	repos, err := a.Requester.GetRepositories()
 	if err == githubreq.ErrGetLastPage {
 		w.WriteHeader(http.StatusBadGateway)
@@ -105,7 +108,9 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 					prepare("UpdateAllProjects", err).Error("Failed to get milestone")
 					cancel()
 					errChan <- err
-				} else if err != nil {
+				} else if errors.Unwrap(err) == githubreq.UnexpectedCode {
+					// Pass
+				} else {
 					prepare("UpdateAllProjects", err).Warn("Failed to get milestone")
 				}
 			},
@@ -129,8 +134,8 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 					cancel()
 					errChan <- err
 				} else if errors.Unwrap(err) == githubreq.UnexpectedCode {
-
-				} else if err != nil {
+					// Pass
+				} else {
 					prepare("UpdateAllProjects", err).Warn("Failed to get realese")
 				}
 			},
@@ -152,8 +157,11 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 					prepare("UpdateAllProjects", err).Error("Faield to get tag")
 					cancel()
 					errChan <- err
+				} else if errors.Unwrap(err) == githubreq.UnexpectedCode {
+					// Pass
+				} else { 
+					prepare("UpdateAllProjects", err).Warn("Faield to get tag")
 				}
-				prepare("UpdateAllProjects", err).Warn("Faield to get tag")
 			},
 		)
 		if err != nil {
@@ -269,6 +277,169 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		prepare("UpdateAllProjects", err).Error("Can't save tags")
 		return
 	}
+}
+
+func (a *Api) updateAllProjects(ctx context.Context) error {
+	repos, err := a.Requester.GetRepositories()
+	if err != nil {
+		return err
+	}
+
+	msChan := make(chan []milestone.MilestoneInRepo, 1)
+	rsChan := make(chan []realese.RealeseInRepo, 1)
+	tgsChan := make(chan []tag.Tag, 1)
+	errChan := make(chan error, 1)
+	ctx, cancel := context.WithTimeout(
+		ctx,
+		20*time.Second,
+	)
+	defer cancel()
+
+	go func() {
+		ms, err := a.Requester.GetAllMilestonesForRepoWithID(
+			ctx,
+			repo.ToRepo(repos),
+			func(err error) {
+				if err == githubreq.ErrForbiden || err == githubreq.ErrUnatorizared {
+					cancel()
+					errChan <- err
+				} else if err != nil {
+					logrus.WithFields(
+						logrus.Fields{
+							"package": "api/v1",
+							"func": "updateAllProjects",
+							"err": err,
+						},
+					).Warn("Warning!")
+				}
+			},
+		)
+		if err != nil {
+			return
+		}
+
+		msChan <- ms
+	}()
+
+	go func() {
+		rs, err := a.Requester.GetLastsRealeseWithRepoID(
+			ctx,
+			repo.ToRepo(repos),
+			func(err error) {
+				if err == githubreq.ErrForbiden || err == githubreq.ErrUnatorizared {
+					cancel()
+					errChan <- err
+				} else if errors.Unwrap(err) == githubreq.UnexpectedCode {
+
+				} else if err != nil {
+					logrus.WithFields(
+						logrus.Fields{
+							"package": "api/v1",
+							"func": "updateAllProjects",
+							"err": err,
+						},
+					).Warn("Warning!")
+				}
+			},
+		)
+		if err != nil {
+			return
+		}
+		rsChan <- rs
+	}()
+
+	go func() {
+		tgs, err := a.Requester.GetAllTagsForRepoWithID(
+			ctx,
+			repo.ToRepo(repos),
+			func(err error) {
+				if err == githubreq.ErrForbiden || err == githubreq.ErrUnatorizared {
+					cancel()
+					errChan <- err
+				} else if errors.Unwrap(err) == githubreq.UnexpectedCode {
+
+				} else if err != nil {
+					logrus.WithFields(
+						logrus.Fields{
+							"package": "api/v1",
+							"func": "updateAllProjects",
+							"err": err,
+						},
+					).Warn("Warning!")
+				}
+			},
+		)
+		if err != nil {
+			return
+		}
+
+		tgsChan <- tgs
+	}()
+	var (
+		ms 	[]milestone.MilestoneInRepo = nil
+		rs 	[]realese.RealeseInRepo		= nil
+		tgs	[]tag.Tag					= nil
+	)
+
+	for i := 0; i < 3; i++ {
+		select {
+		case <- ctx.Done():
+			err := <- errChan
+			return err
+		case _ms := <- msChan:
+			ms = _ms
+		case _rs := <- rsChan:
+			rs = _rs
+		case _tgs := <- tgsChan:
+			tgs = _tgs
+		}
+	}
+
+	close(msChan)
+	close(rsChan)
+	close(tgsChan)
+
+	if err := a.Repository.Repo.SaveAndUpdatenUnfind(
+		ctx,
+		repo.ToRepo(repos),
+		bson.M{"$set": bson.M{"deleted": true}},
+	); err != nil {
+		return err
+	}
+
+	if err := a.Repository.Milestone.SaveAndUpdatenUnfind(
+		ctx,
+		ms,
+		bson.M{"$set": bson.M{"deleted": true}},
+	); err != nil {
+		return err
+	}
+
+	is := getIssuesFromMilestone(ms)
+	
+	if err := a.Repository.Issue.SaveAndUpdatenUnfind(
+		ctx,
+		is,
+		bson.M{"$set": bson.M{"deleted": true}},
+	); err != nil {
+		return err
+	}
+
+	if err := a.Repository.Realese.Save(
+		ctx,
+		rs,
+	); err != nil {
+		return err
+	}
+
+	if err := a.Repository.Tag.Save(
+		ctx,
+		tgs,
+	); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // GetProjects

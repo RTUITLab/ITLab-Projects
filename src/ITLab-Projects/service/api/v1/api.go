@@ -1,10 +1,13 @@
 package v1
 
 import (
+	"github.com/ITLab-Projects/pkg/updater"
+	"context"
 	"net/http"
 	"net/http/pprof"
 	"net/url"
 	"strconv"
+	"time"
 
 	_ "github.com/ITLab-Projects/docs"
 	"github.com/ITLab-Projects/pkg/config"
@@ -12,7 +15,6 @@ import (
 	"github.com/ITLab-Projects/service/middleware/mgsess"
 	swag "github.com/swaggo/http-swagger"
 
-	"github.com/ITLab-Projects/pkg/apibuilder"
 	"github.com/ITLab-Projects/pkg/githubreq"
 	"github.com/ITLab-Projects/pkg/mfsreq"
 	"github.com/ITLab-Projects/pkg/models/estimate"
@@ -32,6 +34,7 @@ type Api struct {
 	Requester 		githubreq.Requester
 	MFSRequester	mfsreq.Requester
 	Testmode		bool
+	upd				*updater.Updater
 	Auth auth.AuthMiddleware
 }
 
@@ -45,7 +48,7 @@ func New(
 	Repository *repositories.Repositories,
 	Requester githubreq.Requester,
 	MFSRequester	mfsreq.Requester,
-	) apibuilder.ApiBulder {
+	) *Api {
 	a := &Api{
 		Repository: Repository,
 		Requester: Requester,
@@ -57,6 +60,72 @@ func New(
 
 	return a
 }
+
+func (a *Api) WithUpdater(Time string) *Api {
+	if err := a.CreateUpdater(Time); err != nil {
+		log.WithFields(
+			log.Fields{
+				"package": "api/v1",
+				"func": "WithUpdater",
+				"err": err,
+			},
+		).Panic("Failed to create with updater")
+	}
+
+	return a
+}
+
+func (a *Api) CreateUpdater(Time string) error {
+	duration, err := time.ParseDuration(Time)
+	if err != nil {
+		return err
+	}
+
+	a.upd = updater.New(
+		duration,
+		a.update,
+	)
+
+	return nil
+}
+
+func (a *Api) StartUpdater() {
+	if a.upd != nil {
+		go a.upd.Update()
+	}
+}
+
+func (a *Api) resetUpdater() {
+	if a.upd != nil {
+		log.Debug("Reset update")
+		a.upd.Reset()
+	}
+}
+
+func (a *Api) update() {
+	log.Debug("Start update")
+	sessctx, err := repositories.GetMongoSessionContext(context.Background())
+	if err != nil {
+		log.WithFields(
+			log.Fields{
+				"package": "api/v1",
+				"func": "update",
+				"err": err,
+			},
+		).Error("Failed to update projects")
+	}
+	if err := a.updateAllProjects(sessctx); err != nil {
+		log.WithFields(
+			log.Fields{
+				"package": "api/v1",
+				"func": "update",
+				"err": err,
+			},
+		).Error("Failed to update projects")
+	}
+	log.Debug("End update")
+}
+
 
 func (a *Api) Build(r *mux.Router) {
 	docs := r.PathPrefix("/swagger")
@@ -108,7 +177,8 @@ func (a *Api) Build(r *mux.Router) {
 	projects.Use(
 		mgsess.PutSessionINTOCtx,
 	)
-	
+
+	a.StartUpdater()
 }
 
 
