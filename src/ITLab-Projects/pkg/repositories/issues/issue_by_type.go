@@ -1,6 +1,7 @@
 package issues
 
 import (
+	"github.com/ITLab-Projects/pkg/repositories/agregate"
 	"github.com/sirupsen/logrus"
 	"context"
 
@@ -20,6 +21,7 @@ type IssueByType struct {
 	deleter.Deleter
 	getter.Getter
 	model mgm.Model
+	agregate.Agregater
 }
 
 func NewByType(
@@ -46,6 +48,10 @@ func NewByType(
 	)
 
 	it.Getter = getter.NewGetByType(
+		&i,
+	)
+
+	it.Agregater = agregate.NewByType(
 		&i,
 	)
 

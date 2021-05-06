@@ -1,6 +1,7 @@
 package issues
 
 import (
+	"github.com/ITLab-Projects/pkg/repositories/agregate"
 	"github.com/ITLab-Projects/pkg/repositories/counter"
 	"github.com/ITLab-Projects/pkg/repositories/deleter"
 	"github.com/ITLab-Projects/pkg/repositories/getter"
@@ -12,4 +13,5 @@ type Issuer interface {
 	getter.Getter
 	deleter.Deleter
 	counter.Counter
+	agregate.Agregater
 }
