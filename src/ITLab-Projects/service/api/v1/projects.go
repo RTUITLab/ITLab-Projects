@@ -594,31 +594,20 @@ func (a *Api) GetProject(w http.ResponseWriter, r *http.Request) {
 
 	id, _ := strconv.ParseUint(_id, 10, 64)
 
-	var repos []repo.Repo
+	var rep repo.Repo
 	ctx, cancel := context.WithTimeout(
-		context.Background(),
+		r.Context(),
 		5 * time.Second,
 	)
 	defer cancel()
 
-	if err := a.Repository.Repo.GetAllFiltered(
+	if err := a.Repository.Repo.GetOne(
 		ctx,
 		bson.M{"id": id},
-		func(c *mongo.Cursor) error {
-			if err := c.All(
-				ctx,
-				&repos,
-			); err != nil {
-				return err
-			}
-
-			if len(repos) == 0 {
-				return mongo.ErrNoDocuments
-			}
-
-			return nil
+		func(sr *mongo.SingleResult) error {
+			return sr.Decode(&rep)
 		},
-		options.Find(),
+		options.FindOne(),
 	); err == mongo.ErrNoDocuments {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(
@@ -638,7 +627,7 @@ func (a *Api) GetProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	project, err := a.getProjs(repos)
+	project, err := a.getProject(ctx, rep)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
@@ -648,19 +637,10 @@ func (a *Api) GetProject(w http.ResponseWriter, r *http.Request) {
 		)
 		prepare("GetProject", err).Error()
 		return
-	} else if len(project) != 1 {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(
-			e.Message {
-				Message: "Failed to get project",
-			},
-		)
-		prepare("GetProject", fmt.Errorf("Len of project == %v", len(project))).Error()
-		return
 	}
 
 	json.NewEncoder(w).Encode(
-		project[0],	
+		project,	
 	)
 }
 
@@ -696,7 +676,7 @@ func (a *Api) DeleteProject(w http.ResponseWriter, r *http.Request) {
 
 	var rep repo.Repo
 	ctx, cancel := context.WithTimeout(
-		context.Background(),
+		r.Context(),
 		3*time.Second,
 	)
 	defer cancel()
@@ -927,6 +907,84 @@ func (a *Api) deleteIssues(ctx context.Context, repoid uint64) error {
 	}
 
 	return nil
+}
+
+func (a *Api) getProject(ctx context.Context, rep repo.Repo) (repoasproj.RepoAsProj, error) {
+	proj := repoasproj.RepoAsProj{
+		Repo: rep,
+	}
+
+	if err := a.Repository.Milestone.GetAllFiltered(
+		ctx,
+		bson.M{"repoid": rep.ID},
+		func(c *mongo.Cursor) error {
+			return c.All(
+				ctx,
+				&proj.Milestones,
+			)
+		},
+		options.Find(),
+	); err == mongo.ErrNoDocuments {
+		// Pass
+	} else if err != nil {
+		return proj, err
+	}
+
+	if milestones, err := a.getAssetsForMilestones(
+		ctx,
+		proj.Milestones,
+	); err != nil {
+		return proj, err
+	} else {
+		proj.Milestones = milestones
+	}
+
+	var open float64
+	var closed float64
+	for _, m := range proj.Milestones {
+		if m.OpenIssues != 0 {
+			open += float64(m.OpenIssues)
+			closed += float64(m.ClosedIssues)
+		}
+	}
+
+	if closed == 0 {
+		proj.Completed = 1
+	} else {
+		proj.Completed = open/closed
+	}
+
+	if err := a.Repository.Realese.GetOne(
+		ctx,
+		bson.M{"repoid": rep.ID},
+		func(sr *mongo.SingleResult) error {
+			return sr.Decode(proj.LastRealese)
+		},
+		options.FindOne(),
+	); err == mongo.ErrNoDocuments {
+		// Pass
+	} else if err != nil {
+		return proj, err
+	}
+
+	if err := a.Repository.Tag.GetAllFiltered(
+		ctx,
+		bson.M{"repo_id": rep.ID},
+		func(c *mongo.Cursor) error {
+			c.All(
+				ctx,
+				&proj.Tags,
+			)
+			return c.Err()
+		},
+		options.Find(),
+	); err == mongo.ErrNoDocuments {
+		// Pass
+	} else if err != nil {
+		return proj, err
+	}
+
+	return proj, nil
 }
 
 func (a *Api) getProjs(reps []repo.Repo) ([]repoasproj.RepoAsProj, error) {
