@@ -230,6 +230,8 @@ definitions:
     type: object
   repoasproj.RepoAsProj:
     properties:
+      completed:
+        type: number
       last_realese:
         $ref: '#/definitions/realese.Realese'
       milestones:
@@ -503,6 +505,10 @@ paths:
         in: query
         name: name
         type: string
+      - description: search of label name of issues
+        in: query
+        name: tag
+        type: string
       produces:
       - application/json
       responses:
@@ -521,6 +527,29 @@ paths:
           schema:
             $ref: '#/definitions/err.Message'
       summary: return issues
+      tags:
+      - issues
+  /api/v1/projects/issues/labels:
+    get:
+      description: return all unique labels of issues
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: return labels
       tags:
       - issues
   /api/v1/projects/tags:

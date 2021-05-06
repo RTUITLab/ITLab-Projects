@@ -266,6 +266,12 @@ var doc = `{
                         "description": "search to name of issues, title of milestones and repository names",
                         "name": "name",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "search of label name of issues",
+                        "name": "tag",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -275,6 +281,41 @@ var doc = `{
                             "type": "array",
                             "items": {
                                 "$ref": "#/definitions/milestone.IssuesWithMilestoneID"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/projects/issues/labels": {
+            "get": {
+                "description": "return all unique labels of issues",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "issues"
+                ],
+                "summary": "return labels",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
                             }
                         }
                     },
@@ -898,6 +939,9 @@ var doc = `{
         "repoasproj.RepoAsProj": {
             "type": "object",
             "properties": {
+                "completed": {
+                    "type": "number"
+                },
                 "last_realese": {
                     "$ref": "#/definitions/realese.Realese"
                 },
