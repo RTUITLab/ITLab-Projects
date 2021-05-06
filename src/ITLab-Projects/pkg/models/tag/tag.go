@@ -3,7 +3,7 @@ package tag
 import "github.com/Kamva/mgm"
 
 type Tag struct {
-	mgm.DefaultModel	`json:"-" bson:",inline"`
+	mgm.DefaultModel	`json:"-" bson:",inline" swaggerignore:"true"`
 	RepoID 		uint64 	`json:"-" bson:"repo_id"`
 	Tag			string	`json:"tag" bson:"tag"`
 }

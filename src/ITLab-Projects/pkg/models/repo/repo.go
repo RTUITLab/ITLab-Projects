@@ -6,7 +6,7 @@ import (
 )
 
 type Repo struct {
-	mgm.DefaultModel					`json:"-" bson:",inline"`
+	mgm.DefaultModel					`json:"-" bson:",inline" swaggerignore:"true"`
 	ID          		uint64 			`json:"id"`
 	Name        		string 			`json:"name"`
 	Contributors		[]User			`json:"contributors"`

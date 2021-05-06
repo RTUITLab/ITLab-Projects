@@ -9,7 +9,7 @@ type Realese struct {
 }
 
 type RealeseInRepo struct {
-	mgm.DefaultModel		`json:"-" bson:",inline"`
+	mgm.DefaultModel		`json:"-" bson:",inline" swaggerignore:"true"`
 	RepoID	uint64			`json:"repo_id"`
 	Realese 				`bson:",inline"`
 }

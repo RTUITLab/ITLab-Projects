@@ -14,6 +14,7 @@ type RepoAsProj struct {
 	Milestones 		[]milestone.Milestone		`json:"milestones"`
 	LastRealese		*realese.Realese			`json:"last_realese"`
 	Tags			[]tag.Tag					`json:"tags"`
+	Completed		float64						`json:"completed"`
 }
 
 
