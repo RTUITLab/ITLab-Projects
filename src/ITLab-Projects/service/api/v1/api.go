@@ -62,8 +62,9 @@ func New(
 
 	if cfg.UpdateTime != "" {
 		log.Debug("WithUpdater")
-		a = a.WithUpdater(cfg.UpdateTime)
+		a.WithUpdater(cfg.UpdateTime)
 	}
+	log.Debug(a.upd)
 
 	return a
 }
