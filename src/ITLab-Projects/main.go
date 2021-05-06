@@ -18,13 +18,14 @@ func main() {
 	app.AddApi(
 		v1.New(
 			v1.Config{
-				cfg.App.TestMode,
-				*cfg.Auth,
+				Testmode: cfg.App.TestMode,
+				Config: *cfg.Auth,
+				UpdateTime: cfg.App.UpdateTime,
 			},
 			app.Repository,
 			app.Requester,
 			app.MFSRequester,
-		).WithUpdater(cfg.App.UpdateTime),
+		),
 	)
 
 	app.Start()

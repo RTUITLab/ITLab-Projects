@@ -40,7 +40,8 @@ type Api struct {
 }
 
 type Config struct {
-	Testmode bool
+	Testmode 		bool
+	UpdateTime		string
 	Config config.AuthConfig
 }
 
@@ -58,6 +59,11 @@ func New(
 
 	a.Auth = auth.New(cfg.Config)
 	a.Testmode = cfg.Testmode
+
+	if cfg.UpdateTime != "" {
+		log.Debug("WithUpdater")
+		a = a.WithUpdater(cfg.UpdateTime)
+	}
 
 	return a
 }

@@ -57,6 +57,8 @@ func New(cfg *config.Config) *App {
 
 	if !cfg.App.TestMode {
 		log.SetLevel(log.InfoLevel)
+	} else {
+		log.SetLevel(log.DebugLevel)
 	}
 
 	return app
