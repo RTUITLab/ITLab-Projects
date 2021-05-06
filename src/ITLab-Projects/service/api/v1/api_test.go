@@ -609,9 +609,24 @@ func TestFunc_GetIssues(t *testing.T) {
 	json.NewDecoder(w.Body).Decode(&is)
 
 	for _, i := range is {
-		t.Log(i.CreatedAt)
+		t.Log(i.Labels)
 	}
 
 	t.Log(len(is))
 	
+}
+
+func TestFunc_GetLabels(t *testing.T) {
+	req := httptest.NewRequest("GET", "/api/v1/projects/issues/labels", nil)
+
+	w := httptest.NewRecorder()
+
+	Router.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusOK {
+		t.Log(w.Result().StatusCode)
+		t.FailNow()
+	}
+
+	t.Log(w.Body.String())
 }
