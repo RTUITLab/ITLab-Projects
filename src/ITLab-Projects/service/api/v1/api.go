@@ -219,7 +219,7 @@ func (a *Api) beforeDelete(
 	deleter mfsreq.FileDeleter,
 	v interface{},
 	) error {
-	log.Info("Before delete!")
+	log.Debug("Before delete!")
 	switch v.(type) {
 	case estimate.EstimateFile:
 		est, _ := v.(estimate.EstimateFile)

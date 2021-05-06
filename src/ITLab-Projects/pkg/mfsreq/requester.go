@@ -57,8 +57,8 @@ type MFSRequests struct {
 
 func (mfs *MFSRequests) DeleteFile(ID primitive.ObjectID) error {
 	if mfs.TestMode {
-		logrus.Info("TestMode activated")
-		logrus.Info(mfs.req.Header)
+		logrus.Debug("TestMode activated")
+		logrus.Debug(mfs.req.Header)
 		return nil
 	}
 
