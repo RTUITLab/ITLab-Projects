@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/ITLab-Projects/pkg/mfsreq"
 
@@ -72,7 +73,15 @@ func (a *App) AddApi(Builders ...apibuilder.ApiBulder) {
 
 func (a *App) Start() {
 	log.Infof("Starting Application is port %s", a.Port)
-	if err := http.ListenAndServe(fmt.Sprintf(":%s",a.Port), a.Router); err != nil {
+	s := &http.Server{
+		Addr: fmt.Sprintf(":%s",a.Port),
+		Handler: a.Router,
+		ReadTimeout: 10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+		IdleTimeout: 2*time.Second,
+	}
+	if err := s.ListenAndServe(); err != nil {
 		log.Panicf("Failed to start application %v", err)
 	}
 }
