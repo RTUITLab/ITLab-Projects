@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/ITLab-Projects/service/middleware/contenttype"
 	"github.com/ITLab-Projects/pkg/updater"
 	"context"
 	"net/http"
@@ -142,11 +143,12 @@ func (a *Api) Build(r *mux.Router) {
 	
 	projects.HandleFunc("/", a.GetProjects).Methods("GET")
 	projects.HandleFunc("/{id:[0-9]+}", a.GetProject).Methods("GET")
-
-
 	projects.HandleFunc("/tags", a.GetTags).Methods("GET")
 	projects.HandleFunc("/issues", a.GetIssues).Methods("GET")
+	projects.HandleFunc("/issues/labels", a.GetLabels).Methods("GET")
 
+
+	projects.Use(contenttype.AppJSON)
 	if !a.Testmode {
 		projects.Use(
 			mux.MiddlewareFunc(a.Auth),
