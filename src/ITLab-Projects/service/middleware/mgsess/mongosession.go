@@ -1,23 +1,22 @@
 package mgsess
 
 import (
+	"github.com/ITLab-Projects/pkg/repositories"
 	"context"
 	"encoding/json"
 	"net/http"
 
 	e "github.com/ITLab-Projects/pkg/err"
 	"github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/mongo"
-
-	"github.com/Kamva/mgm"
 )
 
 func PutSessionINTOCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			logrus.Debug("Session middleware")
-			_, client, _, _ := mgm.DefaultConfigs()
-			sess, err := client.StartSession()
+			sessctx, err := repositories.GetMongoSessionContext(
+				r.Context(),
+			)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				json.NewEncoder(w).Encode(
@@ -34,15 +33,9 @@ func PutSessionINTOCtx(next http.Handler) http.Handler {
 				).Error()
 				return
 			}
-			defer sess.EndSession(
+			defer sessctx.EndSession(
 				context.Background(),
 			)
-
-			sessctx := mongo.NewSessionContext(
-				r.Context(),
-				sess,
-			)
-
 
 			r = r.WithContext(sessctx)
 
