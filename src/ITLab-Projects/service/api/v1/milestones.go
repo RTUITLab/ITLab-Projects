@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	e "github.com/ITLab-Projects/pkg/err"
@@ -34,6 +35,8 @@ import (
 //
 // @Param name query string false "search to name of issues, title of milestones and repository names"
 //
+// @Param tag query string false "search of label name of issues"
+//
 // @Success 200 {array} milestone.IssuesWithMilestoneID
 //
 // @Failure 500 {object} e.Message
@@ -50,19 +53,25 @@ func (a *Api) GetIssues(w http.ResponseWriter, r *http.Request) {
 		count = uint64(a.Repository.Issue.Count())
 	}
 
-	// TODO change to bson.D
 	filter := bson.M{
 		"state": "open",
 	}
 
 	name := values.Get("name")
+	tag := values.Get("tag")
 
 	ctx, cancel := context.WithTimeout(
 		r.Context(),
 		5*time.Second,
 	)
-
 	defer cancel()
+	if tag != "" {
+		filter = a.buildFilterForLabelTags(
+			ctx,
+			filter,
+			tag,
+		)
+	}
 
 	if name != "" {
 		if _filter, err := a.buildFilterByNameForIssues(
@@ -212,4 +221,63 @@ func (a *Api) buildFilterByNameForIssues(ctx context.Context, filter bson.M, nam
 	}(filter)
 
 	return f, nil
+}
+
+func (a *Api) buildFilterForLabelTags(
+	ctx context.Context, 
+	filter bson.M, 
+	tag string,
+) (bson.M) {
+	tags := strings.Split(tag, " ")
+
+	return func(m map[string]interface{}) bson.M {
+		m["labels.name"] = bson.M{"$in": tags}
+		return m
+	}(filter)
+}
+
+// GetLabels
+//
+// @Summary return labels
+//
+// @Tags issues
+//
+// @Produce json
+//
+// @Description return all unique labels of issues
+//
+// @Router /api/v1/projects/issues/labels [get]
+//
+// @Success 200 {array} string
+//
+// @Failure 500 {object} e.Message
+//
+// @Failure 401 {object} e.Message
+func (a *Api) GetLabels(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(
+		r.Context(),
+		1*time.Second,
+	)
+	defer cancel()
+
+	names, err := a.Repository.Issue.Distinct(
+		ctx,
+		"labels.name",
+		bson.M{"state": "open"},
+		options.Distinct(),
+	)
+	if err == mongo.ErrNoDocuments {
+		// Pass
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(
+			e.Message{
+				Message: "Failed to get labels",
+			},
+		)
+		prepare("GetLabels", err).Error()
+		return
+	}
+
+	json.NewEncoder(w).Encode(names)
 }
