@@ -51,6 +51,7 @@ type Github struct {
 type AppConfig struct {
 	AppPort				string	`envconfig:"ITLAB_PROJECTS_APPPORT" json:"appPort"`
 	TestMode			bool	`envconfig:"ITLAB_PROJECTS_TESTMODE" json:"testMode"`
+	UpdateTime			string	`envconfig:"ITLAB_PROJECTS_UPDATETIME" json:"update_time"`
 }
 
 func GetConfig() *Config {
