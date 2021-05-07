@@ -1,15 +1,17 @@
 package tags
 
 import (
-	log "github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/bson"
 	"context"
-	"go.mongodb.org/mongo-driver/mongo/options"
+
 	model "github.com/ITLab-Projects/pkg/models/tag"
+	"github.com/ITLab-Projects/pkg/repositories/agregate"
 	"github.com/ITLab-Projects/pkg/repositories/deleter"
 	"github.com/ITLab-Projects/pkg/repositories/getter"
 	"github.com/ITLab-Projects/pkg/repositories/saver"
 	"github.com/Kamva/mgm"
+	log "github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type TagsByType struct {
@@ -17,6 +19,7 @@ type TagsByType struct {
 	saver.SaverWithDelUpdate
 	getter.Getter
 	deleter.Deleter
+	agregate.Agregater
 }
 
 func NewByType(
@@ -43,16 +46,19 @@ func NewByType(
 		&t,
 	)
 
+	tt.Agregater = agregate.NewByType(&t)
+
 	return tt
 }
 
 func (tg *TagsByType) save(ctx context.Context, v interface{}) error {
 	tag, _ := v.(model.Tag)
-	opts := options.Replace().SetUpsert(true)
-	filter := bson.M{"repo_id": tag.RepoID}
 
-	
-	_, err := mgm.Coll(tg.model).ReplaceOne(ctx, filter, tag, opts)
+	_, err := mgm.Coll(tg.model).InsertOne(
+		ctx,
+		tag,
+		options.InsertOne(),
+	)
 	if err != nil {
 		return err
 	}

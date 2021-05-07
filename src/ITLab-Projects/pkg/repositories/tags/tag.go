@@ -23,7 +23,7 @@ type TagRepository struct {
 
 func New(
 	collection *mongo.Collection,
-) Tager {
+) *TagRepository {
 	tr := &TagRepository{
 		tagCollection: collection,
 	}
@@ -71,10 +71,11 @@ func (tg *TagRepository) buildFilter(v interface{}) interface{} {
 
 func (tg *TagRepository) save(ctx context.Context, v interface{}) error {
 	tag, _ := v.(model.Tag)
-	opts := options.Replace().SetUpsert(true)
-	filter := bson.M{"repo_id": tag.RepoID}
-	
-	_, err := tg.tagCollection.ReplaceOne(ctx, filter, tag, opts)
+	_, err := tg.tagCollection.InsertOne(
+		ctx, 
+		tag, 
+		options.InsertOne(),
+	)
 	if err != nil {
 		return err
 	}
