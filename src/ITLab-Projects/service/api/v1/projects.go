@@ -264,14 +264,14 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := a.Repository.Tag.Save(
+	if err := a.Repository.Tag.SaveAndDeletedUnfind(
 		ctx,
 		tgs,
 	); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
 			e.Message{
-				Message: "Can't save realeses",
+				Message: "Can't save tags",
 			},
 		)
 		prepare("UpdateAllProjects", err).Error("Can't save tags")
@@ -948,10 +948,10 @@ func (a *Api) getProject(ctx context.Context, rep repo.Repo) (repoasproj.RepoAsP
 		}
 	}
 
-	if closed == 0 {
+	if open + closed == 0 {
 		proj.Completed = 1
 	} else {
-		proj.Completed = open/closed
+		proj.Completed = (closed)/(open+closed)
 	}
 
 	if err := a.Repository.Realese.GetOne(
@@ -1129,10 +1129,10 @@ func (a *Api) GetCompatcProj(ctx context.Context, repos []repo.Repo) ([]repoaspr
 						}
 					}
 
-					if closed == 0 {
+					if open + closed == 0 {
 						proj.Completed = 1
 					} else {
-						proj.Completed = open/closed
+						proj.Completed = (closed)/(open+closed)
 					}
 
 					return nil

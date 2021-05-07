@@ -140,7 +140,7 @@ func (a *Api) Build(r *mux.Router) {
 
 	projects := r.PathPrefix("/api/v1/projects").Subrouter()
 	admin := projects.NewRoute().Subrouter()
-
+	
 	admin.HandleFunc("/", a.UpdateAllProjects).Methods("POST")
 	admin.HandleFunc("/task", a.AddFuncTask).Methods("POST")
 	admin.HandleFunc("/estimate", a.AddEstimate).Methods("POST")

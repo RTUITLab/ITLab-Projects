@@ -3,6 +3,7 @@ package v1
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/ITLab-Projects/pkg/models/tag"
 )
@@ -40,20 +42,13 @@ func (a *Api) GetTags(w http.ResponseWriter, r *http.Request) {
 	)
 	defer cancel()
 	
-	if err := a.Repository.Tag.GetAllFiltered(
+	_tags, err := a.Repository.Tag.Distinct(
 		ctx,
+		"tag",
 		bson.M{},
-		func(c *mongo.Cursor) error {
-			if err := c.All(
-				ctx,
-				&tags,
-			); err != nil {
-				return err
-			}
-
-			return c.Err()
-		},
-	); err == mongo.ErrNoDocuments {
+		options.Distinct(),
+	)
+	if err == mongo.ErrNoDocuments {
 		// pass
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -64,6 +59,12 @@ func (a *Api) GetTags(w http.ResponseWriter, r *http.Request) {
 		)
 		prepare("GetTags", err).Error()
 		return
+	}
+
+	for _, t := range _tags {
+		tags = append(tags, tag.Tag{
+			Tag: fmt.Sprint(t),
+		})
 	}
 
 	json.NewEncoder(w).Encode(tags)
