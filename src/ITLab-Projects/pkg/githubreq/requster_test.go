@@ -16,7 +16,7 @@ import (
 	"github.com/ITLab-Projects/pkg/models/repo"
 )
 
-var requster githubreq.Requester
+var requster *githubreq.GHRequester
 
 func init() {
 	// Strange path but okay
@@ -105,7 +105,6 @@ func TestFunc_GetMilestonesWithRepoID(t *testing.T) {
 	wg.Wait()
 }
 
-
 func TestFunc_GetIssues(t *testing.T) {
 	repos, err := requster.GetRepositories()
 	if err != nil {
@@ -133,7 +132,6 @@ func TestFunc_GetIssues(t *testing.T) {
 	t.Log(count)
 	t.Log("milestone count: ", len(ms))
 
-
 	var is []milestone.IssuesWithMilestoneID
 
 	isChan := make(chan milestone.IssuesWithMilestoneID)
@@ -142,19 +140,19 @@ func TestFunc_GetIssues(t *testing.T) {
 	for j, _ := range ms {
 		for i, _ := range ms[j].Issues {
 			count++
-			go func(i milestone.Issue, MID , RepoID uint64) {
+			go func(i milestone.Issue, MID, RepoID uint64) {
 				isChan <- milestone.IssuesWithMilestoneID{
 					MilestoneID: MID,
-					RepoID: RepoID,
-					Issue: i,
+					RepoID:      RepoID,
+					Issue:       i,
 				}
 			}(ms[j].Issues[i], ms[j].Milestone.ID, ms[j].RepoID)
 		}
 	}
 
 	for i := 0; i < count; i++ {
-		select{
-		case issue := <- isChan:
+		select {
+		case issue := <-isChan:
 			is = append(is, issue)
 		}
 	}
@@ -177,7 +175,6 @@ func TestFunc_URL(t *testing.T) {
 	baseUrl.RawQuery = val.Encode()
 	t.Log(baseUrl.String())
 }
-
 
 func TestFunc_GetLastRealese(t *testing.T) {
 	repos, err := requster.GetRepositories()
@@ -214,7 +211,7 @@ func TestFunc_GetAllMilestonesForRepoWithID(t *testing.T) {
 		defer close(msChan)
 		ms, err := requster.GetAllMilestonesForRepoWithID(
 			context.Background(),
-			repo.ToRepo(repos), 
+			repo.ToRepo(repos),
 			func(e error) {
 				logrus.WithFields(
 					logrus.Fields{
@@ -262,36 +259,36 @@ func TestFunc(t *testing.T) {
 }
 
 func TestFunc_HashSet(t *testing.T) {
-		var issues []milestone.IssueFromGH = []milestone.IssueFromGH{
-			{Issue: milestone.Issue{Description: "issue_1"}, Milestone: nil,},
-			{Issue: milestone.Issue{Description: "issue_2"}, Milestone: nil,},
-			{Issue: milestone.Issue{Description: "issue_3"}, Milestone: &milestone.MilestoneFromGH{ID: 2},},
-			{Issue: milestone.Issue{Description: "issue_4"}, Milestone: &milestone.MilestoneFromGH{ID: 2},},
-			{Issue: milestone.Issue{Description: "issue_5"}, Milestone: &milestone.MilestoneFromGH{ID: 1},},
-			{Issue: milestone.Issue{Description: "issue_6"}, Milestone: &milestone.MilestoneFromGH{ID: 3},},
-		}
+	var issues []milestone.IssueFromGH = []milestone.IssueFromGH{
+		{Issue: milestone.Issue{Description: "issue_1"}, Milestone: nil},
+		{Issue: milestone.Issue{Description: "issue_2"}, Milestone: nil},
+		{Issue: milestone.Issue{Description: "issue_3"}, Milestone: &milestone.MilestoneFromGH{ID: 2}},
+		{Issue: milestone.Issue{Description: "issue_4"}, Milestone: &milestone.MilestoneFromGH{ID: 2}},
+		{Issue: milestone.Issue{Description: "issue_5"}, Milestone: &milestone.MilestoneFromGH{ID: 1}},
+		{Issue: milestone.Issue{Description: "issue_6"}, Milestone: &milestone.MilestoneFromGH{ID: 3}},
+	}
 
-		set := make(map[interface{}][]milestone.Issue)
-	
-		for _, issue := range issues {
-			if issue.Milestone != nil {
-				if _, find := set[*issue.Milestone]; !find {
-					set[*issue.Milestone] = []milestone.Issue{issue.Issue}
-				} else if find {
-					set[*issue.Milestone] = append(set[*issue.Milestone], issue.Issue)
-				}
+	set := make(map[interface{}][]milestone.Issue)
+
+	for _, issue := range issues {
+		if issue.Milestone != nil {
+			if _, find := set[*issue.Milestone]; !find {
+				set[*issue.Milestone] = []milestone.Issue{issue.Issue}
+			} else if find {
+				set[*issue.Milestone] = append(set[*issue.Milestone], issue.Issue)
 			}
 		}
-	
-		var milestones []milestone.Milestone
-	
-		for k, v := range set {
-			m := k.(milestone.MilestoneFromGH)
-			milestones = append(milestones,  milestone.Milestone{MilestoneFromGH: m, Issues: v})
-		}
+	}
 
-		for _, m := range milestones {
-			t.Log(m)
-		}
-	
+	var milestones []milestone.Milestone
+
+	for k, v := range set {
+		m := k.(milestone.MilestoneFromGH)
+		milestones = append(milestones, milestone.Milestone{MilestoneFromGH: m, Issues: v})
+	}
+
+	for _, m := range milestones {
+		t.Log(m)
+	}
+
 }
