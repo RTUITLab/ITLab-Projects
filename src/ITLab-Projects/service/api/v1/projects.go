@@ -939,20 +939,7 @@ func (a *Api) getProject(ctx context.Context, rep repo.Repo) (repoasproj.RepoAsP
 		proj.Milestones = milestones
 	}
 
-	var open float64
-	var closed float64
-	for _, m := range proj.Milestones {
-		if m.OpenIssues != 0 {
-			open += float64(m.OpenIssues)
-			closed += float64(m.ClosedIssues)
-		}
-	}
-
-	if open + closed == 0 {
-		proj.Completed = 1
-	} else {
-		proj.Completed = (closed)/(open+closed)
-	}
+	proj.Completed = countCompleted(proj.Milestones)
 
 	if err := a.Repository.Realese.GetOne(
 		ctx,
@@ -1110,7 +1097,7 @@ func (a *Api) GetCompatcProj(ctx context.Context, repos []repo.Repo) ([]repoaspr
 				ctx,
 				bson.M{"repoid": r.ID},
 				func(c *mongo.Cursor) error {
-					var mls []milestone.MilestoneInRepo
+					var mls []milestone.Milestone
 					c.All(
 						ctx,
 						&mls,
@@ -1120,20 +1107,9 @@ func (a *Api) GetCompatcProj(ctx context.Context, repos []repo.Repo) ([]repoaspr
 						return c.Err()
 					}
 					
-					var open float64
-					var closed float64
-					for _, m := range mls {
-						if m.OpenIssues != 0 {
-							open += float64(m.OpenIssues)
-							closed += float64(m.ClosedIssues)
-						}
-					}
-
-					if open + closed == 0 {
-						proj.Completed = 1
-					} else {
-						proj.Completed = (closed)/(open+closed)
-					}
+					proj.Completed = countCompleted(
+						mls,
+					)
 
 					return nil
 				},
@@ -1298,4 +1274,21 @@ func (a *Api) buildFilterForTags(ctx context.Context, t string) (bson.M, error) 
 	}
 
 	return bson.M{"id": bson.M{"$in": ids}}, nil 
+}
+
+func countCompleted(ms []milestone.Milestone) float64 {
+	var open float64
+	var closed float64
+	for _, m := range ms {
+		if m.OpenIssues != 0 {
+			open += float64(m.OpenIssues)
+			closed += float64(m.ClosedIssues)
+		}
+	}
+
+	if open + closed == 0 {
+		return 1
+	} else {
+		return (closed)/(open+closed)
+	}
 }
