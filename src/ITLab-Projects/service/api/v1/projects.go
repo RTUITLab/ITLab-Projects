@@ -271,7 +271,7 @@ func (a *Api) UpdateAllProjects(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(
 			e.Message{
-				Message: "Can't save tags",
+				Message: "Can't save tag",
 			},
 		)
 		prepare("UpdateAllProjects", err).Error("Can't save tags")
@@ -1095,7 +1095,7 @@ func (a *Api) GetCompatcProj(ctx context.Context, repos []repo.Repo) ([]repoaspr
 	defer cancel()
 
 	errChan := make(chan error, 1)
-	projChan := make(chan []repoasproj.RepoAsProjCompact, 1)
+	projChan := make(chan repoasproj.RepoAsProjCompact, 1)
 
 	var count uint
 	for i := range repos {
@@ -1161,7 +1161,7 @@ func (a *Api) GetCompatcProj(ctx context.Context, repos []repo.Repo) ([]repoaspr
 				return
 			}
 
-			projChan <- []repoasproj.RepoAsProjCompact{proj}
+			projChan <- proj
 		}(repos[i])
 	}
 	var projs []repoasproj.RepoAsProjCompact
@@ -1169,7 +1169,7 @@ func (a *Api) GetCompatcProj(ctx context.Context, repos []repo.Repo) ([]repoaspr
 	for i := uint(0); i < count; i++ {
 		select {
 		case p := <- projChan:
-			projs = append(projs, p...)
+			projs = append(projs, p)
 		case <- ctx.Done():
 			close(errChan)
 			close(projChan)

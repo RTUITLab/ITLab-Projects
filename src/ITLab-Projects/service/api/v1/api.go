@@ -1,14 +1,16 @@
 package v1
 
 import (
-	"github.com/ITLab-Projects/service/middleware/contenttype"
-	"github.com/ITLab-Projects/pkg/updater"
 	"context"
 	"net/http"
 	"net/http/pprof"
 	"net/url"
 	"strconv"
 	"time"
+
+
+	"github.com/ITLab-Projects/pkg/updater"
+	"github.com/ITLab-Projects/service/middleware/contenttype"
 
 	_ "github.com/ITLab-Projects/docs"
 	"github.com/ITLab-Projects/pkg/config"
@@ -36,7 +38,7 @@ type Api struct {
 	MFSRequester	mfsreq.Requester
 	Testmode		bool
 	upd				*updater.Updater
-	Auth auth.AuthMiddleware
+	Auth 			auth.AuthMiddleware
 }
 
 type Config struct {
