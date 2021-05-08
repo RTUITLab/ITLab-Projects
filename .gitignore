@@ -1,3 +1,11 @@
-.idea
+**/.env
+
+**/sample.json
+**/mongodb_data
+
+**/main
 .DS_Store
-**/auth_config.json
+.*
+**/docker-compose.metrics.yml
+
+**/pprof
