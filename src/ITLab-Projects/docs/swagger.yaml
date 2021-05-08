@@ -278,7 +278,7 @@ info:
   title: ITLab-Projects API
   version: "1.0"
 paths:
-  /api/v1/projects/:
+  /api/projects/:
     get:
       description: |-
         return a projects you can filter count of them
@@ -344,7 +344,7 @@ paths:
       summary: Update all projects
       tags:
       - projects
-  /api/v1/projects/{id}:
+  /api/projects/{id}:
     delete:
       description: delete project by id and all milestones in it
       parameters:
@@ -409,7 +409,7 @@ paths:
       summary: return project according to id
       tags:
       - projects
-  /api/v1/projects/estimate:
+  /api/projects/estimate:
     post:
       consumes:
       - application/json
@@ -451,7 +451,7 @@ paths:
       summary: add estimate to milestone
       tags:
       - estimate
-  /api/v1/projects/estimate/{milestone_id}:
+  /api/projects/estimate/{milestone_id}:
     delete:
       description: delete estimate from database
       parameters:
@@ -488,7 +488,7 @@ paths:
       summary: delete estimate from database
       tags:
       - estimate
-  /api/v1/projects/issues:
+  /api/projects/issues:
     get:
       description: return issues according to query params
       parameters:
@@ -529,7 +529,7 @@ paths:
       summary: return issues
       tags:
       - issues
-  /api/v1/projects/issues/labels:
+  /api/projects/issues/labels:
     get:
       description: return all unique labels of issues
       produces:
@@ -552,7 +552,7 @@ paths:
       summary: return labels
       tags:
       - issues
-  /api/v1/projects/tags:
+  /api/projects/tags:
     get:
       description: return all tags
       produces:
@@ -575,7 +575,7 @@ paths:
       summary: return all tags
       tags:
       - tags
-  /api/v1/projects/task:
+  /api/projects/task:
     post:
       consumes:
       - application/json
@@ -617,7 +617,7 @@ paths:
       summary: add func task to milestone
       tags:
       - functask
-  /api/v1/projects/task/{milestone_id}:
+  /api/projects/task/{milestone_id}:
     delete:
       description: delete functask from database
       parameters:

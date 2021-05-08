@@ -26,7 +26,7 @@ import (
 //
 // @Description return all tags
 //
-// @Router /api/v1/projects/tags [get]
+// @Router /api/projects/tags [get]
 //
 // @Success 200 {array} tag.Tag
 //

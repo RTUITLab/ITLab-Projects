@@ -138,9 +138,9 @@ func (a *Api) update() {
 
 
 func (a *Api) Build(r *mux.Router) {
-	docs := r.PathPrefix("/swagger")
-
-	projects := r.PathPrefix("/api/v1/projects").Subrouter()
+	docs := r.PathPrefix("/api/projects/swagger")
+	// TODO refactor api path's
+	projects := r.PathPrefix("/api/projects").Subrouter()
 	admin := projects.NewRoute().Subrouter()
 	
 	admin.HandleFunc("/", a.UpdateAllProjects).Methods("POST")

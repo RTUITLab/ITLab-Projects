@@ -27,7 +27,7 @@ import (
 //
 // @Description return issues according to query params
 //
-// @Router /api/v1/projects/issues [get]
+// @Router /api/projects/issues [get]
 //
 // @Param start query integer false "represent how mush skip first issues"
 //
@@ -246,7 +246,7 @@ func (a *Api) buildFilterForLabelTags(
 //
 // @Description return all unique labels of issues
 //
-// @Router /api/v1/projects/issues/labels [get]
+// @Router /api/projects/issues/labels [get]
 //
 // @Success 200 {array} string
 //

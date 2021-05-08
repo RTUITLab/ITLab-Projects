@@ -24,7 +24,7 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/projects/": {
+        "/api/projects/": {
             "get": {
                 "description": "return a projects you can filter count of them\ntags, name",
                 "produces": [
@@ -121,7 +121,7 @@ var doc = `{
                 }
             }
         },
-        "/api/v1/projects/estimate": {
+        "/api/projects/estimate": {
             "post": {
                 "description": "add estimate to milestone\nif estimate is exist for milesotne will replace it",
                 "consumes": [
@@ -182,7 +182,7 @@ var doc = `{
                 }
             }
         },
-        "/api/v1/projects/estimate/{milestone_id}": {
+        "/api/projects/estimate/{milestone_id}": {
             "delete": {
                 "description": "delete estimate from database",
                 "produces": [
@@ -238,7 +238,7 @@ var doc = `{
                 }
             }
         },
-        "/api/v1/projects/issues": {
+        "/api/projects/issues": {
             "get": {
                 "description": "return issues according to query params",
                 "produces": [
@@ -299,7 +299,7 @@ var doc = `{
                 }
             }
         },
-        "/api/v1/projects/issues/labels": {
+        "/api/projects/issues/labels": {
             "get": {
                 "description": "return all unique labels of issues",
                 "produces": [
@@ -334,7 +334,7 @@ var doc = `{
                 }
             }
         },
-        "/api/v1/projects/tags": {
+        "/api/projects/tags": {
             "get": {
                 "description": "return all tags",
                 "produces": [
@@ -369,7 +369,7 @@ var doc = `{
                 }
             }
         },
-        "/api/v1/projects/task": {
+        "/api/projects/task": {
             "post": {
                 "description": "add func task to milestone\nif func task is exist for milesotne will replace it",
                 "consumes": [
@@ -430,7 +430,7 @@ var doc = `{
                 }
             }
         },
-        "/api/v1/projects/task/{milestone_id}": {
+        "/api/projects/task/{milestone_id}": {
             "delete": {
                 "description": "delete functask from database",
                 "produces": [
@@ -486,7 +486,7 @@ var doc = `{
                 }
             }
         },
-        "/api/v1/projects/{id}": {
+        "/api/projects/{id}": {
             "get": {
                 "description": "return a project according to id value in path",
                 "produces": [

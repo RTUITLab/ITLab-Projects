@@ -78,7 +78,7 @@ func init() {
 }
 
 func TestFunc_UpdateAllProjects(t *testing.T) {
-	req := httptest.NewRequest("POST", "/api/v1/projects/", nil)
+	req := httptest.NewRequest("POST", "/api/projects/", nil)
 
 	w := httptest.NewRecorder()
 
@@ -163,7 +163,7 @@ func TestFunc_AddFuncTask_NotFound(t *testing.T) {
 		t.FailNow()
 	}
 
-	req := httptest.NewRequest("POST", "/api/v1/projects/task", bytes.NewReader(data))
+	req := httptest.NewRequest("POST", "/api/projects/task", bytes.NewReader(data))
 
 	w := httptest.NewRecorder()
 
@@ -208,7 +208,7 @@ func TestFunc_AddTestFunc(t *testing.T) {
 		t.FailNow()
 	}
 
-	req := httptest.NewRequest("POST", "/api/v1/projects/task", bytes.NewReader(data))
+	req := httptest.NewRequest("POST", "/api/projects/task", bytes.NewReader(data))
 
 	w := httptest.NewRecorder()
 
@@ -223,7 +223,7 @@ func TestFunc_AddTestFunc(t *testing.T) {
 }
 
 func TestFunc_AddTask_BadRequest(t *testing.T) {
-	req := httptest.NewRequest("POST", "/api/v1/projects/task", nil)
+	req := httptest.NewRequest("POST", "/api/projects/task", nil)
 
 	w := httptest.NewRecorder()
 
@@ -251,7 +251,7 @@ func TestFunc_AddEstimate_NotFound(t *testing.T) {
 		t.FailNow()
 	}
 
-	req := httptest.NewRequest("POST", "/api/v1/projects/estimate", bytes.NewReader(data))
+	req := httptest.NewRequest("POST", "/api/projects/estimate", bytes.NewReader(data))
 
 	w := httptest.NewRecorder()
 
@@ -296,7 +296,7 @@ func TestFunc_AddEstimate(t *testing.T) {
 		t.FailNow()
 	}
 
-	req := httptest.NewRequest("POST", "/api/v1/projects/estimate", bytes.NewReader(data))
+	req := httptest.NewRequest("POST", "/api/projects/estimate", bytes.NewReader(data))
 
 	w := httptest.NewRecorder()
 
@@ -312,7 +312,7 @@ func TestFunc_AddEstimate(t *testing.T) {
 }
 
 func TestFunc_AddEstimate_BadRequest(t *testing.T) {
-	req := httptest.NewRequest("POST", "/api/v1/projects/estimate", nil)
+	req := httptest.NewRequest("POST", "/api/projects/estimate", nil)
 
 	w := httptest.NewRecorder()
 
@@ -327,7 +327,7 @@ func TestFunc_AddEstimate_BadRequest(t *testing.T) {
 }
 
 func TestFunc_DeleteFuncTask_NotFound(t *testing.T) {
-	req := httptest.NewRequest("DELETE", "/api/v1/projects/task/1", nil)
+	req := httptest.NewRequest("DELETE", "/api/projects/task/1", nil)
 
 	w := httptest.NewRecorder()
 
@@ -342,7 +342,7 @@ func TestFunc_DeleteFuncTask_NotFound(t *testing.T) {
 }
 
 func TestFunc_DeleteFuncTask(t *testing.T) {
-	req := httptest.NewRequest("DELETE", "/api/v1/projects/task/2", nil)
+	req := httptest.NewRequest("DELETE", "/api/projects/task/2", nil)
 
 	req.Header.Add("Test", "OOOOO")
 	w := httptest.NewRecorder()
@@ -359,7 +359,7 @@ func TestFunc_DeleteFuncTask(t *testing.T) {
 }
 
 func TestFunc_DeleteEstimate_NotFound(t *testing.T) {
-	req := httptest.NewRequest("DELETE", "/api/v1/projects/estimate/1", nil)
+	req := httptest.NewRequest("DELETE", "/api/projects/estimate/1", nil)
 
 	w := httptest.NewRecorder()
 
@@ -374,7 +374,7 @@ func TestFunc_DeleteEstimate_NotFound(t *testing.T) {
 }
 
 func TestFunc_DeleteEstimate(t *testing.T) {
-	req := httptest.NewRequest("DELETE", "/api/v1/projects/estimate/2", nil)
+	req := httptest.NewRequest("DELETE", "/api/projects/estimate/2", nil)
 
 	w := httptest.NewRecorder()
 
@@ -390,7 +390,7 @@ func TestFunc_DeleteEstimate(t *testing.T) {
 }
 
 func TestFunc_GetProjects(t *testing.T) {
-	req := httptest.NewRequest("GET", "/api/v1/projects/?start=0&count=10000", nil)
+	req := httptest.NewRequest("GET", "/api/projects/?start=0&count=10000", nil)
 
 	w := httptest.NewRecorder()
 
@@ -407,7 +407,7 @@ func TestFunc_GetProjects(t *testing.T) {
 }
 
 func TestFunc_GetProjectsByTag(t *testing.T) {
-	req := httptest.NewRequest("GET", "/api/v1/projects/?start=0&count=100&tag=Mobile+Tool", nil)
+	req := httptest.NewRequest("GET", "/api/projects/?start=0&count=100&tag=Mobile+Tool", nil)
 
 	w := httptest.NewRecorder()
 
@@ -425,7 +425,7 @@ func TestFunc_GetProjectsByTag(t *testing.T) {
 }
 
 func TestFunc_GetProjectsByName(t *testing.T) {
-	req := httptest.NewRequest("GET", "/api/v1/projects/?start=0&count=100&name=CyberBird", nil)
+	req := httptest.NewRequest("GET", "/api/projects/?start=0&count=100&name=CyberBird", nil)
 
 	w := httptest.NewRecorder()
 
@@ -453,7 +453,7 @@ func TestFunc_GetProject(t *testing.T) {
 			FileID:      primitive.NewObjectID(),
 		},
 	})
-	req := httptest.NewRequest("GET", "/api/v1/projects/144718606", nil)
+	req := httptest.NewRequest("GET", "/api/projects/144718606", nil)
 
 	w := httptest.NewRecorder()
 
@@ -478,7 +478,7 @@ func TestFunc_GetProject(t *testing.T) {
 }
 
 func TestFunc_GetProject_NotFound(t *testing.T) {
-	req := httptest.NewRequest("GET", "/api/v1/projects/3", nil)
+	req := httptest.NewRequest("GET", "/api/projects/3", nil)
 
 	w := httptest.NewRecorder()
 
@@ -561,7 +561,7 @@ func TestFunc_DeleteProject(t *testing.T) {
 		t.FailNow()
 	}
 
-	req := httptest.NewRequest("DELETE", "/api/v1/projects/12", nil)
+	req := httptest.NewRequest("DELETE", "/api/projects/12", nil)
 
 	w := httptest.NewRecorder()
 
@@ -574,7 +574,7 @@ func TestFunc_DeleteProject(t *testing.T) {
 }
 
 func TestFunc_GetTags(t *testing.T) {
-	req := httptest.NewRequest("GET", "/api/v1/projects/tags", nil)
+	req := httptest.NewRequest("GET", "/api/projects/tags", nil)
 
 	w := httptest.NewRecorder()
 
@@ -593,7 +593,7 @@ func TestFunc_GetTags(t *testing.T) {
 }
 
 func TestFunc_GetIssues(t *testing.T) {
-	req := httptest.NewRequest("GET", "/api/v1/projects/issues?start=0&count=177&name=WebVRShoot", nil)
+	req := httptest.NewRequest("GET", "/api/projects/issues?start=0&count=177&name=WebVRShoot", nil)
 
 	w := httptest.NewRecorder()
 
@@ -617,7 +617,7 @@ func TestFunc_GetIssues(t *testing.T) {
 }
 
 func TestFunc_GetLabels(t *testing.T) {
-	req := httptest.NewRequest("GET", "/api/v1/projects/issues/labels", nil)
+	req := httptest.NewRequest("GET", "/api/projects/issues/labels", nil)
 
 	w := httptest.NewRecorder()
 
@@ -632,7 +632,7 @@ func TestFunc_GetLabels(t *testing.T) {
 }
 
 func BenchmarkGetProjects(b *testing.B) {
-	r := httptest.NewRequest("GET", "/api/v1/projects/?start=0&count=20", nil)
+	r := httptest.NewRequest("GET", "/api/projects/?start=0&count=20", nil)
 	b.RunParallel(
 		func(p *testing.PB) {
 			for p.Next() {

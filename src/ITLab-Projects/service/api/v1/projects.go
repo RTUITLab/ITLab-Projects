@@ -37,7 +37,7 @@ import (
 //
 // @Description make all request to github to update repositories, milestones
 //
-// @Router /api/v1/projects/ [post]
+// @Router /api/projects/ [post]
 //
 // @Success 200
 //
@@ -454,7 +454,7 @@ func (a *Api) updateAllProjects(ctx context.Context) error {
 // 
 // @Produce json
 // 
-// @Router /api/v1/projects/ [get]
+// @Router /api/projects/ [get]
 // 
 // @Param start query integer false "represents the number of skiped projects"
 // 
@@ -576,7 +576,7 @@ func (a *Api) GetProjects(w http.ResponseWriter, r *http.Request) {
 // 
 // @Produce json
 // 
-// @Router /api/v1/projects/{id} [get]
+// @Router /api/projects/{id} [get]
 // 
 // @Param id path integer true "a uint value of repository id"
 // 
@@ -652,7 +652,7 @@ func (a *Api) GetProject(w http.ResponseWriter, r *http.Request) {
 // 
 // @Tags projects
 // 
-// @Router /api/v1/projects/{id} [delete]
+// @Router /api/projects/{id} [delete]
 // 
 // @Param id path integer true "id of project"
 // 

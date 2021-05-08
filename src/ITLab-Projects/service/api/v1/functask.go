@@ -28,7 +28,7 @@ import (
 //
 // @Description if func task is exist for milesotne will replace it
 //
-// @Router /api/v1/projects/task [post]
+// @Router /api/projects/task [post]
 //
 // @Accept json
 //
@@ -123,7 +123,7 @@ func (a *Api) AddFuncTask(w http.ResponseWriter, r *http.Request) {
 // 
 // @Description delete functask from database
 // 
-// @Router /api/v1/projects/task/{milestone_id} [delete]
+// @Router /api/projects/task/{milestone_id} [delete]
 // 
 // @Param milestone_id path uint64 true "should be uint"
 // 

@@ -4,7 +4,7 @@
 
 ## Documantation 
 Can be open directly by swagger. All swagger files located in ```src/ITLab-Projects/docs```.
-Or if the service is running in default settings http://localhost:8080/swagger/
+Or if the service is running in default settings http://localhost:8080/api/projects/swagger/
 
 ## Configuration
 File ```src/.env``` for laucnh from docker must contain:

@@ -28,7 +28,7 @@ import (
 //
 // @Description if estimate is exist for milesotne will replace it
 //
-// @Router /api/v1/projects/estimate [post]
+// @Router /api/projects/estimate [post]
 //
 // @Accept json
 //
@@ -125,7 +125,7 @@ func (a *Api) AddEstimate(w http.ResponseWriter, r *http.Request) {
 // 
 // @Description delete estimate from database
 // 
-// @Router /api/v1/projects/estimate/{milestone_id} [delete]
+// @Router /api/projects/estimate/{milestone_id} [delete]
 // 
 // @Param milestone_id path uint64 true "should be uint"
 // 
