@@ -630,3 +630,15 @@ func TestFunc_GetLabels(t *testing.T) {
 
 	t.Log(w.Body.String())
 }
+
+func BenchmarkGetProjects(b *testing.B) {
+	r := httptest.NewRequest("GET", "/api/v1/projects/?start=0&count=20", nil)
+	b.RunParallel(
+		func(p *testing.PB) {
+			for p.Next() {
+				w := httptest.NewRecorder()
+				Router.ServeHTTP(w, r)
+			}
+		},
+	)
+}
