@@ -10,7 +10,6 @@ require (
 	github.com/go-openapi/spec v0.20.3 // indirect
 	github.com/go-openapi/swag v0.19.15 // indirect
 	github.com/gorilla/mux v1.8.0
-	github.com/influxdata/influxdb v1.8.5 // indirect
 	github.com/joho/godotenv v1.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/klauspost/compress v1.12.1 // indirect
@@ -19,7 +18,6 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/swaggo/http-swagger v1.0.0
 	github.com/swaggo/swag v1.7.0
-	github.com/tevjef/go-runtime-metrics v0.0.0-20170326170900-527a54029307
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a // indirect
 	go.mongodb.org/mongo-driver v1.5.1
 	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b // indirect
