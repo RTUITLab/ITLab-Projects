@@ -54,10 +54,11 @@ func NewByType(
 func (tg *TagsByType) save(ctx context.Context, v interface{}) error {
 	tag, _ := v.(model.Tag)
 
-	_, err := mgm.Coll(tg.model).InsertOne(
+	_, err := mgm.Coll(tg.model).ReplaceOne(
 		ctx,
+		bson.M{"repo_id": tag.RepoID, "tag": tag.Tag},
 		tag,
-		options.InsertOne(),
+		options.Replace().SetUpsert(true),
 	)
 	if err != nil {
 		return err
