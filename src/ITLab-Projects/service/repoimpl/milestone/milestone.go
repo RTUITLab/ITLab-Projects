@@ -15,6 +15,14 @@ type MilestoneRepositoryImp struct {
 	Milestone milestones.Milestoner
 }
 
+func New(
+	Milestone milestones.Milestoner,
+) *MilestoneRepositoryImp {
+	return &MilestoneRepositoryImp{
+		Milestone: Milestone,
+	}
+}
+
 func (m *MilestoneRepositoryImp) SaveMilestonesAndSetDeletedUnfind(
 	ctx context.Context,
 	ms []*model.MilestoneInRepo,

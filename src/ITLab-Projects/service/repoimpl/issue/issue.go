@@ -16,6 +16,14 @@ type IssueRepositoryImp struct {
 	Issue issues.Issuer
 }
 
+func New(
+	Issue issues.Issuer,
+) *IssueRepositoryImp {
+	return &IssueRepositoryImp{
+		Issue: Issue,
+	}
+}
+
 func (i *IssueRepositoryImp) SaveIssueAndSetDeletedUnfind(
 	ctx context.Context,
 	is 	[]*model.IssuesWithMilestoneID,
