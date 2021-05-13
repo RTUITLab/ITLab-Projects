@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"github.com/ITLab-Projects/service/repoimpl/utils"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/bson"
@@ -26,10 +27,10 @@ func (r *RepoRepositoryImp) SaveReposAndSetDeletedUnfind(
 	ctx context.Context,
 	repos []*repo.Repo,
 ) error {
-	return r.Repo.SaveAndUpdatenUnfind(
+	return utils.SaveAndSetDeletedUnfind(
 		ctx,
+		r.Repo,
 		repos,
-		bson.M{"$set": bson.M{"deleted": true}},
 	)
 }
 
@@ -137,6 +138,6 @@ func (r *RepoRepositoryImp) DeleteByID(
 	); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
