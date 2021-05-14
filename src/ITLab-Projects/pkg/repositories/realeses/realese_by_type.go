@@ -48,7 +48,7 @@ func NewByType(
 func (r *RealeseByType) save(ctx context.Context, v interface{}) error {
 	real := getPointer(v)
 	opts := options.Replace().SetUpsert(true)
-	filter := bson.M{"id": real.ID}
+	filter := bson.M{"repoid": real.RepoID}
 	
 	
 	_, err := mgm.Coll(r.model).ReplaceOne(ctx, filter, real, opts)
