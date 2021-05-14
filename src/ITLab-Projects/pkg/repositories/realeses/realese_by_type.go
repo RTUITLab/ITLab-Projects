@@ -46,7 +46,7 @@ func NewByType(
 }
 
 func (r *RealeseByType) save(ctx context.Context, v interface{}) error {
-	real, _ := v.(model.RealeseInRepo)
+	real := getPointer(v)
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"id": real.ID}
 	
@@ -60,7 +60,7 @@ func (r *RealeseByType) save(ctx context.Context, v interface{}) error {
 }
 
 func (r *RealeseByType) buildFilter(v interface{}) interface{} {
-	rls, _ := v.([]model.RealeseInRepo)
+	rls, _ := v.([]*model.RealeseInRepo)
 
 	var ids []uint64
 	for _, r := range rls {

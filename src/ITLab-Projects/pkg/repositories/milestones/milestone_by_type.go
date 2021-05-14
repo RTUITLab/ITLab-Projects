@@ -100,7 +100,7 @@ func (m *MilestoneByType) SaveAndUpdatenUnfind(
 }
 
 func (m *MilestoneByType) buildFilter(v interface{}) interface{} {
-	ms, ok := v.([]model.MilestoneInRepo)
+	ms, ok := v.([]*model.MilestoneInRepo)
 	if !ok {
 		logrus.WithFields(
 			logrus.Fields{
@@ -119,7 +119,7 @@ func (m *MilestoneByType) buildFilter(v interface{}) interface{} {
 }
 
 func (m *MilestoneByType) save(ctx context.Context, v interface{}) error {
-	milestone, _ := v.(model.MilestoneInRepo)
+	milestone := getPointer(v)
 
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"id": milestone.Milestone.ID}

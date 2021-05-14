@@ -70,7 +70,7 @@ func (ftr *FuncTaskRepository) DeleteFuncTasksNotIn(ms []milestone.MilestoneInRe
 }
 
 func (ftr *FuncTaskRepository) save(ctx context.Context, v interface{}) error {
-	functask, _ := v.(model.FuncTaskFile)
+	functask := getPointer(v)
 
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"milestone_id": functask.MilestoneID}
@@ -81,6 +81,15 @@ func (ftr *FuncTaskRepository) save(ctx context.Context, v interface{}) error {
 	}
 
 	return nil
+}
+
+func getPointer(v interface{}) *model.FuncTaskFile {
+	functask, ok := v.(*model.FuncTaskFile)
+	if !ok {
+		_f, _ := v.(model.FuncTaskFile)
+		functask = &_f
+	}
+	return functask
 }
 
 func (ftr *FuncTaskRepository) Delete(MilestoneID uint64) error {

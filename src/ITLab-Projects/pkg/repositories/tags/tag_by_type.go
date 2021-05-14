@@ -52,7 +52,7 @@ func NewByType(
 }
 
 func (tg *TagsByType) save(ctx context.Context, v interface{}) error {
-	tag, _ := v.(model.Tag)
+	tag := getPointer(v)
 
 	_, err := mgm.Coll(tg.model).ReplaceOne(
 		ctx,
@@ -68,7 +68,7 @@ func (tg *TagsByType) save(ctx context.Context, v interface{}) error {
 }
 
 func (tg *TagsByType) buildFilter(v interface{}) interface{} {
-	tgs, ok := v.([]model.Tag)
+	tgs, ok := v.([]*model.Tag)
 	if !ok {
 		log.WithFields(
 			log.Fields{

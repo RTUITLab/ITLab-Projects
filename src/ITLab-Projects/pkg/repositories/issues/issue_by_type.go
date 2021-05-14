@@ -59,7 +59,7 @@ func NewByType(
 }
 
 func (i *IssueByType) save(ctx context.Context, v interface{}) error {
-	issue, _ := v.(model.IssuesWithMilestoneID)
+	issue := getPointer(v)
 
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"id": issue.ID}
@@ -74,7 +74,7 @@ func (i *IssueByType) save(ctx context.Context, v interface{}) error {
 }
 
 func (i *IssueByType) buildFilter(v interface{}) interface{} {
-	is, ok := v.([]model.IssuesWithMilestoneID)
+	is, ok := v.([]*model.IssuesWithMilestoneID)
 	if !ok {
 		logrus.WithFields(
 			logrus.Fields{

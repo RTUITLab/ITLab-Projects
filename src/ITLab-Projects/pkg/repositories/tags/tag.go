@@ -50,7 +50,7 @@ func New(
 }
 
 func (tg *TagRepository) buildFilter(v interface{}) interface{} {
-	tgs, ok := v.([]model.Tag)
+	tgs, ok := v.([]*model.Tag)
 	if !ok {
 		log.WithFields(
 			log.Fields{
@@ -70,15 +70,25 @@ func (tg *TagRepository) buildFilter(v interface{}) interface{} {
 }
 
 func (tg *TagRepository) save(ctx context.Context, v interface{}) error {
-	tag, _ := v.(model.Tag)
-	_, err := tg.tagCollection.InsertOne(
-		ctx, 
-		tag, 
-		options.InsertOne(),
+	tag := getPointer(v)
+	_, err := tg.tagCollection.ReplaceOne(
+		ctx,
+		bson.M{"repo_id": tag.RepoID, "tag": tag.Tag},
+		tag,
+		options.Replace().SetUpsert(true),
 	)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func getPointer(v interface{}) *model.Tag {
+	tag, ok := v.(*model.Tag)
+	if !ok {
+		_tag, _ := v.(model.Tag)
+		tag = &_tag
+	}
+	return tag
 }

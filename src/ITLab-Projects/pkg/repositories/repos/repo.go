@@ -52,7 +52,7 @@ func New(repoCollection *mongo.Collection) ReposRepositorier {
 }
 
 func (r *ReposRepository) buildFilter(v interface{}) interface{} {
-	repos, _ := v.([]repo.Repo)
+	repos, _ := v.([]*repo.Repo)
 
 	var ids []uint64
 
@@ -105,12 +105,12 @@ func (r *ReposRepository) SaveAndUpdatenUnfind(
 
 
 func (r *ReposRepository) save(ctx context.Context, v interface{}) error {
-	repo, _ := v.(repo.Repo)
+	rep := pointFromInterface(v)
 	
 	opts := options.Replace().SetUpsert(true)
-	filter := bson.M{"id": repo.ID}
+	filter := bson.M{"id": rep.ID}
 
-	_, err := r.repoCollection.ReplaceOne(ctx, filter, repo, opts)
+	_, err := r.repoCollection.ReplaceOne(ctx, filter, rep, opts)
 	if err != nil {
 		return err
 	}
@@ -118,3 +118,12 @@ func (r *ReposRepository) save(ctx context.Context, v interface{}) error {
 	return nil
 }
 
+func pointFromInterface(v interface{}) *repo.Repo {
+	rep, ok := v.(*repo.Repo)
+	if !ok {
+		_repo, _ := v.(repo.Repo)
+		rep = &_repo
+	}
+
+	return rep
+}
