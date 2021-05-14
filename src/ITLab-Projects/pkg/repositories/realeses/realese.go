@@ -70,7 +70,7 @@ func (r *RealeseRepo) Save(ctx context.Context, v interface{}) error {
 func (r *RealeseRepo) save(ctx context.Context, v interface{}) error {
 	real, _ := v.(model.RealeseInRepo)
 	opts := options.Replace().SetUpsert(true)
-	filter := bson.M{"id": real.ID}
+	filter := bson.M{"repoid": real.ID}
 
 	
 	_, err := r.realeseCollection.ReplaceOne(ctx, filter, real, opts)
