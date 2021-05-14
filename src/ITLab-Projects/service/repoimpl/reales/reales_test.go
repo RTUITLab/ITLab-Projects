@@ -1,12 +1,16 @@
 package reales_test
 
 import (
+	"go.mongodb.org/mongo-driver/mongo"
 	"context"
 	"os"
 	"testing"
 
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
+
 	model "github.com/ITLab-Projects/pkg/models/realese"
-	"github.com/stretchr/testify/assert"
+
 
 	"github.com/ITLab-Projects/pkg/repositories"
 	"github.com/ITLab-Projects/service/repoimpl/reales"
@@ -41,7 +45,7 @@ func TestFunc_Init(t *testing.T) {
 	t.Log("INIT")
 }
 
-func TestFunc_SaveReales(t *testing.T) {
+func TestFunc_SaveReales_AndGetByRepoID(t *testing.T) {
 	realeses := []*model.RealeseInRepo{
 		{RepoID: 12, Realese: model.Realese{URL: "mock_12"}},
 		{RepoID: 13, Realese: model.Realese{URL: "mock_13"}},
@@ -55,6 +59,15 @@ func TestFunc_SaveReales(t *testing.T) {
 		t.FailNow()
 	}
 
+	defer Repositories.Realese.DeleteMany(
+		context.Background(),
+		bson.M{},
+		func(dr *mongo.DeleteResult) error {
+			return nil
+		},
+		options.Delete(),
+	)
+
 	rls_1, err := RealeseRepository.GetByRepoID(
 		context.Background(),
 		12,
@@ -64,8 +77,23 @@ func TestFunc_SaveReales(t *testing.T) {
 		t.FailNow()
 	}
 
-	if eq := assert.ObjectsAreEqualValues(realeses[0], rls_1); !eq {
-		t.Log("Assert err")
+	rls_2, err := RealeseRepository.GetByRepoID(
+		context.Background(),
+		13,
+	)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+	
+
+	if rls_1.RepoID != 12 || rls_1.URL != "mock_12" {
+		t.Log("assert error")
+		t.FailNow()
+	}
+
+	if rls_2.RepoID != 13 || rls_2.URL != "mock_13" {
+		t.Log("assert error")
 		t.FailNow()
 	}
 }

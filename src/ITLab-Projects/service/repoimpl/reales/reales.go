@@ -38,7 +38,7 @@ func (r *RealeseRepositoryImp) GetByRepoID(
 	ctx 		context.Context,
 	RepoID		uint64,
 ) (*model.RealeseInRepo, error) {
-	var relase *model.RealeseInRepo
+	relase := &model.RealeseInRepo{}
 	if err := r.Realese.GetOne(
 		ctx,
 		bson.M{"repoid": RepoID},

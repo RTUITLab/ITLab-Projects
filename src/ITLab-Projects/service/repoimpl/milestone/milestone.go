@@ -44,10 +44,16 @@ func (m *MilestoneRepositoryImp) GetAllByRepoID(
 		ctx,
 		bson.M{"repoid": RepoID},
 		func(c *mongo.Cursor) error {
-			return c.All(
+			c.All(
 				ctx,
 				&ms,
 			)
+
+			if len(ms) == 0 {
+				return mongo.ErrNoDocuments
+			}
+
+			return c.Err()
 		},
 		options.Find(),
 	); err != nil {
