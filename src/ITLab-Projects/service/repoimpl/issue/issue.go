@@ -127,3 +127,20 @@ func (i *IssueRepositoryImp) DeleteAllByMilestoneID(
 		options.Delete(),
 	)
 }
+
+func (i *IssueRepositoryImp) DeleteAllTagsByRepoID(
+	ctx 		context.Context,
+	RepoID uint64,
+) error {
+	return i.Issue.DeleteMany(
+		ctx,
+		bson.M{"repo_id": RepoID},
+		func(dr *mongo.DeleteResult) error {
+			if dr.DeletedCount == 0 {
+				return mongo.ErrNoDocuments
+			}
+			return nil
+		},
+		options.Delete(),
+	)
+}
