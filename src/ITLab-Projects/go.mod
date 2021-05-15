@@ -7,6 +7,7 @@ require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/auth0-community/go-auth0 v1.0.0
 	github.com/aws/aws-sdk-go v1.38.23 // indirect
+	github.com/go-kit/kit v0.10.0
 	github.com/go-openapi/spec v0.20.3 // indirect
 	github.com/go-openapi/swag v0.19.15 // indirect
 	github.com/gorilla/mux v1.8.0
