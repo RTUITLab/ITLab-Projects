@@ -110,3 +110,20 @@ func (i *IssueRepositoryImp) GetLabelsNameFromOpenIssues(
 		options.Distinct(),
 	)
 }
+
+func (i *IssueRepositoryImp) DeleteAllByMilestoneID(
+	ctx 		context.Context,
+	MilestoneID uint64,
+) error {
+	return i.Issue.DeleteMany(
+		ctx,
+		bson.M{"milestone_id": MilestoneID},
+		func(dr *mongo.DeleteResult) error {
+			if dr.DeletedCount == 0 {
+				return mongo.ErrNoDocuments
+			}
+			return nil
+		},
+		options.Delete(),
+	)
+}

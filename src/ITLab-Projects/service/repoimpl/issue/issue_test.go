@@ -1,12 +1,16 @@
 package issue_test
 
 import (
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/bson"
 	"context"
-	model "github.com/ITLab-Projects/pkg/models/milestone"
+	"fmt"
 	"os"
 	"testing"
+
+	"github.com/ITLab-Projects/pkg/models/label"
+	model "github.com/ITLab-Projects/pkg/models/milestone"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/ITLab-Projects/pkg/repositories"
 	"github.com/ITLab-Projects/service/repoimpl/issue"
@@ -105,5 +109,91 @@ func TestFunc_SaveIssuesAndSetDeletedUnfind(t *testing.T) {
 				t.FailNow()
 		}
 
+	}
+}
+
+func TestFunc_GetFilteredIssues(t *testing.T) {
+	all := []*model.IssuesWithMilestoneID{
+		{MilestoneID: 1, Issue: model.Issue{ID: 1, Title: "mock_1"}},
+		{MilestoneID: 1, Issue: model.Issue{ID: 2, Title: "mock_1"}},
+		{MilestoneID: 1, Issue: model.Issue{ID: 3, Title: "mock_3"}},
+	}
+
+	if err := IssueRepository.SaveIssuesAndSetDeletedUnfind(
+		context.Background(),
+		all,
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	defer IssueRepository.DeleteAllByMilestoneID(
+		context.Background(),
+		1,
+	)
+
+	is, err := IssueRepository.GetFilteredIssues(
+		context.Background(),
+		bson.M{"title": "mock_1"},
+	)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	for _, i := range is {
+		if !(i.ID == 1 && i.Title == "mock_1" || i.ID == 2 && i.Title == "mock_1") {
+			t.Log("Assert error")
+			t.FailNow()
+		}
+	}
+}
+
+func TestFunc_GetLabalesNameFromOpenIssues(t *testing.T) {
+	all := []*model.IssuesWithMilestoneID{
+		{MilestoneID: 1, Issue: model.Issue{
+			ID: 1, Title: "mock_1", State: "open", Labels: []label.Label{{CompactLabel: label.CompactLabel{Name: "label_mock_1"}}},},
+		},
+		{MilestoneID: 1, Issue: model.Issue{
+			ID: 2, Title: "mock_2", State: "open", Labels: []label.Label{{CompactLabel: label.CompactLabel{Name: "label_mock_2"}}},},
+		},
+	}
+	
+	if err := IssueRepository.SaveIssuesAndSetDeletedUnfind(
+		context.Background(),
+		all,
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	defer IssueRepository.DeleteAllByMilestoneID(
+		context.Background(),
+		1,
+	)
+
+	names, err := IssueRepository.GetLabelsNameFromOpenIssues(
+		context.Background(),
+	)
+	if err != nil {
+		t.Log(err)
+	}
+
+	for _, name := range names {
+		if !(fmt.Sprint(name) == "label_mock_1" || fmt.Sprint(name) == "label_mock_2") {
+			t.Log("Assert error")
+			t.FailNow()
+		}
+	}
+	
+}
+
+func TestFunc_DeleteAllByMilesoneID_NoDocument(t *testing.T) {
+	if err := IssueRepository.DeleteAllByMilestoneID(
+		context.Background(),
+		12,
+	); err != mongo.ErrNoDocuments {
+		t.Log(err)
+		t.FailNow()
 	}
 }
