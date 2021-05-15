@@ -28,7 +28,7 @@ func New(
 
 func (t *TagRepositoryImp) SaveAndDeleteUnfindTags(
 	ctx context.Context,
-	tgs []*model.Tag,
+	tgs interface{},
 ) (error) {
 	if err := t.Tag.SaveAndDeletedUnfind(
 		ctx,
