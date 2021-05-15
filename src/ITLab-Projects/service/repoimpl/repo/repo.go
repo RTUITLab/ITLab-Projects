@@ -25,7 +25,7 @@ func New(
 
 func (r *RepoRepositoryImp) SaveReposAndSetDeletedUnfind(
 	ctx context.Context,
-	repos []*repo.Repo,
+	repos interface{},
 ) error {
 	return utils.SaveAndSetDeletedUnfind(
 		ctx,

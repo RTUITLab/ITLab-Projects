@@ -108,6 +108,70 @@ func TestFunc_SaveReposAndSetDeletedUnfind(t *testing.T) {
 	}
 }
 
+func TestFunc_SaveReposAndSetDeletedUnfindByValue(t *testing.T) {
+	deleted := []model.Repo{
+		{ID: 12, Name: "mock_12"},
+		{ID: 13, Name: "mock_13"},
+		{ID: 14, Name: "mock_14"},
+	}
+
+	not_deleted := []model.Repo{
+		{ID: 15, Name: "mock_15"},
+		{ID: 16, Name: "mock_16"},
+		{ID: 17, Name: "mock_17"},
+	}
+
+	all := []model.Repo{}
+	all = append(all, deleted...)
+	all = append(all, not_deleted...)
+
+	if err := Repositories.Repo.Save(
+		context.Background(),
+		all,
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+	all_ids := []uint{12,13,14,15,16,17}
+	defer Repositories.Repo.DeleteMany(
+		context.Background(),
+		bson.M{"id": bson.M{"$in": all_ids}},
+		nil,
+		options.Delete(),
+	)
+
+	if err := RepoRepository.SaveReposAndSetDeletedUnfind(
+		context.Background(),
+		not_deleted,
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	repos, err := RepoRepository.GetRepos(
+		context.Background(),
+		bson.M{},
+		options.Find(),
+	)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	for _, r := range repos {
+		if r.ID == 12 || r.ID == 13 || r.ID == 14 {
+			if !r.Deleted {
+				t.Log("Asserting error: not deleted")
+				t.FailNow()
+			}
+		} else if r.Deleted {
+				t.Log("Asserting error: deleted but should'nt")
+				t.FailNow()
+		}
+
+	}
+}
+
 func BenchmarkSaveSlice(b *testing.B) {
 	slice := []model.Repo{
 		{ID: 12, Name: "mock_12"},
