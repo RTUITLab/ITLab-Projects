@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"testing"
 
 	"github.com/ITLab-Projects/pkg/models/label"
@@ -194,6 +195,92 @@ func TestFunc_DeleteAllByMilesoneID_NoDocument(t *testing.T) {
 		12,
 	); err != mongo.ErrNoDocuments {
 		t.Log(err)
+		t.FailNow()
+	}
+}
+
+func TestFunc_GetFiltrSortIssues(t *testing.T) {
+	all := []*model.IssuesWithMilestoneID{
+		{MilestoneID: 1, Issue: model.Issue{ID: 1, Title: "mock_1"}},
+		{MilestoneID: 1, Issue: model.Issue{ID: 2, Title: "mock_1"}},
+		{MilestoneID: 1, Issue: model.Issue{ID: 3, Title: "mock_3"}},
+	}
+
+	if err := IssueRepository.SaveIssuesAndSetDeletedUnfind(
+		context.Background(),
+		all,
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	defer IssueRepository.DeleteAllByMilestoneID(
+		context.Background(),
+		1,
+	)
+
+	is, err := IssueRepository.GetFiltrSortIssues(
+		context.Background(),
+		bson.M{},
+		bson.D{{"id", -1}},
+	)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if sorted := sort.SliceIsSorted(
+		is,
+		func(i, j int) bool {
+			return is[i].ID > is[j].ID
+		},
+	); !sorted {
+		t.Log("Assert error")
+		t.FailNow()
+	}
+}
+
+func TestFunc_GetFiltrSortFromToIssues(t *testing.T) {
+	all := []*model.IssuesWithMilestoneID{
+		{MilestoneID: 1, Issue: model.Issue{ID: 1, Title: "mock_1"}},
+		{MilestoneID: 1, Issue: model.Issue{ID: 2, Title: "mock_2"}},
+		{MilestoneID: 1, Issue: model.Issue{ID: 3, Title: "mock_3"}},
+	}
+
+	if err := IssueRepository.SaveIssuesAndSetDeletedUnfind(
+		context.Background(),
+		all,
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	defer IssueRepository.DeleteAllByMilestoneID(
+		context.Background(),
+		1,
+	)
+
+	is, err := IssueRepository.GetFiltrSortedFromToIssues(
+		context.Background(),
+		bson.M{},
+		bson.D{{"id", -1}},
+		1,
+		2,
+	)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if len(is) != 2 {
+		t.Log("Assert error len is not 2")
+		t.FailNow()
+	}
+
+	is_1, is_2 := is[0], is[1]
+
+	if !(is_1.ID == 2 && is_1.Title == "mock_2" ||is_2.ID == 1 && is_2.Title == "mock_1") {
+		t.Log("Assert error")
 		t.FailNow()
 	}
 }
