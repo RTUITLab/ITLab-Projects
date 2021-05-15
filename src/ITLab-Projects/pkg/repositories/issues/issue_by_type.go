@@ -2,7 +2,6 @@ package issues
 
 import (
 	"github.com/ITLab-Projects/pkg/repositories/agregate"
-	"github.com/sirupsen/logrus"
 	"context"
 
 	model "github.com/ITLab-Projects/pkg/models/milestone"
@@ -74,19 +73,16 @@ func (i *IssueByType) save(ctx context.Context, v interface{}) error {
 }
 
 func (i *IssueByType) buildFilter(v interface{}) interface{} {
-	is, ok := v.([]*model.IssuesWithMilestoneID)
-	if !ok {
-		logrus.WithFields(
-			logrus.Fields{
-				"package": "repositories/issues",
-				"func": "buildfilter",
-			},
-		).Panic()
-	}
-
 	var ids []uint64
-	for _, i := range is {
-		ids = append(ids, i.ID)
+
+	if is, ok := v.([]*model.IssuesWithMilestoneID); ok {
+		for _, i := range is {
+			ids = append(ids, i.ID)
+		}
+	} else if is, ok := v.([]model.IssuesWithMilestoneID); ok {
+		for _, i := range is {
+			ids = append(ids, i.ID)
+		}	
 	}
 
 	return bson.M{"id": bson.M{"$nin": ids}}

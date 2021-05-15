@@ -51,13 +51,18 @@ func NewByType(
 }
 
 func (r *RepoByType) buildFilter(v interface{}) interface{} {
-	repos, _ := v.([]*model.Repo)
-
 	var ids []uint64
 
-	for _, rep := range repos {
-		ids = append(ids, rep.ID)
+	if repos, ok := v.([]*model.Repo); ok {
+		for _, rep := range repos {
+			ids = append(ids, rep.ID)
+		}
+	} else if repos, ok := v.([]model.Repo); ok {
+		for _, rep := range repos {
+			ids = append(ids, rep.ID)
+		}
 	}
+	
 
 	return bson.M{"id": bson.M{"$nin": ids}}
 }

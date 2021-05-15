@@ -60,11 +60,16 @@ func (r *RealeseByType) save(ctx context.Context, v interface{}) error {
 }
 
 func (r *RealeseByType) buildFilter(v interface{}) interface{} {
-	rls, _ := v.([]*model.RealeseInRepo)
-
 	var ids []uint64
-	for _, r := range rls {
-		ids = append(ids, r.ID)
+
+	if rls, ok := v.([]*model.RealeseInRepo); ok {
+		for _, r := range rls {
+			ids = append(ids, r.ID)
+		}
+	} else if rls, ok := v.([]model.RealeseInRepo); ok {
+		for _, r := range rls {
+			ids = append(ids, r.ID)
+		}
 	}
 
 	return bson.M{"id": bson.M{"$nin": ids}}
