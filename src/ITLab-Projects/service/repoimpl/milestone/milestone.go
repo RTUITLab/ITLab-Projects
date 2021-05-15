@@ -25,7 +25,7 @@ func New(
 
 func (m *MilestoneRepositoryImp) SaveMilestonesAndSetDeletedUnfind(
 	ctx context.Context,
-	ms []*model.MilestoneInRepo,
+	ms interface{},
 ) error {
 	return utils.SaveAndSetDeletedUnfind(
 		ctx,

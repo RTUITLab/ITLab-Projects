@@ -26,7 +26,7 @@ func New(
 
 func (i *IssueRepositoryImp) SaveIssuesAndSetDeletedUnfind(
 	ctx context.Context,
-	is 	[]*model.IssuesWithMilestoneID,
+	is 	interface{},
 ) (error) {
 	return utils.SaveAndSetDeletedUnfind(
 		ctx,

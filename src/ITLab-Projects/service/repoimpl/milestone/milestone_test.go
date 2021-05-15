@@ -132,6 +132,93 @@ func TestFunc_SaveMilestoneAndSetdDeletedUnfind(t *testing.T) {
 	}
 }
 
+func TestFunc_SaveMilestoneAndSetdDeletedUnfindByValue(t *testing.T) {
+	deleted := []model.MilestoneInRepo{
+		{RepoID: 12, Milestone: model.Milestone{
+			MilestoneFromGH: model.MilestoneFromGH{
+				ID: 1, Title: "mock_1",
+			},
+		}},
+		{RepoID: 12, Milestone: model.Milestone{
+			MilestoneFromGH: model.MilestoneFromGH{
+				ID: 2, Title: "mock_2",
+			},
+		}},
+		{RepoID: 12, Milestone: model.Milestone{
+			MilestoneFromGH: model.MilestoneFromGH{
+				ID: 3, Title: "mock_3",
+			},
+		}},
+	}
+
+	not_deleted := []model.MilestoneInRepo{
+		{RepoID: 12, Milestone: model.Milestone{
+			MilestoneFromGH: model.MilestoneFromGH{
+				ID: 4, Title: "mock_4",
+			},
+		}},
+		{RepoID: 12, Milestone: model.Milestone{
+			MilestoneFromGH: model.MilestoneFromGH{
+				ID: 5, Title: "mock_5",
+			},
+		}},
+		{RepoID: 12, Milestone: model.Milestone{
+			MilestoneFromGH: model.MilestoneFromGH{
+				ID: 6, Title: "mock_6",
+			},
+		}},
+	}
+
+	all := []model.MilestoneInRepo{}
+	all = append(all, deleted...)
+	all = append(all, not_deleted...)
+
+	if err := Repositories.Milestone.Save(
+		context.Background(),
+		all,
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+	all_ids := []uint{1,2,3,4,5,6}
+	defer Repositories.Milestone.DeleteMany(
+		context.Background(),
+		bson.M{"id": bson.M{"$in": all_ids}},
+		nil,
+		options.Delete(),
+	)
+
+	if err := MilestoneRepository.SaveMilestonesAndSetDeletedUnfind(
+		context.Background(),
+		not_deleted,
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	ms, err := MilestoneRepository.GetAllByRepoID(
+		context.Background(),
+		12,
+	)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	for _, m := range ms {
+		if m.Milestone.ID == 1 || m.Milestone.ID == 2 || m.Milestone.ID == 3 {
+			if !m.Deleted {
+				t.Log("Asserting error: not deleted")
+				t.FailNow()
+			}
+		} else if m.Deleted {
+				t.Log("Asserting error: deleted but should'nt")
+				t.FailNow()
+		}
+
+	}
+}
+
 func TestFunc_GetAllByRepoID(t *testing.T) {
 	milestones := []*model.MilestoneInRepo{
 		{
