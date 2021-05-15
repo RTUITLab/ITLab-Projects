@@ -26,7 +26,7 @@ func New(
 
 func (r *RealeseRepositoryImp) SaveRealeses(
 	ctx context.Context,
-	rs []*model.RealeseInRepo,
+	rs interface{},
 ) error {
 	return r.Realese.Save(
 		ctx,
