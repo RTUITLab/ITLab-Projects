@@ -1,19 +1,18 @@
 package functask
 
 import (
+	a "github.com/ITLab-Projects/service/repoimpl/assetsformilestone"
 	"context"
 
 	model "github.com/ITLab-Projects/pkg/models/functask"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/ITLab-Projects/pkg/repositories/functasks"
 )
 
-// TODO
+
 type FuncTaskRepositoryImp struct {
 	FuncTask	functasks.FuncTaskRepositorier
+	m			a.MilestoneAssets
 }
 
 func New(
@@ -21,6 +20,7 @@ func New(
 ) *FuncTaskRepositoryImp {
 	return &FuncTaskRepositoryImp{
 		FuncTask: FuncTask,
+		m: a.New(FuncTask),
 	}
 }
 
@@ -30,13 +30,10 @@ func (f *FuncTaskRepositoryImp) GetFuncTaskByMilestoneID(
 ) (*model.FuncTaskFile, error) {
 	var task model.FuncTaskFile
 
-	if err := f.FuncTask.GetOne(
+	if err := f.m.GetByMilestoneID(
 		ctx,
-		bson.M{"milestone_id": MilestoneID},
-		func(sr *mongo.SingleResult) error {
-			return sr.Decode(&task)
-		},
-		options.FindOne(),
+		MilestoneID,
+		&task,
 	); err != nil {
 		return nil, err
 	}
@@ -49,7 +46,7 @@ func (f *FuncTaskRepositoryImp) SaveFuncTask(
 	// Can be slice or single value
 	task interface{},
 ) error {
-	return f.FuncTask.Save(
+	return f.m.Save(
 		ctx,
 		task,
 	)
@@ -59,16 +56,9 @@ func (f *FuncTaskRepositoryImp) DeleteOneFuncTaskByMilestoneID(
 	ctx 		context.Context,
 	MilestoneID uint64,
 ) error {
-	return f.FuncTask.DeleteOne(
+	return f.m.DeleteOneByMilestoneID(
 		ctx,
-		bson.M{"milestone_id": MilestoneID},
-		func(dr *mongo.DeleteResult) error {
-			if dr.DeletedCount == 0 {
-				return mongo.ErrNoDocuments
-			}
-			return nil
-		},
-		options.Delete(),
+		MilestoneID,
 	)
 }
 
@@ -76,16 +66,9 @@ func (f *FuncTaskRepositoryImp) DeleteManyFuncTasksByMilestonesID(
 	ctx 			context.Context,
 	MilestonesID	[]uint64,
 ) error {
-	return f.FuncTask.DeleteMany(
+	return f.m.DeleteManyByMilestoneID(
 		ctx,
-		bson.M{"milestone_id": bson.M{"$in": MilestonesID}},
-		func(dr *mongo.DeleteResult) error {
-			if dr.DeletedCount == 0 {
-				return mongo.ErrNilDocument
-			}
-			return nil
-		},
-		options.Delete(),
+		MilestonesID,
 	)
 }
 
@@ -95,16 +78,10 @@ func (f *FuncTaskRepositoryImp) GetFuncTasksByMilestonesID(
 ) ([]*model.FuncTaskFile, error) {
 	var fts []*model.FuncTaskFile
 
-	if err := f.FuncTask.GetAllFiltered(
+	if err := f.m.GetManyByMilestonesID(
 		ctx,
-		bson.M{"milestone_id": bson.M{"$in": MilestonesID}},
-		func(c *mongo.Cursor) error {
-			return c.All(
-				ctx,
-				&fts,
-			)
-		},
-		options.Find(),
+		MilestonesID,
+		&fts,
 	); err != nil {
 		return nil, err
 	}
