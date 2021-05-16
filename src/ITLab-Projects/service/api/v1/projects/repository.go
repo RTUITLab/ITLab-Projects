@@ -16,7 +16,7 @@ type Repository interface {
 type RepoRepository interface{
 	SaveReposAndSetDeletedUnfind(
 		ctx context.Context,
-		repos []*repo.Repo,
+		repos interface{},
 	) error
 
 	GetFiltrSortFromToRepos(
