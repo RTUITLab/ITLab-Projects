@@ -98,7 +98,7 @@ func (m *milestoneAssetsImp) DeleteManyByMilestoneID(
 		bson.M{"milestone_id": bson.M{"$in": MilestonesID}},
 		func(dr *mongo.DeleteResult) error {
 			if dr.DeletedCount == 0 {
-				return mongo.ErrNilDocument
+				return mongo.ErrNoDocuments
 			}
 			return nil
 		},
@@ -109,12 +109,16 @@ func (m *milestoneAssetsImp) DeleteManyByMilestoneID(
 func (m *milestoneAssetsImp) GetManyByMilestonesID(
 	ctx				context.Context,
 	MilestonesID	[]uint64,
-	scanTo interface{},
+	scanTo 			interface{},
 ) error {
 	return m.Asset.GetAllFiltered(
 		ctx,
 		bson.M{"milestone_id": bson.M{"$in": MilestonesID}},
 		func(c *mongo.Cursor) error {
+			if len := c.RemainingBatchLength(); len == 0 {
+				return mongo.ErrNoDocuments
+			}
+			
 			return c.All(
 				ctx,
 				scanTo,
