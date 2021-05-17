@@ -13,8 +13,9 @@ type Service interface {
 
 	GetProjects(
 		ctx 			context.Context,
-		start, count 	int64,
-	) ([]*repoasproj.RepoAsProjCompact, error)
+		start, 	count 	int64,
+		name, 	tag		string,
+	) ([]*repoasproj.RepoAsProjCompactPointers, error)
 
 	UpdateProjects(
 		ctx context.Context,
