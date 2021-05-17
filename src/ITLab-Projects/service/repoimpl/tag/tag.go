@@ -62,6 +62,10 @@ func (t *TagRepositoryImp) GetFilteredTags(
 		ctx,
 		filter,
 		func(c *mongo.Cursor) error {
+			if c.RemainingBatchLength() == 0 {
+				return mongo.ErrNoDocuments
+			}
+			
 			return c.All(
 				ctx,
 				&tgs,
