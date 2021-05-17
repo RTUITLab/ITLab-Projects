@@ -8,6 +8,7 @@ import (
 	model "github.com/ITLab-Projects/pkg/models/tag"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/ITLab-Projects/pkg/repositories"
@@ -113,6 +114,17 @@ func TestFunc_GetFilteredByRepoID(t *testing.T) {
 
 	if !(tags[0].Tag == excpected[0].Tag && tags[1].Tag == excpected[1].Tag) {
 		t.Log("Asserting error")
+		t.FailNow()
+	}
+}
+
+func TestFunc_GetFilterTags_ErrNoDocuments(t *testing.T) {
+	_, err := TagRepository.GetFilteredTags(
+		context.Background(),
+		bson.M{},
+	)
+	if err != mongo.ErrNoDocuments {
+		t.Log(err)
 		t.FailNow()
 	}
 }
