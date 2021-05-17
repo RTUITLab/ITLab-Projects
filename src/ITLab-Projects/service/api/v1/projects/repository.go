@@ -1,8 +1,11 @@
 package projects
 
 import (
-	"github.com/ITLab-Projects/pkg/models/repo"
 	"context"
+
+	"github.com/ITLab-Projects/pkg/models/milestone"
+	"github.com/ITLab-Projects/pkg/models/repo"
+	"github.com/ITLab-Projects/pkg/models/tag"
 )
 
 type Repository interface {
@@ -53,6 +56,11 @@ type MilestoneRepository interface {
 		ctx 		context.Context,
 		MilestoneID uint64,
 	) error
+
+	GetAllByRepoID(
+		ctx 		context.Context,
+		RepoID		uint64,
+	) ([]*milestone.MilestoneInRepo, error)
 }
 
 type IssueRepository interface {
@@ -77,7 +85,16 @@ type TagRepository interface {
 		ctx 	context.Context,
 		RepoID	uint64,
 	) (error)
+	
+	GetFilteredTags(
+		ctx context.Context,
+		filter interface{},
+	) ([]*tag.Tag, error)
 
+	GetFilteredTagsByRepoID(
+		ctx 	context.Context,
+		RepoID	uint64,
+	) ([]*tag.Tag, error)
 	
 }
 
