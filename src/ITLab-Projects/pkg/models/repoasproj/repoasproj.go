@@ -47,3 +47,9 @@ func (b ByCreateDate) Less(i, j int) bool {
 func (b ByCreateDate) Swap(i, j int) {
 	b[i], b[j] = b[j], b[i]
 }
+
+type RepoAsProjCompactPointers struct {
+	Repo 			*repo.Repo					`json:"repo"`
+	Completed		float64						`json:"completed"`
+	Tags			[]*tag.Tag					`json:"tags"`
+}
