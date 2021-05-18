@@ -23,6 +23,28 @@ func New(
 	}
 }
 
+func (m *MilestoneRepositoryImp) GetMilestonesAndScanTo(
+	ctx context.Context,
+	filter interface{},
+	value interface{},
+	opts ...*options.FindOptions,
+) error {
+	return m.Milestone.GetAllFiltered(
+		ctx,
+		filter,
+		func(c *mongo.Cursor) error {
+			if c.RemainingBatchLength() == 0 {
+				return mongo.ErrNoDocuments
+			}
+			return c.All(
+				ctx,
+				value,
+			)
+		},
+		opts...
+	)
+}
+
 func (m *MilestoneRepositoryImp) SaveMilestonesAndSetDeletedUnfind(
 	ctx context.Context,
 	ms interface{},
