@@ -32,6 +32,11 @@ func BeforeDelete(
 		if err := deleter.DeleteFile(est.FileID); err != nil {
 			return err
 		}
+	case *estimate.EstimateFile:
+		est, _ := v.(estimate.EstimateFile)
+		if err := deleter.DeleteFile(est.FileID); err != nil {
+			return err
+		}
 	case []estimate.EstimateFile:
 		ests, _ := v.([]estimate.EstimateFile)
 		for _, est := range ests {
@@ -47,6 +52,11 @@ func BeforeDelete(
 			}
 		}
 	case functask.FuncTaskFile:
+		task, _ := v.(functask.FuncTaskFile)
+		if err := deleter.DeleteFile(task.FileID); err != nil {
+			return err
+		}
+	case *functask.FuncTaskFile:
 		task, _ := v.(functask.FuncTaskFile)
 		if err := deleter.DeleteFile(task.FileID); err != nil {
 			return err
