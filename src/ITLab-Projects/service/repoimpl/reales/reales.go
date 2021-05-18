@@ -34,7 +34,7 @@ func (r *RealeseRepositoryImp) SaveRealeses(
 	)
 }
 
-func (r *RealeseRepositoryImp) GetByRepoID(
+func (r *RealeseRepositoryImp) GetRealeseByRepoID(
 	ctx 		context.Context,
 	RepoID		uint64,
 ) (*model.RealeseInRepo, error) {
