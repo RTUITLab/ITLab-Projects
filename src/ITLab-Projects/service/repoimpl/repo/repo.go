@@ -47,6 +47,28 @@ func (r *RepoRepositoryImp) GetFiltrSortRepos(
 	)
 }
 
+func (r *RepoRepositoryImp) GetReposAndScanTo(
+	ctx context.Context,
+	filter interface{},
+	value interface{},
+	options ...*options.FindOptions,
+) error {
+	return r.Repo.GetAllFiltered(
+		ctx,
+		filter,
+		func(c *mongo.Cursor) error {
+			if c.RemainingBatchLength() == 0 {
+				return mongo.ErrNoDocuments
+			}
+			return c.All(
+				ctx,
+				value,
+			)
+		},
+		options...
+	)
+}
+
 func (r *RepoRepositoryImp) GetRepos(
 	ctx 	context.Context,
 	filter 	interface{},
@@ -54,17 +76,11 @@ func (r *RepoRepositoryImp) GetRepos(
 ) ([]*repo.Repo, error) {
 	var repos []*repo.Repo
 
-	if err := r.Repo.GetAllFiltered(
+	if err := r.GetReposAndScanTo(
 		ctx,
 		filter,
-		func(c *mongo.Cursor) error {
-			c.All(
-				ctx,
-				&repos,
-			)
-			return c.Err()
-		},
-		options...,
+		&repos,
+		options...
 	); err != nil {
 		return nil, err
 	}
