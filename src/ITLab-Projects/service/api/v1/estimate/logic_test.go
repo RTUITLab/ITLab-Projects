@@ -105,10 +105,15 @@ func TestFunc_AddEstimate(t *testing.T) {
 		t.FailNow()
 	}
 
-	defer RepoImp.DeleteAllMilestonesByRepoID(
-		context.Background(),
-		1,
-	)
+	defer func(){
+		if err := RepoImp.DeleteAllMilestonesByRepoID(
+			context.Background(),
+			12,
+		); err != nil {
+			t.Log(err)
+			t.FailNow()
+		}
+	}()
 
 	id := primitive.NewObjectID()
 	est := me.EstimateFile{
@@ -174,7 +179,7 @@ func TestFunc_DeleteEstimate(t *testing.T) {
 
 	defer RepoImp.DeleteAllMilestonesByRepoID(
 		context.Background(),
-		1,
+		12,
 	)
 
 	id := primitive.NewObjectID()
