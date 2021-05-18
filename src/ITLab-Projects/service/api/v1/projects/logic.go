@@ -11,6 +11,7 @@ import (
 	"github.com/ITLab-Projects/pkg/models/repo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/go-kit/kit/log/level"
 
@@ -51,7 +52,7 @@ func New(
 func (s *service) GetProject(
 	ctx context.Context,
 	ID uint64,
-) (*repoasproj.RepoAsProj, error) {
+) (*repoasproj.RepoAsProjPointer, error) {
 	rep, err := s.repository.GetByID(
 		ctx,
 		ID,
@@ -60,7 +61,15 @@ func (s *service) GetProject(
 		return nil, err
 	}
 
-	
+	proj, err := s.getProjects(
+		ctx,
+		rep,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return proj, nil
 }
 
 func (s *service) GetProjects(
@@ -475,7 +484,41 @@ func (s *service) getProjects(
 	if err!= nil {
 		return nil, err
 	}
+	proj.Milestones = ms
 
+	if err := s.getAssetsForMilestones(
+		ctx,
+		ms,
+	); err != nil {
+		return nil, err
+	}
+
+	proj.Completed = countCompleted(ms)
+
+	if rls, err := s.repository.GetRealeseByRepoID(
+		ctx,
+		rep.ID,
+	); err == mongo.ErrNoDocuments {
+		// Pass
+	} else if err != nil {
+		return nil, err
+	} else {
+		proj.LastRealese = &rls.Realese
+	}
+
+	tgs, err := s.repository.GetFilteredTagsByRepoID(
+		ctx,
+		rep.ID,
+	)
+	if err == mongo.ErrNoDocuments {
+		// Pass
+	} else if err != nil {
+		return nil, err
+	} else {
+		proj.Tags = tgs
+	}
+
+	return proj, nil
 }
 
 func (s *service) getAssetsForMilestones(
@@ -513,6 +556,18 @@ func (s *service) getAssetsForMilestones(
 			}
 		}
 
-		is, err := s.repository.Get
+		if err := s.repository.GetIssuesAndScanTo(
+			ctx,
+			bson.M{"milestone_id": ms[i].ID},
+			&ms[i].Issues,
+			options.Find(),
+		); err == mongo.ErrNoDocuments {
+			// Pass
+			level.Debug(s.logger).Log("Don't finc issues")
+		} else if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
