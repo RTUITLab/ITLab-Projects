@@ -1,8 +1,10 @@
 package projects
 
 import (
+	"github.com/ITLab-Projects/service/api/v1/beforedelete"
 	"context"
 	"errors"
+	"net/http"
 	"sort"
 	"strings"
 
@@ -158,9 +160,64 @@ func (s *service) UpdateProjects(
 
 func (s *service) DeleteProject(
 	ctx context.Context, 
-	ID uint64,
+	ID 	uint64,
+	// For mfs requester
+	r 	*http.Request,
 ) error {
-	panic("not implemented") // TODO: Implement
+	rep, err := s.repository.GetByID(
+		ctx,
+		ID,
+	)
+	if err != nil {
+		return err
+	}
+
+	if err := s.deleteMilestone(
+		ctx,
+		rep.ID,
+		beforedelete.BeforeDeleteWithReq(
+			s.mfsRequester,
+			r,
+		),
+	); err != nil {
+		return err
+	}
+
+	if err := s.repository.DeleteTagsByRepoID(
+		ctx,
+		rep.ID,
+	); err == mongo.ErrNoDocuments {
+		// Pass
+	} else if err != nil {
+		return err
+	}
+
+	if err := s.repository.DeleteRealeseByRepoID(
+		ctx,
+		rep.ID,
+	); err == mongo.ErrNoDocuments {
+		// Pass
+	} else if err != nil {
+		return err
+	}
+
+	if err := s.repository.DeleteTagsByRepoID(
+		ctx,
+		rep.ID,
+	); err == mongo.ErrNoDocuments {
+		// Pass
+	} else if err != nil {
+		return err
+	}
+
+	if err := s.repository.DeleteByID(
+		ctx,
+		rep.ID,
+	); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *service) resetUpdater() {
@@ -567,6 +624,122 @@ func (s *service) getAssetsForMilestones(
 		} else if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (s *service) deleteMilestone(
+	ctx 		context.Context,
+	RepoID		uint64,
+	f			beforedelete.BeforeDeleteFunc,
+) error {
+	ms, err := s.repository.GetAllMilestonesByRepoID(
+		ctx,
+		RepoID,
+	)
+	if err == mongo.ErrNoDocuments {
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	MilestonesID := func(ms []*milestone.Milestone) []uint64 {
+		var ids []uint64
+		for _, m := range ms {
+			ids = append(ids, m.ID)
+		}
+		return ids
+	}(ms)
+
+	if err := s.deleteEstimates(
+		ctx,
+		MilestonesID,
+		f,
+	); err == mongo.ErrNoDocuments {
+		// Pass
+	} else if err != nil {
+		return err
+	}
+
+	if err := s.deleteFuncTask(
+		ctx,
+		MilestonesID,
+		f,
+	); err == mongo.ErrNoDocuments {
+		// Pass
+	} else if err != nil {
+		return err
+	}
+
+	if err := s.repository.DeleteAllIssuesByMilestonesID(
+		ctx,
+		MilestonesID,
+	); err == mongo.ErrNoDocuments {
+		// Pass
+	} else if err != nil {
+		return err
+	}
+
+	if err := s.repository.DeleteAllMilestonesByRepoID(
+		ctx,
+		RepoID,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *service) deleteEstimates(
+	ctx 			context.Context,
+	MilestonesID	[]uint64,
+	f				beforedelete.BeforeDeleteFunc,
+) error {
+	est, err := s.repository.GetEstimatesByMilestonesID(
+		ctx,
+		MilestonesID,
+	)
+	if err != nil {
+		return err
+	}
+	
+	if err := f(est); err != nil {
+		return err
+	}
+
+	if err := s.repository.DeleteManyEstimatesByMilestonesID(
+		ctx,
+		MilestonesID,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *service) deleteFuncTask(
+	ctx 			context.Context,
+	MilestonesID 	[]uint64,
+	f				beforedelete.BeforeDeleteFunc,
+) error {
+	tasks, err := s.repository.GetFuncTasksByMilestonesID(
+		ctx,
+		MilestonesID,
+	)
+	if err != nil {
+		return err
+	}
+
+	if err := f(tasks); err != nil {
+		return err
+	}
+
+	if err := s.repository.DeleteManyFuncTasksByMilestonesID(
+		ctx,
+		MilestonesID,
+	); err != nil {
+		return err
 	}
 
 	return nil
