@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	_ "time"
 
 	e "github.com/ITLab-Projects/pkg/err"
 	"github.com/ITLab-Projects/pkg/githubreq"
