@@ -68,7 +68,7 @@ func TestFunc_SaveReales_AndGetByRepoID(t *testing.T) {
 		options.Delete(),
 	)
 
-	rls_1, err := RealeseRepository.GetByRepoID(
+	rls_1, err := RealeseRepository.GetRealeseByRepoID(
 		context.Background(),
 		12,
 	)
@@ -77,7 +77,7 @@ func TestFunc_SaveReales_AndGetByRepoID(t *testing.T) {
 		t.FailNow()
 	}
 
-	rls_2, err := RealeseRepository.GetByRepoID(
+	rls_2, err := RealeseRepository.GetRealeseByRepoID(
 		context.Background(),
 		13,
 	)
