@@ -350,6 +350,167 @@ func TestFunc_GetFiltrSortFromToIssues(t *testing.T) {
 }
 
 func TestFunc_GetAllIssuesByMilestoneID_IssueWithMilestoneID(t *testing.T) {
+	save_is := []model.IssuesWithMilestoneID{
+		{
+			MilestoneID: 1, 
+			Issue: model.Issue{
+				ID: 1,
+				Title: "mock_1",
+			},
+		},
+		{
+			MilestoneID: 1, 
+			Issue: model.Issue{
+				ID: 2,
+				Title: "mock_2",
+			},
+		},
+		{
+			MilestoneID: 1, 
+			Issue: model.Issue{
+				ID: 3,
+				Title: "mock_3",
+			},
+		},
+	}
 
-	// TODo
+	if err := IssueRepository.SaveIssuesAndSetDeletedUnfind(
+		context.Background(),
+		save_is,
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	defer IssueRepository.DeleteAllByMilestoneID(
+		context.Background(),
+		1,
+	)
+
+	var get_issie_with_id []model.IssuesWithMilestoneID
+	if err := IssueRepository.GetIssuesAndScanTo(
+		context.Background(),
+		bson.M{"milestone_id": 1},
+		&get_issie_with_id,
+		options.Find(),
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	for _, i := range get_issie_with_id {
+		if !(i.ID == 1 && i.Title == "mock_1" || i.ID == 2 && i.Title == "mock_2" || i.ID == 3 && i.Title == "mock_3") {
+			t.Log("Assert error")
+			t.FailNow()
+		}
+	}
+
+	var get_issie_with_id_pointer []*model.IssuesWithMilestoneID
+	if err := IssueRepository.GetIssuesAndScanTo(
+		context.Background(),
+		bson.M{"milestone_id": 1},
+		&get_issie_with_id_pointer,
+		options.Find(),
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	for _, i := range get_issie_with_id_pointer {
+		if !(i.ID == 1 && i.Title == "mock_1" || i.ID == 2 && i.Title == "mock_2" || i.ID == 3 && i.Title == "mock_3") {
+			t.Log("Assert error")
+			t.FailNow()
+		}
+	}
+
+	var get_issue []model.Issue
+	if err := IssueRepository.GetIssuesAndScanTo(
+		context.Background(),
+		bson.M{"milestone_id": 1},
+		&get_issue,
+		options.Find(),
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	for _, i := range get_issue {
+		if !(i.ID == 1 && i.Title == "mock_1" || i.ID == 2 && i.Title == "mock_2" || i.ID == 3 && i.Title == "mock_3") {
+			t.Log("Assert error")
+			t.FailNow()
+		}
+	}
+
+	var get_issue_pointer []*model.Issue
+	if err := IssueRepository.GetIssuesAndScanTo(
+		context.Background(),
+		bson.M{"milestone_id": 1},
+		&get_issue,
+		options.Find(),
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	for _, i := range get_issue_pointer {
+		if !(i.ID == 1 && i.Title == "mock_1" || i.ID == 2 && i.Title == "mock_2" || i.ID == 3 && i.Title == "mock_3") {
+			t.Log("Assert error")
+			t.FailNow()
+		}
+	}
+}
+
+func TestFunc_GetAllIssuesByMilestoneID(t *testing.T) {
+	save_is := []model.IssuesWithMilestoneID{
+		{
+			MilestoneID: 1, 
+			Issue: model.Issue{
+				ID: 1,
+				Title: "mock_1",
+			},
+		},
+		{
+			MilestoneID: 1, 
+			Issue: model.Issue{
+				ID: 2,
+				Title: "mock_2",
+			},
+		},
+		{
+			MilestoneID: 1, 
+			Issue: model.Issue{
+				ID: 3,
+				Title: "mock_3",
+			},
+		},
+	}
+
+	if err := IssueRepository.SaveIssuesAndSetDeletedUnfind(
+		context.Background(),
+		save_is,
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	defer IssueRepository.DeleteAllByMilestoneID(
+		context.Background(),
+		1,
+	)
+
+	is, err := IssueRepository.GetAllIssuesByMilestoneID(
+		context.Background(),
+		1,
+	)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	for _, i := range is {
+		if !(i.ID == 1 && i.Title == "mock_1" || i.ID == 2 && i.Title == "mock_2" || i.ID == 3 && i.Title == "mock_3") {
+			t.Log("Assert error")
+			t.FailNow()
+		}
+	}
 }
