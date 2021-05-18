@@ -3,8 +3,11 @@ package projects
 import (
 	"context"
 	"errors"
+	"sort"
 	"strings"
 
+	"github.com/ITLab-Projects/pkg/models/estimate"
+	"github.com/ITLab-Projects/pkg/models/functask"
 	"github.com/ITLab-Projects/pkg/models/repo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -29,12 +32,35 @@ type service struct {
 	upd				*updater.Updater
 }
 
+func New(
+	repository 	Repository,
+	logger 		log.Logger,
+	requester	githubreq.Requester,
+	mfsreq		mfsreq.Requester,
+	upd			*updater.Updater,
+) *service {
+	return &service{
+		repository: repository,
+		logger: logger,
+		requester: requester,
+		mfsRequester: mfsreq,
+		upd: upd,
+	}
+}
 
 func (s *service) GetProject(
 	ctx context.Context,
 	ID uint64,
 ) (*repoasproj.RepoAsProj, error) {
-	panic("not implemented") // TODO: Implement
+	rep, err := s.repository.GetByID(
+		ctx,
+		ID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	
 }
 
 func (s *service) GetProjects(
@@ -66,7 +92,7 @@ func (s *service) GetProjects(
 	if err != nil {
 		return nil, err
 	}
-
+	sort.Sort(repoasproj.ByCreateDatePointers(projs))
 	return projs, nil
 }
 
@@ -363,7 +389,7 @@ func (s *service) GetCompatcProj(
 				Repo: r,
 			}
 
-			if ms, err := s.repository.GetAllByRepoID(
+			if ms, err := s.repository.GetAllMilestonesByRepoID(
 				ctx,
 				r.ID,
 			); err == mongo.ErrNoDocuments {
@@ -417,7 +443,7 @@ func (s *service) catchPanic() {
 	}
 }
 
-func countCompleted(ms []*milestone.MilestoneInRepo) float64 {
+func countCompleted(ms []*milestone.Milestone) float64 {
 	var open float64
 	var closed float64
 	for _, m := range ms {
@@ -431,5 +457,62 @@ func countCompleted(ms []*milestone.MilestoneInRepo) float64 {
 		return 1
 	} else {
 		return (closed)/(open+closed)
+	}
+}
+
+func (s *service) getProjects(
+	ctx context.Context,
+	rep *repo.Repo,
+) (*repoasproj.RepoAsProjPointer, error) {
+	proj := &repoasproj.RepoAsProjPointer{
+		Repo: rep,
+	}
+
+	ms, err := s.repository.GetAllMilestonesByRepoID(
+		ctx,
+		rep.ID,
+	)
+	if err!= nil {
+		return nil, err
+	}
+
+}
+
+func (s *service) getAssetsForMilestones(
+	ctx context.Context,
+	ms []*milestone.Milestone,
+) error {
+	for i, _ := range ms {
+		est, err := s.repository.GetEstimateByMilestoneID(
+			ctx,
+			ms[i].ID,
+		)
+		if err == mongo.ErrNoDocuments {
+			// Pass
+		} else if err != nil {
+			return err
+		} else {
+			ms[i].Estimate = &estimate.Estimate{
+				MilestoneID: est.MilestoneID,
+				EstimateURL: s.mfsRequester.GenerateDownloadLink(est.FileID),
+			}
+		}
+
+		f, err := s.repository.GetFuncTaskByMilestoneID(
+			ctx,
+			ms[i].ID,
+		)
+		if err == mongo.ErrNoDocuments {
+			// Pass
+		} else if err != nil {
+			return err
+		} else {
+			ms[i].FuncTask = &functask.FuncTask{
+				MilestoneID: f.MilestoneID,
+				FuncTaskURL: s.mfsRequester.GenerateDownloadLink(f.FileID),
+			}
+		}
+
+		is, err := s.repository.Get
 	}
 }
