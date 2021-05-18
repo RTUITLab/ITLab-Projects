@@ -1,9 +1,21 @@
 package projects_test
 
 import (
+	mre "github.com/ITLab-Projects/pkg/models/realese"
+	mt "github.com/ITLab-Projects/pkg/models/tag"
+
 	"context"
+	"net/http"
 	"os"
 	"testing"
+
+	me "github.com/ITLab-Projects/pkg/models/estimate"
+	mf "github.com/ITLab-Projects/pkg/models/functask"
+	mm "github.com/ITLab-Projects/pkg/models/milestone"
+	"github.com/ITLab-Projects/pkg/models/milestonefile"
+	mr "github.com/ITLab-Projects/pkg/models/repo"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/ITLab-Projects/pkg/githubreq"
 	"github.com/ITLab-Projects/pkg/mfsreq"
@@ -32,7 +44,7 @@ func init() {
 		panic(err)
 	}
 
-	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI")
+	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI_TEST")
 	if !find {
 		panic("Don't find dburi")
 	}
@@ -127,5 +139,215 @@ func TestFunc_GetProject(t *testing.T) {
 	t.Log(proj.Completed)
 	for _, m := range proj.Milestones {
 		t.Log(len(m.Issues))
+	}
+}
+
+func TestFunc_DeleteProject(t *testing.T) {
+	if err := RepoImp.Repo.Save(
+		context.Background(),
+		mr.Repo{
+			ID: 12,
+			Name: "mock_repo_1",
+		},
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if err := RepoImp.Milestone.Save(
+		context.Background(),
+		[]mm.MilestoneInRepo{
+			{	
+				RepoID: 12,
+				Milestone: mm.Milestone{
+					MilestoneFromGH: mm.MilestoneFromGH{
+						ID: 1,
+						Title: "mock_milestone_1",
+					},
+				},
+			},
+			{	
+				RepoID: 12,
+				Milestone: mm.Milestone{
+					MilestoneFromGH: mm.MilestoneFromGH{
+						ID: 2,
+						Title: "mock_milestone_2",
+					},
+				},
+			},
+			{	
+				RepoID: 12,
+				Milestone: mm.Milestone{
+					MilestoneFromGH: mm.MilestoneFromGH{
+						ID: 3,
+						Title: "mock_milestone_3",
+					},
+				},
+			},
+		},
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if err := RepoImp.Issue.Save(
+		context.Background(),
+		[]mm.IssuesWithMilestoneID{
+			{
+				RepoID: 12,
+				MilestoneID: 1,
+				Issue: mm.Issue{
+					ID: 1,
+					Title: "mock_issue_1",
+				},
+			},
+			{
+				RepoID: 12,
+				MilestoneID: 1,
+				Issue: mm.Issue{
+					ID: 2,
+					Title: "mock_issue_2",
+				},
+			},
+			{
+				RepoID: 12,
+				MilestoneID: 2,
+				Issue: mm.Issue{
+					ID: 3,
+					Title: "mock_issue_3",
+				},
+			},
+		},
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if err := RepoImp.Estimate.Save(
+		context.Background(),
+		me.EstimateFile{
+			MilestoneFile: milestonefile.MilestoneFile{
+				MilestoneID: 1,
+				FileID: primitive.NewObjectID(),
+			},
+		},	
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if err := RepoImp.FuncTask.Save(
+		context.Background(),
+		mf.FuncTaskFile{
+			MilestoneFile: milestonefile.MilestoneFile{
+				MilestoneID: 1,
+				FileID: primitive.NewObjectID(),
+			},
+		},
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if err := RepoImp.Tag.Save(
+		context.Background(),
+		[]mt.Tag{
+			{
+				RepoID: 12,
+				Tag: "mock_tag_1",
+			},
+			{
+				RepoID: 12,
+				Tag: "mock_tag_2",
+			},
+			{
+				RepoID: 12,
+				Tag: "mock_tag_3",
+			},
+		},
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if err := RepoImp.Realese.Save(
+		context.Background(),
+		mre.RealeseInRepo {
+			RepoID: 12,
+			Realese: mre.Realese{
+				ID: 1,
+			},
+		},
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+
+	if err := service.DeleteProject(
+		context.Background(),
+		12,
+		&http.Request{
+			Header: http.Header{},
+		},
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if _, err := RepoImp.GetFilteredTagsByRepoID(
+		context.Background(),
+		12,
+	); err != mongo.ErrNoDocuments {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if _, err := RepoImp.GetAllIssuesByMilestoneID(
+		context.Background(),
+		1,
+	); err != mongo.ErrNoDocuments {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if _, err := RepoImp.GetAllIssuesByMilestoneID(
+		context.Background(),
+		2,
+	); err != mongo.ErrNoDocuments {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if _, err := RepoImp.GetAllMilestonesByRepoID(
+		context.Background(),
+		12,
+	); err != mongo.ErrNoDocuments {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if _, err := RepoImp.GetFuncTaskByMilestoneID(
+		context.Background(),
+		1,
+	); err != mongo.ErrNoDocuments {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if _, err := RepoImp.GetEstimateByMilestoneID(
+		context.Background(),
+		1,
+	); err != mongo.ErrNoDocuments {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if _, err := RepoImp.GetByID(
+		context.Background(),
+		12,
+	); err != mongo.ErrNoDocuments {
+		t.Log(err)
+		t.FailNow()
 	}
 }
