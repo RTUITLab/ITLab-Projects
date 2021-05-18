@@ -348,3 +348,8 @@ func TestFunc_GetFiltrSortFromToIssues(t *testing.T) {
 		t.FailNow()
 	}
 }
+
+func TestFunc_GetAllIssuesByMilestoneID_IssueWithMilestoneID(t *testing.T) {
+
+	// TODo
+}
