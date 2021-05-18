@@ -83,6 +83,11 @@ type IssueRepository interface {
 		value 		interface{},
 		options 	...*options.FindOptions,
 	) (error)
+
+	DeleteAllIssuesByMilestonesID(
+		ctx 		context.Context,
+		MilestonesID []uint64,
+	) error
 }
 
 type TagRepository interface {
@@ -118,6 +123,11 @@ type RealeseRepository interface {
 		ctx 		context.Context,
 		RepoID		uint64,
 	) (*realese.RealeseInRepo, error)
+
+	DeleteRealeseByRepoID(
+		ctx 	context.Context,
+		RepoID	uint64,
+	) error
 }
 
 type FuncTaskRepository interface {
@@ -126,6 +136,15 @@ type FuncTaskRepository interface {
 		MilestoneID	uint64,
 	) (*functask.FuncTaskFile, error)
 
+	GetFuncTasksByMilestonesID(
+		ctx 			context.Context,
+		MilestonesID	[]uint64,
+	) ([]*functask.FuncTaskFile, error)
+
+	DeleteManyFuncTasksByMilestonesID(
+		ctx 			context.Context,
+		MilestonesID	[]uint64,
+	) error
 }
 
 type EstimeateRepository interface {
@@ -133,4 +152,14 @@ type EstimeateRepository interface {
 		ctx 		context.Context,
 		MilestoneID	uint64,
 	) (*estimate.EstimateFile, error)
+
+	GetEstimatesByMilestonesID(
+		ctx 			context.Context,
+		MilestonesID	[]uint64,
+	) ([]*estimate.EstimateFile, error)
+
+	DeleteManyEstimatesByMilestonesID(
+		ctx 			context.Context,
+		MilestonesID	[]uint64,
+	) error
 }
