@@ -1,8 +1,10 @@
 package projects
 
 import (
-	"github.com/ITLab-Projects/pkg/models/repoasproj"
 	"context"
+	"net/http"
+
+	"github.com/ITLab-Projects/pkg/models/repoasproj"
 )
 
 type Service interface {
@@ -24,5 +26,6 @@ type Service interface {
 	DeleteProject(
 		ctx context.Context,
 		ID	uint64,
+		r *http.Request,
 	) error
 }
