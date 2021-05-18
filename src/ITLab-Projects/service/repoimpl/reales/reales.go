@@ -53,3 +53,20 @@ func (r *RealeseRepositoryImp) GetRealeseByRepoID(
 	return relase, nil
 }
 
+func (r *RealeseRepositoryImp) DeleteRealeseByRepoID(
+	ctx 	context.Context,
+	RepoID	uint64,
+) error {
+	return r.Realese.DeleteOne(
+		context.Background(),
+		bson.M{"repoid": RepoID},
+		func(dr *mongo.DeleteResult) error {
+			if dr.DeletedCount == 0 {
+				return mongo.ErrNoDocuments
+			}
+
+			return nil
+		},
+		options.Delete(),
+	)
+}
