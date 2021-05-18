@@ -114,7 +114,22 @@ func (m *MilestoneRepositoryImp) DeleteAllMilestonesByRepoID(
 	return nil
 }
 
-// func (m *MilestoneRepositoryImp) CountCompletedForRepo(
-// 	ctx 	context.Context,
-// 	RepoID	uint64,
-// ) (float64,)
+func (m *MilestoneRepositoryImp) GetMilestoneByID(
+	ctx 		context.Context,
+	MilestoneID uint64,
+) (*model.Milestone, error) {
+	ms := &model.Milestone{}
+
+	if err := m.Milestone.GetOne(
+		ctx,
+		bson.M{"id": MilestoneID},
+		func(sr *mongo.SingleResult) error {
+			return sr.Decode(ms)
+		},
+		options.FindOne(),
+	); err != nil {
+		return nil, err
+	}
+
+	return ms, nil
+}
