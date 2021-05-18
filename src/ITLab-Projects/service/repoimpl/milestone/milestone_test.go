@@ -109,7 +109,7 @@ func TestFunc_SaveMilestoneAndSetdDeletedUnfind(t *testing.T) {
 		t.FailNow()
 	}
 
-	ms, err := MilestoneRepository.GetAllByRepoID(
+	ms, err := MilestoneRepository.GetAllMilestonesInRepo(
 		context.Background(),
 		12,
 	)
@@ -196,7 +196,7 @@ func TestFunc_SaveMilestoneAndSetdDeletedUnfindByValue(t *testing.T) {
 		t.FailNow()
 	}
 
-	ms, err := MilestoneRepository.GetAllByRepoID(
+	ms, err := MilestoneRepository.GetAllMilestonesInRepo(
 		context.Background(),
 		12,
 	)
@@ -261,7 +261,7 @@ func TestFunc_GetAllByRepoID(t *testing.T) {
 		options.Delete(),
 	)
 
-	ms, err := MilestoneRepository.GetAllByRepoID(
+	ms, err := MilestoneRepository.GetAllMilestonesInRepo(
 		context.Background(),
 		12,
 	)
@@ -311,7 +311,7 @@ func TestFunc_DeleteAllByRepoID(t *testing.T) {
 		t.FailNow()
 	}
 
-	if err := MilestoneRepository.DeleteAllByRepoID(
+	if err := MilestoneRepository.DeleteAllMilestonesByRepoID(
 		context.Background(),
 		12,
 	); err != nil {
@@ -319,7 +319,7 @@ func TestFunc_DeleteAllByRepoID(t *testing.T) {
 		t.FailNow()
 	}
 
-	if _, err := MilestoneRepository.GetAllByRepoID(
+	if _, err := MilestoneRepository.GetAllMilestonesInRepo(
 		context.Background(),
 		12,
 	); err != mongo.ErrNoDocuments {
@@ -329,7 +329,7 @@ func TestFunc_DeleteAllByRepoID(t *testing.T) {
 }
 
 func TestFunc_DeleteAllByRepoID_ErrNoDocument(t *testing.T) {
-	if err := MilestoneRepository.DeleteAllByRepoID(
+	if err := MilestoneRepository.DeleteAllMilestonesByRepoID(
 		context.Background(),
 		12,
 	); err != mongo.ErrNoDocuments {
