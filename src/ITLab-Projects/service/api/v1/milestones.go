@@ -135,8 +135,6 @@ func (a *Api) buildFilterByNameForIssues(ctx context.Context, filter bson.M, nam
 		ID 	uint64		`bson:"id"`
 	}
 
-	type ids []uint64
-	
 
 	var repoIDs []IDs
 	if err := a.Repository.Repo.GetAllFiltered(
