@@ -97,3 +97,44 @@ func TestFunc_SaveReales_AndGetByRepoID(t *testing.T) {
 		t.FailNow()
 	}
 }
+
+func TestFunc_DeleteRealese(t *testing.T) {
+	if err := RealeseRepository.SaveRealeses(
+		context.Background(),
+		model.RealeseInRepo{
+			RepoID: 1,
+			Realese: model.Realese{
+				ID: 12,
+			},
+		},
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if err := RealeseRepository.DeleteRealeseByRepoID(
+		context.Background(),
+		1,
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if _, err := RealeseRepository.GetRealeseByRepoID(
+		context.Background(),
+		1,
+	); err != mongo.ErrNoDocuments {
+		t.Log(err)
+		t.FailNow()
+	}
+}
+
+func TestFunc_DeleteRealese_NotFound(t *testing.T) {
+	if err := RealeseRepository.DeleteRealeseByRepoID(
+		context.Background(),
+		1,
+	); err != mongo.ErrNoDocuments {
+		t.Log(err)
+		t.FailNow()
+	}
+}
