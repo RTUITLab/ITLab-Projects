@@ -384,3 +384,67 @@ func TestFunc_DeleteMilestone(t *testing.T) {
 		t.FailNow()
 	}
 }
+
+func TestFunc_GetMilestoneAndScanTo(t *testing.T) {
+	milestones := []*model.MilestoneInRepo{
+		{
+			RepoID: 12, Milestone: model.Milestone{
+				MilestoneFromGH: model.MilestoneFromGH{
+					ID: 1, Title: "mock_1",					
+				},
+			},
+		},
+		{
+			RepoID: 12, Milestone: model.Milestone{
+				MilestoneFromGH: model.MilestoneFromGH{
+					ID: 2, Title: "mock_2",					
+				},
+			},
+		},
+	}
+
+	if err := Repositories.Milestone.Save(
+		context.Background(),
+		milestones,
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	defer MilestoneRepository.DeleteAllMilestonesByRepoID(
+		context.Background(),
+		12,
+	)
+
+	var gets []*model.Milestone
+	err := MilestoneRepository.GetMilestonesAndScanTo(
+		context.Background(),
+		bson.M{"repoid": 12},
+		&gets,
+		options.Find(),
+	)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	for _, m := range gets {
+		if !(m.ID == 1 && m.Title == "mock_1" || m.ID == 2 && m.Title == "mock_2") {
+			t.Log("Assert error")
+			t.FailNow()
+		}
+	}	
+}
+
+func TestFunc_GetMilestonesAndScanTo_NoDocuments(t *testing.T) {
+	err := MilestoneRepository.GetMilestonesAndScanTo(
+		context.Background(),
+		bson.M{"repoid": 12},
+		nil,
+		options.Find(),
+	)
+	if err != mongo.ErrNoDocuments {
+		t.Log(err)
+		t.FailNow()
+	}
+}
