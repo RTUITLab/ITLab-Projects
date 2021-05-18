@@ -71,6 +71,9 @@ func (i *IssueRepositoryImp) GetIssuesAndScanTo(
 		ctx,
 		filter,
 		func(c *mongo.Cursor) error {
+			if c.RemainingBatchLength() == 0 {
+				return mongo.ErrNoDocuments
+			}
 			c.All(
 				ctx,
 				value,
@@ -154,13 +157,30 @@ func (i *IssueRepositoryImp) GetLabelsNameFromOpenIssues(
 	)
 }
 
-func (i *IssueRepositoryImp) DeleteAllByMilestoneID(
+func (i *IssueRepositoryImp) DeleteAllIssuesByMilestoneID(
 	ctx 		context.Context,
 	MilestoneID uint64,
 ) error {
 	return i.Issue.DeleteMany(
 		ctx,
 		bson.M{"milestone_id": MilestoneID},
+		func(dr *mongo.DeleteResult) error {
+			if dr.DeletedCount == 0 {
+				return mongo.ErrNoDocuments
+			}
+			return nil
+		},
+		options.Delete(),
+	)
+}
+
+func (i *IssueRepositoryImp) DeleteAllIssuesByMilestonesID(
+	ctx 		context.Context,
+	MilestonesID []uint64,
+) error {
+	return i.Issue.DeleteMany(
+		ctx,
+		bson.M{"milestone_id": bson.M{"$in": MilestonesID}},
 		func(dr *mongo.DeleteResult) error {
 			if dr.DeletedCount == 0 {
 				return mongo.ErrNoDocuments
