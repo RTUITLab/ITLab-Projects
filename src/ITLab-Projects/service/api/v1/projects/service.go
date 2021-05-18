@@ -9,7 +9,7 @@ type Service interface {
 	GetProject(
 		ctx context.Context,
 		ID	uint64,
-	) (*repoasproj.RepoAsProj, error)
+	) (*repoasproj.RepoAsProjPointer, error)
 
 	GetProjects(
 		ctx 			context.Context,
