@@ -1,10 +1,12 @@
 package issue
 
 import (
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 	"context"
 
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+
+	"github.com/ITLab-Projects/pkg/models/milestone"
 	model "github.com/ITLab-Projects/pkg/models/milestone"
 	"github.com/ITLab-Projects/service/repoimpl/utils"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -59,6 +61,30 @@ func (i *IssueRepositoryImp) GetIssues(
 	return is, nil
 }
 
+func (i *IssueRepositoryImp) GetIssuesAndScanTo(
+	ctx 		context.Context,
+	filter 		interface{},
+	value 		interface{},
+	options 	...*options.FindOptions,
+) (error) {
+	if err := i.Issue.GetAllFiltered(
+		ctx,
+		filter,
+		func(c *mongo.Cursor) error {
+			c.All(
+				ctx,
+				value,
+			)
+			return c.Err()
+		},
+		options...,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (i *IssueRepositoryImp) GetFiltrSortIssues(
 	ctx 	context.Context,
 	filter 	interface{},
@@ -81,6 +107,23 @@ func (i *IssueRepositoryImp) GetFilteredIssues(
 		filter,
 		options.Find(),
 	)
+}
+
+func (i *IssueRepositoryImp) GetAllIssuesByMilestoneID(
+	ctx 		context.Context,
+	MilestoneID	uint64,
+) ([]*milestone.Issue, error) {
+	var is []*milestone.Issue
+	if err := i.GetIssuesAndScanTo(
+		ctx,
+		bson.M{"milestone_id": MilestoneID},
+		&is,
+		options.Find(),
+	); err != nil {
+		return nil, err
+	}
+
+	return is, nil
 }
 
 func (i *IssueRepositoryImp) GetFiltrSortedFromToIssues(
@@ -118,23 +161,6 @@ func (i *IssueRepositoryImp) DeleteAllByMilestoneID(
 	return i.Issue.DeleteMany(
 		ctx,
 		bson.M{"milestone_id": MilestoneID},
-		func(dr *mongo.DeleteResult) error {
-			if dr.DeletedCount == 0 {
-				return mongo.ErrNoDocuments
-			}
-			return nil
-		},
-		options.Delete(),
-	)
-}
-
-func (i *IssueRepositoryImp) DeleteAllTagsByRepoID(
-	ctx 		context.Context,
-	RepoID uint64,
-) error {
-	return i.Issue.DeleteMany(
-		ctx,
-		bson.M{"repo_id": RepoID},
 		func(dr *mongo.DeleteResult) error {
 			if dr.DeletedCount == 0 {
 				return mongo.ErrNoDocuments
