@@ -192,7 +192,7 @@ func TestFunc_GetFilteredIssues(t *testing.T) {
 		t.FailNow()
 	}
 
-	defer IssueRepository.DeleteAllByMilestoneID(
+	defer IssueRepository.DeleteAllIssuesByMilestoneID(
 		context.Background(),
 		1,
 	)
@@ -232,7 +232,7 @@ func TestFunc_GetLabalesNameFromOpenIssues(t *testing.T) {
 		t.FailNow()
 	}
 
-	defer IssueRepository.DeleteAllByMilestoneID(
+	defer IssueRepository.DeleteAllIssuesByMilestoneID(
 		context.Background(),
 		1,
 	)
@@ -254,7 +254,7 @@ func TestFunc_GetLabalesNameFromOpenIssues(t *testing.T) {
 }
 
 func TestFunc_DeleteAllByMilesoneID_NoDocument(t *testing.T) {
-	if err := IssueRepository.DeleteAllByMilestoneID(
+	if err := IssueRepository.DeleteAllIssuesByMilestoneID(
 		context.Background(),
 		12,
 	); err != mongo.ErrNoDocuments {
@@ -278,7 +278,7 @@ func TestFunc_GetFiltrSortIssues(t *testing.T) {
 		t.FailNow()
 	}
 
-	defer IssueRepository.DeleteAllByMilestoneID(
+	defer IssueRepository.DeleteAllIssuesByMilestoneID(
 		context.Background(),
 		1,
 	)
@@ -319,7 +319,7 @@ func TestFunc_GetFiltrSortFromToIssues(t *testing.T) {
 		t.FailNow()
 	}
 
-	defer IssueRepository.DeleteAllByMilestoneID(
+	defer IssueRepository.DeleteAllIssuesByMilestoneID(
 		context.Background(),
 		1,
 	)
@@ -382,7 +382,7 @@ func TestFunc_GetAllIssuesByMilestoneID_IssueWithMilestoneID(t *testing.T) {
 		t.FailNow()
 	}
 
-	defer IssueRepository.DeleteAllByMilestoneID(
+	defer IssueRepository.DeleteAllIssuesByMilestoneID(
 		context.Background(),
 		1,
 	)
@@ -493,7 +493,7 @@ func TestFunc_GetAllIssuesByMilestoneID(t *testing.T) {
 		t.FailNow()
 	}
 
-	defer IssueRepository.DeleteAllByMilestoneID(
+	defer IssueRepository.DeleteAllIssuesByMilestoneID(
 		context.Background(),
 		1,
 	)
@@ -512,5 +512,79 @@ func TestFunc_GetAllIssuesByMilestoneID(t *testing.T) {
 			t.Log("Assert error")
 			t.FailNow()
 		}
+	}
+}
+
+func TestFunc_DeleteAllIssuesByMilestoneID(t *testing.T) {
+	if err := IssueRepository.SaveIssuesAndSetDeletedUnfind(
+		context.Background(),
+		[]model.IssuesWithMilestoneID {
+			{
+				MilestoneID: 1,
+				Issue: model.Issue{
+					ID: 1,
+					Title: "mock_1",
+				},
+			},
+			{
+				MilestoneID: 2,
+				Issue: model.Issue{
+					ID: 2,
+					Title: "mock_2",
+				},
+			},
+			{
+				MilestoneID: 3,
+				Issue: model.Issue{
+					ID: 3,
+					Title: "mock_3",
+				},
+			},
+		},
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if err := IssueRepository.DeleteAllIssuesByMilestonesID(
+		context.Background(),
+		[]uint64{1,2,3},
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if _, err := IssueRepository.GetAllIssuesByMilestoneID(
+		context.Background(),
+		1,
+	); err != mongo.ErrNoDocuments {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if _, err := IssueRepository.GetAllIssuesByMilestoneID(
+		context.Background(),
+		2,
+	); err != mongo.ErrNoDocuments {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if _, err := IssueRepository.GetAllIssuesByMilestoneID(
+		context.Background(),
+		3,
+	); err != mongo.ErrNoDocuments {
+		t.Log(err)
+		t.FailNow()
+	}
+}
+
+func TestFunc_DeleteAllIssuesByMilesonesID_NoDocuments(t *testing.T) {
+	if err := IssueRepository.DeleteAllIssuesByMilestonesID(
+		context.Background(),
+		[]uint64{1,2,3},
+	); err != mongo.ErrNoDocuments {
+		t.Log(err)
+		t.FailNow()
 	}
 }
