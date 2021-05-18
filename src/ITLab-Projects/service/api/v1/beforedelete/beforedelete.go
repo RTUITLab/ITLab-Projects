@@ -6,6 +6,7 @@ import (
 	"github.com/ITLab-Projects/pkg/mfsreq"
 	"github.com/ITLab-Projects/pkg/models/estimate"
 	"github.com/ITLab-Projects/pkg/models/functask"
+	"github.com/sirupsen/logrus"
 )
 
 type BeforeDeleteFunc func(interface{}) error
@@ -26,6 +27,7 @@ func BeforeDelete(
 	deleter mfsreq.FileDeleter,
 	v interface{},
 ) error {
+	logrus.Debug("Before delete")
 	switch v.(type) {
 	case estimate.EstimateFile:
 		est, _ := v.(estimate.EstimateFile)
