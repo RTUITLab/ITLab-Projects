@@ -3,6 +3,8 @@ package projects
 import (
 	"context"
 
+	"github.com/ITLab-Projects/pkg/models/estimate"
+	"github.com/ITLab-Projects/pkg/models/functask"
 	"github.com/ITLab-Projects/pkg/models/milestone"
 	"github.com/ITLab-Projects/pkg/models/repo"
 	"github.com/ITLab-Projects/pkg/models/tag"
@@ -14,6 +16,8 @@ type Repository interface {
 	IssueRepository
 	TagRepository
 	RealeseRepository
+	FuncTaskRepository
+	EstimeateRepository
 }
 
 type RepoRepository interface{
@@ -22,7 +26,7 @@ type RepoRepository interface{
 		repos interface{},
 	) error
 
-	GetFiltrSortFromToRepos(
+	 GetFiltrSortFromToRepos(
 		ctx 	context.Context,
 		filter 	interface{},
 		sort 	interface{},
@@ -47,20 +51,16 @@ type MilestoneRepository interface {
 		ms interface{},
 	) error
 	
-	DeleteAllByRepoID(
+	DeleteAllMilestonesByRepoID(
 		ctx 	context.Context,
 		RepoID	uint64,
 	) error
 
-	DeleteAllByMilestoneID(
-		ctx 		context.Context,
-		MilestoneID uint64,
-	) error
 
-	GetAllByRepoID(
+	GetAllMilestonesByRepoID(
 		ctx 		context.Context,
 		RepoID		uint64,
-	) ([]*milestone.MilestoneInRepo, error)
+	) ([]*milestone.Milestone, error)
 }
 
 type IssueRepository interface {
@@ -103,4 +103,19 @@ type RealeseRepository interface {
 		ctx context.Context,
 		rs interface{},
 	) error
+}
+
+type FuncTaskRepository interface {
+	GetFuncTaskByMilestoneID(
+		ctx 		context.Context,
+		MilestoneID	uint64,
+	) (*functask.FuncTaskFile, error)
+
+}
+
+type EstimeateRepository interface {
+	GetEstimateByMilestoneID(
+		ctx 		context.Context,
+		MilestoneID	uint64,
+	) (*estimate.EstimateFile, error)
 }
