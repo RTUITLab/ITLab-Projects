@@ -337,3 +337,50 @@ func TestFunc_DeleteAllByRepoID_ErrNoDocument(t *testing.T) {
 		t.FailNow()
 	}
 }
+
+func TestFunc_GetMilestoneByID(t *testing.T) {
+	if err := Repositories.Milestone.Save(
+		context.Background(),
+		model.MilestoneInRepo{
+			RepoID: 1,
+			Milestone: model.Milestone{
+				MilestoneFromGH: model.MilestoneFromGH{
+					ID: 1,
+					Title: "mock_1",
+				},
+			},
+		},
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	defer MilestoneRepository.DeleteAllMilestonesByRepoID(
+		context.Background(),
+		1,
+	)
+
+	m, err := MilestoneRepository.GetMilestoneByID(
+		context.Background(),
+		1,
+	)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if !(m.ID == 1 || m.Title == "mock_1") {
+		t.Log("Assert error")
+		t.FailNow()
+	}
+}
+
+func TestFunc_DeleteMilestone(t *testing.T) {
+	if _, err := MilestoneRepository.GetMilestoneByID(
+		context.Background(),
+		1,
+	); err != mongo.ErrNoDocuments {
+		t.Log(err)
+		t.FailNow()
+	}
+}
