@@ -34,7 +34,7 @@ func (m *MilestoneRepositoryImp) SaveMilestonesAndSetDeletedUnfind(
 	)
 }
 
-func (m *MilestoneRepositoryImp) GetAllByRepoID(
+func (m *MilestoneRepositoryImp) GetAllMilestonesInRepo(
 	ctx 		context.Context,
 	RepoID		uint64,
 ) ([]*model.MilestoneInRepo, error)  {
@@ -63,10 +63,39 @@ func (m *MilestoneRepositoryImp) GetAllByRepoID(
 	return ms, nil
 }
 
-func (m *MilestoneRepositoryImp) DeleteAllByRepoID(
+func (m *MilestoneRepositoryImp) GetAllMilestonesByRepoID(
+	ctx 		context.Context,
+	RepoID		uint64,
+) ([]*model.Milestone, error)  {
+	var ms []*model.Milestone
+
+	if err := m.Milestone.GetAllFiltered(
+		ctx,
+		bson.M{"repoid": RepoID},
+		func(c *mongo.Cursor) error {
+			c.All(
+				ctx,
+				&ms,
+			)
+
+			if len(ms) == 0 {
+				return mongo.ErrNoDocuments
+			}
+
+			return c.Err()
+		},
+		options.Find(),
+	); err != nil {
+		return nil, err
+	}
+
+	return ms, nil
+}
+
+func (m *MilestoneRepositoryImp) DeleteAllMilestonesByRepoID(
 	ctx 	context.Context,
 	RepoID	uint64,
-) (error) {
+) error {
 	if err := m.Milestone.DeleteMany(
 		ctx,
 		bson.M{"repoid": RepoID},
