@@ -3,9 +3,12 @@ package projects
 import (
 	"context"
 
+	"go.mongodb.org/mongo-driver/mongo/options"
+
 	"github.com/ITLab-Projects/pkg/models/estimate"
 	"github.com/ITLab-Projects/pkg/models/functask"
 	"github.com/ITLab-Projects/pkg/models/milestone"
+	"github.com/ITLab-Projects/pkg/models/realese"
 	"github.com/ITLab-Projects/pkg/models/repo"
 	"github.com/ITLab-Projects/pkg/models/tag"
 )
@@ -69,10 +72,17 @@ type IssueRepository interface {
 		is 	interface{},
 	) error
 
-	DeleteAllTagsByRepoID(
+	GetAllIssuesByMilestoneID(
 		ctx 		context.Context,
-		RepoID uint64,
-	) error
+		MilestoneID	uint64,
+	) ([]*milestone.Issue, error)
+
+	GetIssuesAndScanTo(
+		ctx 		context.Context,
+		filter 		interface{},
+		value 		interface{},
+		options 	...*options.FindOptions,
+	) (error)
 }
 
 type TagRepository interface {
@@ -103,6 +113,11 @@ type RealeseRepository interface {
 		ctx context.Context,
 		rs interface{},
 	) error
+
+	GetRealeseByRepoID(
+		ctx 		context.Context,
+		RepoID		uint64,
+	) (*realese.RealeseInRepo, error)
 }
 
 type FuncTaskRepository interface {
