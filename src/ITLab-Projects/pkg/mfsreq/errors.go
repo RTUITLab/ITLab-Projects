@@ -4,7 +4,7 @@ import "errors"
 
 var (
 	ErrUnexpectedCode 	= errors.New("Unexpected code")
-	NetError			= errors.New("Error when send req")
+	NetError			= errors.New("Error when send request to microfileserver")
 )
 
 type UnexpectedCodeErr struct {
