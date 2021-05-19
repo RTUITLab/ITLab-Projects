@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	mm "github.com/ITLab-Projects/pkg/models/milestone"
+	"github.com/ITLab-Projects/pkg/statuscode"
 	"github.com/sirupsen/logrus"
 
 	me "github.com/ITLab-Projects/pkg/models/estimate"
@@ -67,24 +68,30 @@ func init() {
 		log.NewJSONLogger(os.Stdout),
 		mfsreq.New(
 			&mfsreq.Config{
-				BaseURL: "mfs_url",
+				BaseURL:  "mfs_url",
 				TestMode: true,
 			},
 		),
 	)
 }
 
-func TestFunc_AddEstimate_ErrNoDocument(t *testing.T) {
-	if err := service.AddEstimate(
+func TestFunc_AddEstimate_ErrFailedToSave_NotFoundMilestone(t *testing.T) {
+	err := service.AddEstimate(
 		context.Background(),
 		&me.EstimateFile{
 			milestonefile.MilestoneFile{
 				MilestoneID: 1,
-				FileID: primitive.NewObjectID(),
+				FileID:      primitive.NewObjectID(),
 			},
-		},	
-	); err != mongo.ErrNoDocuments {
-		t.Log(err)
+		},
+	)
+	if status, _ := statuscode.GetStatus(err); status != http.StatusNotFound {
+		t.Log("Assert error")
+		t.FailNow()
+	}
+
+	if statuscode.GetError(err) != s.ErrNotFoundMilestone {
+		t.Log("Assert error")
 		t.FailNow()
 	}
 }
@@ -92,7 +99,7 @@ func TestFunc_AddEstimate_ErrNoDocument(t *testing.T) {
 func TestFunc_AddEstimate(t *testing.T) {
 	if err := RepoImp.Milestone.Save(
 		context.Background(),
-		mm.MilestoneInRepo {
+		mm.MilestoneInRepo{
 			RepoID: 12,
 			Milestone: mm.Milestone{
 				MilestoneFromGH: mm.MilestoneFromGH{
@@ -105,7 +112,7 @@ func TestFunc_AddEstimate(t *testing.T) {
 		t.FailNow()
 	}
 
-	defer func(){
+	defer func() {
 		if err := RepoImp.DeleteAllMilestonesByRepoID(
 			context.Background(),
 			12,
@@ -119,7 +126,7 @@ func TestFunc_AddEstimate(t *testing.T) {
 	est := me.EstimateFile{
 		milestonefile.MilestoneFile{
 			MilestoneID: 1,
-			FileID: id,
+			FileID:      id,
 		},
 	}
 
@@ -150,13 +157,20 @@ func TestFunc_AddEstimate(t *testing.T) {
 	}
 }
 
-func TestFunc_DeleteEstimate_NoDocument(t *testing.T) {
-	if err := service.DeleteEstimate(
+func TestFunc_DeleteEstimate_NotFoundEstimate(t *testing.T) {
+	err := service.DeleteEstimate(
 		context.Background(),
 		1,
 		nil,
-	); err != mongo.ErrNoDocuments {
-		t.Log(err)
+	)
+
+	if status, _ := statuscode.GetStatus(err); status != http.StatusNotFound {
+		t.Log("Assert error")
+		t.FailNow()
+	}
+
+	if statuscode.GetError(err) != s.ErrNotFoundEstimate {
+		t.Log("assert error")
 		t.FailNow()
 	}
 }
@@ -164,7 +178,7 @@ func TestFunc_DeleteEstimate_NoDocument(t *testing.T) {
 func TestFunc_DeleteEstimate(t *testing.T) {
 	if err := RepoImp.Milestone.Save(
 		context.Background(),
-		mm.MilestoneInRepo {
+		mm.MilestoneInRepo{
 			RepoID: 12,
 			Milestone: mm.Milestone{
 				MilestoneFromGH: mm.MilestoneFromGH{
@@ -186,7 +200,7 @@ func TestFunc_DeleteEstimate(t *testing.T) {
 	est := me.EstimateFile{
 		milestonefile.MilestoneFile{
 			MilestoneID: 1,
-			FileID: id,
+			FileID:      id,
 		},
 	}
 
