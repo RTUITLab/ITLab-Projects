@@ -108,3 +108,9 @@ func (r *MFSRequester) NewRequests(req *http.Request) Requests {
 func (r *MFSRequester) GenerateDownloadLink(ID primitive.ObjectID) string {
 	return fmt.Sprintf("%s/download/%s", r.baseURL, ID.Hex())
 }
+
+func IfUnexcpectedCode(err error) bool {
+	_, ok := err.(*UnexpectedCodeErr)
+
+	return ok
+}
