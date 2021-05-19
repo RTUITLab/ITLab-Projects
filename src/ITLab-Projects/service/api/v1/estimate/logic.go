@@ -59,7 +59,7 @@ func (s *service) AddEstimate(
 			http.StatusNotFound,
 		)
 	case err != nil:
-		level.Error(logger).Log("Failed to save estimate: ", err)
+		level.Error(logger).Log("Failed to save estimate: err", err)
 		return statuscode.WrapStatusError(
 			ErrFailedToSave,
 			http.StatusInternalServerError,
@@ -70,7 +70,7 @@ func (s *service) AddEstimate(
 		ctx,
 		est,
 	); err != nil {
-		level.Error(logger).Log("Failed to save estimate: ", err)
+		level.Error(logger).Log("Failed to save estimate: err", err)
 		return statuscode.WrapStatusError(
 			ErrFailedToSave,
 			http.StatusInternalServerError,
@@ -97,7 +97,7 @@ func (s *service) DeleteEstimate(
 			http.StatusNotFound,
 		)
 	case err != nil:
-		level.Error(logger).Log("Failed to delete estimate: ", err)
+		level.Error(logger).Log("Failed to delete estimate: err", err)
 		return statuscode.WrapStatusError(
 			ErrFailedToDeleteEstimate,
 			http.StatusInternalServerError,
@@ -110,21 +110,21 @@ func (s *service) DeleteEstimate(
 	)(est)
 	switch {
 	case errors.Is(err, mfsreq.NetError):
-		level.Error(logger).Log("Failed to delete estimate: ", err)
+		level.Error(logger).Log("Failed to delete estimate: err", err)
 		return statuscode.WrapStatusError(
 			mfsreq.NetError,
 			http.StatusConflict,
 		)
-	case errors.Is(err, mfsreq.ErrUnexpectedCode):
+	case mfsreq.IfUnexcpectedCode(err):
 		uce := err.(*mfsreq.UnexpectedCodeErr)
 		causedErr := fmt.Errorf("Unecxpected code from microfileserver: %v", uce.Code)
-		level.Error(logger).Log("Failed to delete estimate: ", causedErr)
+		level.Error(logger).Log("Failed to delete estimate: err", causedErr)
 		return statuscode.WrapStatusError(
 			causedErr,
 			http.StatusConflict,
 		)
 	case err != nil:
-		level.Error(logger).Log("Failed to delete estimate: ", err)
+		level.Error(logger).Log("Failed to delete estimate: err", err)
 		return statuscode.WrapStatusError(
 			ErrFailedToDeleteEstimate,
 			http.StatusInternalServerError,
@@ -135,7 +135,7 @@ func (s *service) DeleteEstimate(
 		ctx,
 		MilestoneID,
 	); err != nil {
-		level.Error(logger).Log("Failed to delete estimate: ", err)
+		level.Error(logger).Log("Failed to delete estimate: err", err)
 		return statuscode.WrapStatusError(
 			ErrFailedToDeleteEstimate,
 			http.StatusInternalServerError,

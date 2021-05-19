@@ -1,6 +1,8 @@
 package estimate_test
 
 import (
+	"github.com/pkg/errors"
+	kitl "github.com/go-kit/kit/log/logrus"
 	"context"
 	"net/http"
 	"os"
@@ -26,7 +28,6 @@ import (
 	"github.com/ITLab-Projects/service/repoimpl/reales"
 	"github.com/ITLab-Projects/service/repoimpl/repo"
 	"github.com/ITLab-Projects/service/repoimpl/tag"
-	"github.com/go-kit/kit/log"
 	"github.com/joho/godotenv"
 )
 
@@ -63,9 +64,11 @@ func init() {
 		tag.New(Repositories.Tag),
 	}
 
+
+
 	service = s.New(
 		RepoImp,
-		log.NewJSONLogger(os.Stdout),
+		kitl.NewLogrusLogger(logrus.StandardLogger()),
 		mfsreq.New(
 			&mfsreq.Config{
 				BaseURL:  "mfs_url",
@@ -230,4 +233,181 @@ func TestFunc_DeleteEstimate(t *testing.T) {
 		t.Log(err)
 		t.FailNow()
 	}
+}
+
+type MockMFSRequester struct {
+	ErrSwithcer int
+}
+
+func (m *MockMFSRequester) NewRequests(req *http.Request) mfsreq.Requests {
+	if m.ErrSwithcer == 1 {
+		return &MockMFSRequests_1{}
+	} else {
+		return &MockMFSRequests_2{}
+	}
+}
+
+func (m *MockMFSRequester) GenerateDownloadLink(ID primitive.ObjectID) string {
+	return "mock_download_ling"
+}
+
+type MockMFSRequests_1 struct {
+
+}
+
+func (m *MockMFSRequests_1) DeleteFile(ID primitive.ObjectID) error {
+	return mfsreq.NetError
+}
+
+type MockMFSRequests_2 struct {
+
+}
+
+func (m *MockMFSRequests_2) DeleteFile(ID primitive.ObjectID) error {
+	return &mfsreq.UnexpectedCodeErr{
+		Err:	errors.Wrapf(mfsreq.ErrUnexpectedCode, "%v", 12),
+		Code: 	12,
+	}
+}
+
+func TestFunc_DeleteEstimate_NetError(t *testing.T) {
+	var _service s.Service = s.New(
+		RepoImp,
+		kitl.NewLogrusLogger(logrus.StandardLogger()),
+		&MockMFSRequester{ErrSwithcer: 1},		
+	) 
+	
+	if err := RepoImp.Milestone.Save(
+		context.Background(),
+		mm.MilestoneInRepo {
+			RepoID: 12,
+			Milestone: mm.Milestone{
+				MilestoneFromGH: mm.MilestoneFromGH{
+					ID: 1,
+				},
+			},
+		},
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	defer RepoImp.DeleteAllMilestonesByRepoID(
+		context.Background(),
+		12,
+	)
+	est := me.EstimateFile{
+		milestonefile.MilestoneFile{
+			MilestoneID: 1,
+			FileID: primitive.NewObjectID(),
+		},
+	}
+
+	defer RepoImp.DeleteOneEstimateByMilestoneID(
+		context.Background(),
+		1,
+	)
+
+	if err := service.AddEstimate(
+		context.Background(),
+		&est,
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+
+	err := _service.DeleteEstimate(
+		context.Background(),
+		1,
+		&http.Request{
+			Header: http.Header{},
+		},
+	)
+
+	if err == nil {
+		t.Log("Error is nil")
+		t.FailNow()
+	}
+
+	if status, _ := statuscode.GetStatus(err); status != http.StatusConflict {
+		t.Log(status)
+		t.Log("Assert error")
+		t.FailNow()
+	}
+
+	getErr := statuscode.GetError(err)
+
+	t.Log(getErr)
+}
+
+func TestFunc_DeleteEstimate_UnexcpectedCode(t *testing.T) {
+	var _service s.Service = s.New(
+		RepoImp,
+		kitl.NewLogrusLogger(logrus.StandardLogger()),
+		&MockMFSRequester{ErrSwithcer: 2},	
+	) 
+	
+	if err := RepoImp.Milestone.Save(
+		context.Background(),
+		mm.MilestoneInRepo {
+			RepoID: 12,
+			Milestone: mm.Milestone{
+				MilestoneFromGH: mm.MilestoneFromGH{
+					ID: 1,
+				},
+			},
+		},
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	defer RepoImp.DeleteAllMilestonesByRepoID(
+		context.Background(),
+		12,
+	)
+	est := me.EstimateFile{
+		milestonefile.MilestoneFile{
+			MilestoneID: 1,
+			FileID: primitive.NewObjectID(),
+		},
+	}
+
+	defer RepoImp.DeleteOneEstimateByMilestoneID(
+		context.Background(),
+		1,
+	)
+
+	if err := service.AddEstimate(
+		context.Background(),
+		&est,
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+
+	err := _service.DeleteEstimate(
+		context.Background(),
+		1,
+		&http.Request{
+			Header: http.Header{},
+		},
+	)
+
+	if err == nil {
+		t.Log("Error is nil")
+		t.FailNow()
+	}
+
+	if status, _ := statuscode.GetStatus(err); status != http.StatusConflict {
+		t.Log(status)
+		t.Log("Assert error")
+		t.FailNow()
+	}
+
+	getErr := statuscode.GetError(err)
+
+	t.Log(getErr)
 }

@@ -1,10 +1,16 @@
 package functask_test
 
 import (
-	"net/http"
+	"github.com/pkg/errors"
+
 	"context"
+	"net/http"
 	"os"
 	"testing"
+
+	kitl "github.com/go-kit/kit/log/logrus"
+
+	"github.com/ITLab-Projects/pkg/statuscode"
 
 	"github.com/ITLab-Projects/pkg/mfsreq"
 	mf "github.com/ITLab-Projects/pkg/models/functask"
@@ -72,8 +78,8 @@ func init() {
 	)
 }
 
-func TestFunc_AddFuncTask_ErrNoDocument(t *testing.T) {
-	if err := service.AddFuncTask(
+func TestFunc_AddFuncTask_ErrFailedToSave_NotFoundMilestone(t *testing.T) {
+	err := service.AddFuncTask(
 		context.Background(),
 		&mf.FuncTaskFile{
 			milestonefile.MilestoneFile{
@@ -81,8 +87,14 @@ func TestFunc_AddFuncTask_ErrNoDocument(t *testing.T) {
 				FileID:      primitive.NewObjectID(),
 			},
 		},
-	); err != mongo.ErrNoDocuments {
-		t.Log(err)
+	)
+	if status, _ := statuscode.GetStatus(err); status != http.StatusNotFound {
+		t.Log("Assert error")
+		t.FailNow()
+	}
+
+	if statuscode.GetError(err) != s.ErrNotFoundMilestone {
+		t.Log("Assert error")
 		t.FailNow()
 	}
 }
@@ -148,13 +160,20 @@ func TestFunc_AddFuncTask(t *testing.T) {
 	}
 }
 
-func TestFunc_DeleteFuncTask_NoDocument(t *testing.T) {
-	if err := service.DeleteFuncTask(
+func TestFunc_DeleteFuncTask_NotFoundEstimate(t *testing.T) {
+	err := service.DeleteFuncTask(
 		context.Background(),
 		1,
 		nil,
-	); err != mongo.ErrNoDocuments {
-		t.Log(err)
+	)
+
+	if status, _ := statuscode.GetStatus(err); status != http.StatusNotFound {
+		t.Log("Assert error")
+		t.FailNow()
+	}
+
+	if statuscode.GetError(err) != s.ErrNotFound {
+		t.Log("assert error")
 		t.FailNow()
 	}
 }
@@ -214,4 +233,182 @@ func TestFunc_DeleteFuncTask(t *testing.T) {
 		t.Log(err)
 		t.FailNow()
 	}
+}
+
+type MockMFSRequester struct {
+	ErrSwithcer int
+}
+
+func (m *MockMFSRequester) NewRequests(req *http.Request) mfsreq.Requests {
+	if m.ErrSwithcer == 1 {
+		return &MockMFSRequests_1{}
+	} else {
+		return &MockMFSRequests_2{}
+	}
+}
+
+func (m *MockMFSRequester) GenerateDownloadLink(ID primitive.ObjectID) string {
+	return "mock_download_ling"
+}
+
+type MockMFSRequests_1 struct {
+
+}
+
+func (m *MockMFSRequests_1) DeleteFile(ID primitive.ObjectID) error {
+	return mfsreq.NetError
+}
+
+type MockMFSRequests_2 struct {
+
+}
+
+func (m *MockMFSRequests_2) DeleteFile(ID primitive.ObjectID) error {
+	return &mfsreq.UnexpectedCodeErr{
+		Err:	errors.Wrapf(mfsreq.ErrUnexpectedCode, "%v", 12),
+		Code: 	12,
+	}
+}
+
+
+func TestFunc_DeleteFuncTask_NetError(t *testing.T) {
+	var _service s.Service = s.New(
+		RepoImp,
+		&MockMFSRequester{ErrSwithcer: 1},
+		kitl.NewLogrusLogger(logrus.StandardLogger()),		
+	) 
+	
+	if err := RepoImp.Milestone.Save(
+		context.Background(),
+		mm.MilestoneInRepo {
+			RepoID: 12,
+			Milestone: mm.Milestone{
+				MilestoneFromGH: mm.MilestoneFromGH{
+					ID: 1,
+				},
+			},
+		},
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	defer RepoImp.DeleteAllMilestonesByRepoID(
+		context.Background(),
+		12,
+	)
+	est := mf.FuncTaskFile{
+		milestonefile.MilestoneFile{
+			MilestoneID: 1,
+			FileID: primitive.NewObjectID(),
+		},
+	}
+
+	defer RepoImp.DeleteOneFuncTaskByMilestoneID(
+		context.Background(),
+		1,
+	)
+
+	if err := service.AddFuncTask(
+		context.Background(),
+		&est,
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+
+	err := _service.DeleteFuncTask(
+		context.Background(),
+		1,
+		&http.Request{
+			Header: http.Header{},
+		},
+	)
+
+	if err == nil {
+		t.Log("Error is nil")
+		t.FailNow()
+	}
+
+	if status, _ := statuscode.GetStatus(err); status != http.StatusConflict {
+		t.Log(status)
+		t.Log("Assert error")
+		t.FailNow()
+	}
+
+	getErr := statuscode.GetError(err)
+
+	t.Log(getErr)
+}
+
+func TestFunc_DeleteFuncTask_UnexcpectedCode(t *testing.T) {
+	var _service s.Service = s.New(
+		RepoImp,
+		&MockMFSRequester{ErrSwithcer: 2},
+		kitl.NewLogrusLogger(logrus.StandardLogger()),		
+	) 
+	
+	if err := RepoImp.Milestone.Save(
+		context.Background(),
+		mm.MilestoneInRepo {
+			RepoID: 12,
+			Milestone: mm.Milestone{
+				MilestoneFromGH: mm.MilestoneFromGH{
+					ID: 1,
+				},
+			},
+		},
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	defer RepoImp.DeleteAllMilestonesByRepoID(
+		context.Background(),
+		12,
+	)
+	est := mf.FuncTaskFile{
+		milestonefile.MilestoneFile{
+			MilestoneID: 1,
+			FileID: primitive.NewObjectID(),
+		},
+	}
+
+	defer RepoImp.DeleteOneFuncTaskByMilestoneID(
+		context.Background(),
+		1,
+	)
+
+	if err := service.AddFuncTask(
+		context.Background(),
+		&est,
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+
+	err := _service.DeleteFuncTask(
+		context.Background(),
+		1,
+		&http.Request{
+			Header: http.Header{},
+		},
+	)
+
+	if err == nil {
+		t.Log("Error is nil")
+		t.FailNow()
+	}
+
+	if status, _ := statuscode.GetStatus(err); status != http.StatusConflict {
+		t.Log(status)
+		t.Log("Assert error")
+		t.FailNow()
+	}
+
+	getErr := statuscode.GetError(err)
+
+	t.Log(getErr)
 }
