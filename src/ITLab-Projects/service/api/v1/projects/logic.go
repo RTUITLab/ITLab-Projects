@@ -1,16 +1,19 @@
 package projects
 
 import (
-	"github.com/ITLab-Projects/service/api/v1/beforedelete"
+	"fmt"
 	"context"
 	"errors"
 	"net/http"
 	"sort"
 	"strings"
 
+	"github.com/ITLab-Projects/service/api/v1/beforedelete"
+
 	"github.com/ITLab-Projects/pkg/models/estimate"
 	"github.com/ITLab-Projects/pkg/models/functask"
 	"github.com/ITLab-Projects/pkg/models/repo"
+	"github.com/ITLab-Projects/pkg/statuscode"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -25,6 +28,14 @@ import (
 	"github.com/ITLab-Projects/pkg/models/tag"
 	"github.com/ITLab-Projects/pkg/updater"
 	"github.com/go-kit/kit/log"
+)
+
+var (
+	ErrProjectNotFound 			= errors.New("Poject not found")
+	ErrFaieldToGetProject		= errors.New("Failed to get project")
+	ErrFailedToGetProjects		= errors.New("Failed to get projects")
+	ErrFailedToUpdateProjects	= errors.New("Failed to update projects")
+	ErrFailedToDeleteProject	= errors.New("Failed to delete project")
 )
 
 type service struct {
@@ -55,12 +66,23 @@ func (s *service) GetProject(
 	ctx context.Context,
 	ID uint64,
 ) (*repoasproj.RepoAsProjPointer, error) {
+	logger := log.With(s.logger, "method", "GetProject")
 	rep, err := s.repository.GetByID(
 		ctx,
 		ID,
 	)
-	if err != nil {
-		return nil, err
+	switch {
+	case err == mongo.ErrNoDocuments:
+		return nil, statuscode.WrapStatusError(
+			ErrProjectNotFound,
+			http.StatusNotFound,
+		)
+	case err != nil:
+		level.Error(logger).Log("Failed to get project: err", err)
+		return nil, statuscode.WrapStatusError(
+			ErrFaieldToGetProject,
+			http.StatusInternalServerError,
+		)
 	}
 
 	proj, err := s.getProjects(
@@ -68,7 +90,11 @@ func (s *service) GetProject(
 		rep,
 	)
 	if err != nil {
-		return nil, err
+		level.Error(logger).Log("Failed to get project: err", err)
+		return nil, statuscode.WrapStatusError(
+			ErrFaieldToGetProject,
+			http.StatusInternalServerError,
+		)
 	}
 
 	return proj, nil
@@ -79,13 +105,17 @@ func (s *service) GetProjects(
 	start, 	count 	int64,
 	name, 	tag		string,
 ) ([]*repoasproj.RepoAsProjCompactPointers, error) {
+	logger := log.With(s.logger, "method", "GetProjects")
 	filter, err := s.buildFilterForGetProject(
 		ctx,
 		name,
 		tag,
 	)
 	if err != nil {
-		return nil, err
+		return nil, statuscode.WrapStatusError(
+			ErrFailedToGetProjects,
+			http.StatusInternalServerError,
+		)
 	}
 
 	repos, err := s.repository.GetFiltrSortFromToRepos(
@@ -95,12 +125,21 @@ func (s *service) GetProjects(
 		start,
 		count,
 	)
-	if err != nil {
-		return nil, err
+	switch {
+	case err == mongo.ErrNoDocuments:
+		level.Info(logger).Log("Not found projects for this filters: filter", filter)
+		return nil, nil
+	case err != nil:
+		level.Error(logger).Log("Failed to get projects: err", err)
+		return nil, statuscode.WrapStatusError(
+			ErrFailedToGetProjects,
+			http.StatusInternalServerError,
+		)
 	}
 
 	projs, err := s.GetCompatcProj(ctx, repos)
 	if err != nil {
+		level.Error(logger).Log("Failed to get projects: err", err)
 		return nil, err
 	}
 	sort.Sort(repoasproj.ByCreateDatePointers(projs))
@@ -110,26 +149,46 @@ func (s *service) GetProjects(
 func (s *service) UpdateProjects(
 	ctx context.Context,
 ) error {
+	logger := log.With(s.logger, "method", "UpdateProjects")
 	s.resetUpdater()
 	defer s.resetUpdater()
 
 	repos, ms, rs, tgs, err := s.getAllFromGithub(ctx)
-	if err != nil {
-		return err
+	switch {
+	case err == githubreq.ErrForbiden, err == githubreq.ErrUnatorizared:
+		level.Error(logger).Log("Failed to update projects: err", err)
+		return statuscode.WrapStatusError(
+			ErrFailedToUpdateProjects, //TODO think to make it real error to catch in future
+			http.StatusConflict,
+		)
+	case err != nil:
+		level.Error(logger).Log("Failed to update projects: err", err)
+		return statuscode.WrapStatusError(
+			ErrFailedToUpdateProjects,
+			http.StatusInternalServerError,
+		)
 	}
 
 	if err := s.repository.SaveReposAndSetDeletedUnfind(
 		ctx,
 		repos,
 	); err != nil {
-		return err
+		level.Error(logger).Log("Failed to update projects: err", err)
+		return statuscode.WrapStatusError(
+			ErrFailedToUpdateProjects,
+			http.StatusInternalServerError,
+		)
 	}
 
 	if err := s.repository.SaveMilestonesAndSetDeletedUnfind(
 		ctx,
 		ms,
 	); err != nil {
-		return err
+		level.Error(logger).Log("Failed to update projects: err", err)
+		return statuscode.WrapStatusError(
+			ErrFailedToUpdateProjects,
+			http.StatusInternalServerError,
+		)
 	}
 
 	is := getIssuesFromMilestone(ms)
@@ -138,21 +197,33 @@ func (s *service) UpdateProjects(
 		ctx,
 		is,
 	); err != nil {
-		return err
+		level.Error(logger).Log("Failed to update projects: err", err)
+		return statuscode.WrapStatusError(
+			ErrFailedToUpdateProjects,
+			http.StatusInternalServerError,
+		)
 	}
 
 	if err := s.repository.SaveRealeses(
 		ctx,
 		rs,
 	); err != nil {
-		return err
+		level.Error(logger).Log("Failed to update projects: err", err)
+		return statuscode.WrapStatusError(
+			ErrFailedToUpdateProjects,
+			http.StatusInternalServerError,
+		)
 	}
 
 	if err := s.repository.SaveAndDeleteUnfindTags(
 		ctx,
 		tgs,
 	); err != nil {
-		return nil
+		level.Error(logger).Log("Failed to update projects: err", err)
+		return statuscode.WrapStatusError(
+			ErrFailedToUpdateProjects,
+			http.StatusInternalServerError,
+		)
 	}
 
 	return nil
@@ -164,23 +235,54 @@ func (s *service) DeleteProject(
 	// For mfs requester
 	r 	*http.Request,
 ) error {
+	logger := log.With(s.logger,"method", "DeleteProjects")
 	rep, err := s.repository.GetByID(
 		ctx,
 		ID,
 	)
-	if err != nil {
-		return err
+	switch {
+	case err == mongo.ErrNoDocuments:
+		return statuscode.WrapStatusError(
+			ErrProjectNotFound,
+			http.StatusNotFound,
+		)
+	case err != nil:
+		level.Error(logger).Log("Failed to delete project: err", err)
+		return statuscode.WrapStatusError(
+			ErrFailedToDeleteProject,
+			http.StatusInternalServerError,
+		)
 	}
 
-	if err := s.deleteMilestone(
+	err = s.deleteMilestone(
 		ctx,
 		rep.ID,
 		beforedelete.BeforeDeleteWithReq(
 			s.mfsRequester,
 			r,
 		),
-	); err != nil {
-		return err
+	)
+	switch {
+	case errors.Is(err, mfsreq.NetError):
+		level.Error(logger).Log("Failed to delete project: err", err)
+		return statuscode.WrapStatusError(
+			mfsreq.NetError,
+			http.StatusConflict,
+		)
+	case mfsreq.IfUnexcpectedCode(err):
+		uce := err.(*mfsreq.UnexpectedCodeErr)
+		causedErr := fmt.Errorf("Unecxpected code from microfileserver: %v", uce.Code)
+		level.Error(logger).Log("Failed to delete project: err", err)
+		return statuscode.WrapStatusError(
+			causedErr,
+			http.StatusConflict,
+		)
+	case err != nil:
+		level.Error(logger).Log("Failed to delete project: err", err)
+		return statuscode.WrapStatusError(
+			ErrFailedToDeleteProject,
+			http.StatusInternalServerError,
+		)
 	}
 
 	if err := s.repository.DeleteTagsByRepoID(
@@ -189,7 +291,11 @@ func (s *service) DeleteProject(
 	); err == mongo.ErrNoDocuments {
 		// Pass
 	} else if err != nil {
-		return err
+		level.Error(logger).Log("Failed to delete project: err", err)
+		return statuscode.WrapStatusError(
+			ErrFailedToDeleteProject,
+			http.StatusInternalServerError,
+		)
 	}
 
 	if err := s.repository.DeleteRealeseByRepoID(
@@ -198,7 +304,11 @@ func (s *service) DeleteProject(
 	); err == mongo.ErrNoDocuments {
 		// Pass
 	} else if err != nil {
-		return err
+		level.Error(logger).Log("Failed to delete project: err", err)
+		return statuscode.WrapStatusError(
+			ErrFailedToDeleteProject,
+			http.StatusInternalServerError,
+		)
 	}
 
 	if err := s.repository.DeleteTagsByRepoID(
@@ -207,14 +317,22 @@ func (s *service) DeleteProject(
 	); err == mongo.ErrNoDocuments {
 		// Pass
 	} else if err != nil {
-		return err
+		level.Error(logger).Log("Failed to delete project: err", err)
+		return statuscode.WrapStatusError(
+			ErrFailedToDeleteProject,
+			http.StatusInternalServerError,
+		)
 	}
 
 	if err := s.repository.DeleteByID(
 		ctx,
 		rep.ID,
 	); err != nil {
-		return err
+		level.Error(logger).Log("Failed to delete project: err", err)
+		return statuscode.WrapStatusError(
+			ErrFailedToDeleteProject,
+			http.StatusInternalServerError,
+		)
 	}
 
 	return nil
@@ -410,7 +528,9 @@ func (s *service) buildTagFilterForGetProjects(
 		ctx,
 		bson.M{"tag": bson.M{"$in": massOfTags}},
 	)
-	if err != nil {
+	if err == mongo.ErrNoDocuments {
+		return nil
+	}else if err != nil {
 		return err
 	}
 
@@ -538,7 +658,9 @@ func (s *service) getProjects(
 		ctx,
 		rep.ID,
 	)
-	if err!= nil {
+	if err == mongo.ErrNoDocuments {
+		// Pass
+	} else if err != nil {
 		return nil, err
 	}
 	proj.Milestones = ms
