@@ -1,6 +1,7 @@
 package issues
 
 import (
+	"github.com/go-kit/kit/log/level"
 	"context"
 	"errors"
 	"net/http"
@@ -45,7 +46,7 @@ func (s *service) GetIssues(ctx context.Context,
 		tag,
 	)
 	if err != nil {
-		logger.Log("Failed to get issues: err", err)
+		level.Error(logger).Log("Failed to get issues: err", err)
 		return nil, statuscode.WrapStatusError(
 			ErrFailedToGetIssues,
 			http.StatusInternalServerError,
@@ -62,7 +63,7 @@ func (s *service) GetIssues(ctx context.Context,
 	if err == mongo.ErrNoDocuments {
 		// Pass
 	} else if err != nil {
-		logger.Log("Failed to get issues: err", err)
+		level.Error(logger).Log("Failed to get issues: err", err)
 		return nil, statuscode.WrapStatusError(
 			ErrFailedToGetIssues,
 			http.StatusInternalServerError,
@@ -82,7 +83,7 @@ func (s *service) GetLabels(
 	if err == mongo.ErrNoDocuments {
 		// Pass
 	} else if err != nil {
-		logger.Log("Failed to get issues labels: err", err)
+		level.Error(logger).Log("Failed to get issues labels: err", err)
 		return nil, statuscode.WrapStatusError(
 			ErrFailedToGetLabels,
 			http.StatusInternalServerError,
