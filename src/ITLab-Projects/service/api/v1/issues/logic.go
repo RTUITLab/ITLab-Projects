@@ -2,13 +2,21 @@ package issues
 
 import (
 	"context"
+	"errors"
+	"net/http"
 	"strings"
 
 	"github.com/ITLab-Projects/pkg/models/milestone"
+	"github.com/ITLab-Projects/pkg/statuscode"
 	"github.com/go-kit/kit/log"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+)
+
+var (
+	ErrFailedToGetIssues 	= errors.New("Failed to get issues")
+	ErrFailedToGetLabels	= errors.New("Failed to get issues labels")
 )
 
 type service struct {
@@ -30,13 +38,18 @@ func (s *service) GetIssues(ctx context.Context,
 	start int64, count int64, 
 	name string, tag string,
 ) ([]*milestone.IssuesWithMilestoneID, error) {
+	logger := log.With(s.logger, "method", "GetIssues")
 	filter, err := s.buildFilterForGetIssues(
 		ctx,
 		name,
 		tag,
 	)
 	if err != nil {
-		return nil, err
+		logger.Log("Failed to get issues: err", err)
+		return nil, statuscode.WrapStatusError(
+			ErrFailedToGetIssues,
+			http.StatusInternalServerError,
+		)
 	}
 
 	is, err := s.repository.GetFiltrSortedFromToIssues(
@@ -49,7 +62,11 @@ func (s *service) GetIssues(ctx context.Context,
 	if err == mongo.ErrNoDocuments {
 		// Pass
 	} else if err != nil {
-		return nil, err
+		logger.Log("Failed to get issues: err", err)
+		return nil, statuscode.WrapStatusError(
+			ErrFailedToGetIssues,
+			http.StatusInternalServerError,
+		)
 	}
 
 	return is, nil
@@ -58,13 +75,18 @@ func (s *service) GetIssues(ctx context.Context,
 func (s *service) GetLabels(
 	ctx context.Context,
 ) ([]interface{}, error) {
+	logger := log.With(s.logger, "method", "GetLabels")
 	labels, err := s.repository.GetLabelsNameFromOpenIssues(
 		ctx,
 	)
 	if err == mongo.ErrNoDocuments {
 		// Pass
 	} else if err != nil {
-		return nil, err
+		logger.Log("Failed to get issues labels: err", err)
+		return nil, statuscode.WrapStatusError(
+			ErrFailedToGetLabels,
+			http.StatusInternalServerError,
+		)
 	}
 
 	return labels, nil
