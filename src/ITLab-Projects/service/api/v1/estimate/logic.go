@@ -1,6 +1,7 @@
 package estimate
 
 import (
+	e "github.com/ITLab-Projects/pkg/err"
 	"context"
 	"errors"
 	"fmt"
@@ -22,7 +23,13 @@ var (
 	ErrFailedToSave				= errors.New("Failed to save estimate")
 	ErrNotFoundEstimate			= errors.New("Don't find estimate")
 	ErrFailedToDeleteEstimate	= errors.New("Failed to delete estimate")
+	ErrFileIDIsZero				= errors.New("FileID can't be zero")
 )
+
+func init() {
+	// to generate swagger
+	_ = e.Message{}
+}
 
 type service struct {
 	repository 	Repository
@@ -42,11 +49,46 @@ func New(
 	}
 }
 
+// AddEstimate
+// 
+// @Tags estimate
+//
+// @Summary add estimate to milestone
+//
+// @Description add estimate to milestone
+//
+// @Description if estimate is exist for milesotne will replace it
+//
+// @Router /api/projects/estimate [post]
+//
+// @Accept json
+//
+// @Produce json
+//
+// @Param estimate body estimate.EstimateFile true "estimate that you want to add"
+//
+// @Success 201
+//
+// @Failure 400 {object} e.Message "Unexpected body"
+//
+// @Failure 500 {object} e.Message "Failed to save estimate"
+//
+// @Failure 404 {object} e.Message "Don't find milestone with this id"
+// 
+// @Failure 401 {object} e.Message 
+// 
+// @Failure 403 {object} e.Message "if you are not admin"
 func (s *service) AddEstimate(
 	ctx context.Context, 
 	est *estimate.EstimateFile,
 ) error {
 	logger := log.With(s.logger,"method", "AddEstimate")
+	if est.FileID.IsZero() {
+		return statuscode.WrapStatusError(
+			ErrFileIDIsZero,
+			http.StatusBadRequest,
+		)
+	}
 	// Check if milestone with this id exists
 	_, err := s.repository.GetMilestoneByID(
 		ctx,
@@ -80,6 +122,31 @@ func (s *service) AddEstimate(
 	return nil
 }
 
+// DeleteEstimate
+// 
+// @Tags estimate
+// 
+// @Summary delete estimate from database
+// 
+// @Description delete estimate from database
+// 
+// @Router /api/projects/estimate/{milestone_id} [delete]
+// 
+// @Param milestone_id path uint64 true "should be uint"
+// 
+// @Produce json
+// 
+// @Success 200
+// 
+// @Failure 404 {object} e.Message "estimate not found"
+// 
+// @Failure 500 {object} e.Message "Failed to delete estimate"
+// 
+// @Failure 409 {object} e.Message "some problems with microfileservice"
+// 
+// @Failure 401 {object} e.Message 
+// 
+// @Failure 403 {object} e.Message "if you are not admin"
 func (s *service) DeleteEstimate(
 	ctx context.Context,
 	MilestoneID uint64, 
