@@ -35,7 +35,33 @@ func New(
 	}
 }
 
-func (s *service) GetIssues(ctx context.Context, 
+// GetIssues
+//
+// @Summary return issues
+//
+// @Tags issues
+//
+// @Produce json
+//
+// @Description return issues according to query params
+//
+// @Router /api/projects/issues [get]
+//
+// @Param start query integer false "represent how mush skip first issues"
+//
+// @Param count query integer false "set limit of getting issues standart and max 50"
+//
+// @Param name query string false "search to name of issues, title of milestones and repository names"
+//
+// @Param tag query string false "search of label name of issues"
+//
+// @Success 200 {array} milestone.IssuesWithMilestoneID
+//
+// @Failure 500 {object} e.Message
+//
+// @Failure 401 {object} e.Message
+func (s *service) GetIssues(
+	ctx context.Context, 
 	start int64, count int64, 
 	name string, tag string,
 ) ([]*milestone.IssuesWithMilestoneID, error) {
@@ -51,6 +77,9 @@ func (s *service) GetIssues(ctx context.Context,
 			ErrFailedToGetIssues,
 			http.StatusInternalServerError,
 		)
+	}
+	if count == 0 || count > 50 {
+		count = 50
 	}
 
 	is, err := s.repository.GetFiltrSortedFromToIssues(
@@ -73,6 +102,23 @@ func (s *service) GetIssues(ctx context.Context,
 	return is, nil
 }
 
+// GetLabels
+//
+// @Summary return labels
+//
+// @Tags issues
+//
+// @Produce json
+//
+// @Description return all unique labels of issues
+//
+// @Router /api/projects/issues/labels [get]
+//
+// @Success 200 {array} string
+//
+// @Failure 500 {object} e.Message
+//
+// @Failure 401 {object} e.Message
 func (s *service) GetLabels(
 	ctx context.Context,
 ) ([]interface{}, error) {
