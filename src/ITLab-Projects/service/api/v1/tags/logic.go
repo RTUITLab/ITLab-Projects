@@ -31,6 +31,23 @@ func New(
 	}
 }
 
+// GetAllTags
+//
+// @Summary return all tags
+//
+// @Produce json
+//
+// @Tags tags
+//
+// @Description return all tags
+//
+// @Router /api/projects/tags [get]
+//
+// @Success 200 {array} tag.Tag
+//
+// @Failure 500 {object} e.Message
+//
+// @Failure 401 {object} e.Message
 func (s *service) GetAllTags(
 	ctx context.Context,
 ) ([]*tag.Tag, error) {
