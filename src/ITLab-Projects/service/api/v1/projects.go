@@ -643,7 +643,7 @@ func (a *Api) GetProject(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-// DeleteProjects
+// DeleteProject
 // 
 // @Summary delete project by id
 // 

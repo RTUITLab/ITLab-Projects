@@ -156,7 +156,6 @@ func (a *Api) Build(r *mux.Router) {
 	projects.HandleFunc("/issues", a.GetIssues).Methods("GET")
 	projects.HandleFunc("/issues/labels", a.GetLabels).Methods("GET")
 
-
 	projects.Use(contenttype.AppJSON)
 	if !a.Testmode {
 		projects.Use(
