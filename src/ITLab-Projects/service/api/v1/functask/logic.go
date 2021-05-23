@@ -1,6 +1,7 @@
 package functask
 
 import (
+	e "github.com/ITLab-Projects/pkg/err"
 	"fmt"
 	"github.com/go-kit/kit/log/level"
 	"context"
@@ -15,11 +16,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+func init() {
+	_ = e.Err{}
+}
+
 var (
 	ErrNotFoundMilestone 		= errors.New("Don't find milestone with this id")
 	ErrFailedToSave				= errors.New("Failed to save functask")
 	ErrNotFound					= errors.New("Don't find functask")
 	ErrFailedToDelete			= errors.New("Failed to delete functask")
+	ErrFileIDNil				= errors.New("File id can't be nil")
 )
 
 type service struct {
@@ -40,11 +46,45 @@ func New(
 	}
 }
 
+// AddFuncTask
+//
+// @Tags functask
+//
+// @Summary add func task to milestone
+//
+// @Description add func task to milestone
+//
+// @Description if func task is exist for milesotne will replace it
+//
+// @Router /api/projects/task [post]
+//
+// @Accept json
+//
+// @Produce json
+//
+// @Param functask body functask.FuncTaskFile true "function task that you want to add"
+//
+// @Success 201
+//
+// @Failure 400 {object} e.Message "Unexpected body"
+//
+// @Failure 500 {object} e.Message "Failed to save functask"
+//
+// @Failure 404 {object} e.Message "Don't find milestone with this id"
+// @Failure 401 {object} e.Message 
+// 
+// @Failure 403 {object} e.Message "if you are not admin"
 func (s *service) AddFuncTask(
 	ctx 		context.Context, 
 	FuncTask 	*functask.FuncTaskFile,
 ) error {
 	logger := log.With(s.logger, "method", "AddFuncTask")
+	if FuncTask.FileID.IsZero() {
+		return statuscode.WrapStatusError(
+			ErrFileIDNil,
+			http.StatusBadRequest,
+		)
+	}
 	// Check if milestone with this id exists
 	_, err := s.repository.GetMilestoneByID(
 		ctx,
@@ -75,9 +115,37 @@ func (s *service) AddFuncTask(
 		)
 	}
 
-	return nil
+	return statuscode.WrapStatusError(
+		nil,
+		http.StatusCreated,
+	)
 }
 
+// DeleteFuncTask
+// 
+// @Tags functask
+// 
+// @Summary delete functask from database
+// 
+// @Description delete functask from database
+// 
+// @Router /api/projects/task/{milestone_id} [delete]
+// 
+// @Param milestone_id path uint64 true "should be uint"
+// 
+// @Produce json
+// 
+// @Success 200
+// 
+// @Failure 404 {object} e.Message "func task not found"
+// 
+// @Failure 500 {object} e.Message "Failed to delete func task"
+// 
+// @Failure 409 {object} e.Message "some problems with microfileservice"
+// 
+// @Failure 401 {object} e.Message 
+// 
+// @Failure 403 {object} e.Message "if you are not admin"
 func (s *service) DeleteFuncTask(
 	ctx 		context.Context, 
 	MilestoneID uint64, 
