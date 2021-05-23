@@ -131,7 +131,7 @@ func TestFunc_GetProjects_HTTP(t *testing.T) {
 		context.Background(),
 		3,
 	)
-	req := httptest.NewRequest("GET", "/", nil)
+	req := httptest.NewRequest("GET", "/projects", nil)
 	w := httptest.NewRecorder()
 
 	Router.ServeHTTP(w, req)
@@ -200,7 +200,7 @@ func TestFunc_GetProjects_HTTP_ByName(t *testing.T) {
 		context.Background(),
 		3,
 	)
-	req := httptest.NewRequest("GET", "/?name=mock_1", nil)
+	req := httptest.NewRequest("GET", "/projects?name=mock_1", nil)
 	w := httptest.NewRecorder()
 
 	Router.ServeHTTP(w, req)
@@ -294,7 +294,7 @@ func TestFunc_GetProjects_HTTP_ByTag(t *testing.T) {
 		context.Background(),
 		2,
 	)
-	req := httptest.NewRequest("GET", "/?tag=mock_tag", nil)
+	req := httptest.NewRequest("GET", "/projects?tag=mock_tag", nil)
 	w := httptest.NewRecorder()
 
 	Router.ServeHTTP(w, req)
@@ -450,7 +450,7 @@ func TestFunc_GetProject_HTTP_AndDeleteThem(t *testing.T) {
 
 	proj := &repoasproj.RepoAsProjPointer{}
 
-	req := httptest.NewRequest("GET", "/1", nil)
+	req := httptest.NewRequest("GET", "/projects/1", nil)
 	w := httptest.NewRecorder()
 
 	Router.ServeHTTP(w, req)
@@ -498,7 +498,7 @@ func TestFunc_GetProject_HTTP_AndDeleteThem(t *testing.T) {
 		}
 	}
 
-	req = httptest.NewRequest("DELETE", "/1", nil)
+	req = httptest.NewRequest("DELETE", "/projects/1", nil)
 	w = httptest.NewRecorder()
 
 	Router.ServeHTTP(w, req)

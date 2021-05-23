@@ -59,7 +59,7 @@ func New(
 //
 // @Description if estimate is exist for milesotne will replace it
 //
-// @Router /api/projects/estimate [post]
+// @Router /v1/estimate [post]
 //
 // @Accept json
 //
@@ -130,7 +130,7 @@ func (s *service) AddEstimate(
 // 
 // @Description delete estimate from database
 // 
-// @Router /api/projects/estimate/{milestone_id} [delete]
+// @Router /v1/estimate/{milestone_id} [delete]
 // 
 // @Param milestone_id path uint64 true "should be uint"
 // 

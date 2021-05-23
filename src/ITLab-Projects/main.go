@@ -10,6 +10,7 @@ import (
 // @title ITLab-Projects API
 // @version 1.0
 // @description This is a server to get projects from github
+// @BasePath /api/projects
 
 
 func main() {

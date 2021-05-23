@@ -1,6 +1,7 @@
 package projects
 
 import (
+	e "github.com/ITLab-Projects/pkg/err"
 	"fmt"
 	"context"
 	"errors"
@@ -29,6 +30,11 @@ import (
 	"github.com/ITLab-Projects/pkg/updater"
 	"github.com/go-kit/kit/log"
 )
+
+func init() {
+	// to generate swagger
+	_ = e.Message{}
+}
 
 var (
 	ErrProjectNotFound 			= errors.New("Poject not found")
@@ -72,7 +78,7 @@ func New(
 // 
 // @Produce json
 // 
-// @Router /api/projects/{id} [get]
+// @Router /v1/projects/{id} [get]
 // 
 // @Param id path integer true "a uint value of repository id"
 // 
@@ -133,7 +139,7 @@ func (s *service) GetProject(
 // 
 // @Produce json
 // 
-// @Router /api/projects/ [get]
+// @Router /v1/projects [get]
 // 
 // @Param start query integer false "represents the number of skiped projects"
 // 
@@ -211,7 +217,7 @@ func (s *service) GetProjects(
 //
 // @Description make all request to github to update repositories, milestones
 //
-// @Router /api/projects/ [post]
+// @Router /v1/projects [post]
 //
 // @Success 200
 //
@@ -313,7 +319,7 @@ func (s *service) UpdateProjects(
 // 
 // @Tags projects
 // 
-// @Router /api/projects/{id} [delete]
+// @Router /v1/projects/{id} [delete]
 // 
 // @Param id path integer true "id of project"
 // 

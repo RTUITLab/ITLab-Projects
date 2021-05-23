@@ -97,6 +97,8 @@ func TestFunc_Init(t *testing.T) {
 }
 
 func TestFunc_UpdateAllProjects(t *testing.T) {
+	t.Log("Deprecated")
+	t.SkipNow()
 	if err := service.UpdateProjects(
 		context.Background(),
 	); err != nil {
@@ -106,6 +108,8 @@ func TestFunc_UpdateAllProjects(t *testing.T) {
 }
 
 func TestFunc_GetProjects(t *testing.T) {
+	t.Log("Deprecated")
+	t.SkipNow()
 	projs, err := service.GetProjects(
 		context.Background(),
 		0,
@@ -127,6 +131,8 @@ func TestFunc_GetProjects(t *testing.T) {
 }
 
 func TestFunc_GetProject(t *testing.T) {
+	t.Log("Deprecated")
+	t.SkipNow()
 	proj, err := service.GetProject(
 		context.Background(),
 		356562826,

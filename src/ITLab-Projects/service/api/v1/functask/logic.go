@@ -56,7 +56,7 @@ func New(
 //
 // @Description if func task is exist for milesotne will replace it
 //
-// @Router /api/projects/task [post]
+// @Router /v1/task [post]
 //
 // @Accept json
 //
@@ -115,10 +115,7 @@ func (s *service) AddFuncTask(
 		)
 	}
 
-	return statuscode.WrapStatusError(
-		nil,
-		http.StatusCreated,
-	)
+	return nil
 }
 
 // DeleteFuncTask
@@ -129,7 +126,7 @@ func (s *service) AddFuncTask(
 // 
 // @Description delete functask from database
 // 
-// @Router /api/projects/task/{milestone_id} [delete]
+// @Router /v1/task/{milestone_id} [delete]
 // 
 // @Param milestone_id path uint64 true "should be uint"
 // 

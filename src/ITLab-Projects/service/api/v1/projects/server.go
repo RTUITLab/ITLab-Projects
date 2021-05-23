@@ -22,7 +22,7 @@ func NewHTTPServer(
 	r			*mux.Router,
 ) {
 	r.Handle(
-		"/",
+		"/projects",
 		httptransport.NewServer(
 			endpoints.UpdateProjects,
 			decodeUpdateProjetcsReq,
@@ -34,7 +34,7 @@ func NewHTTPServer(
 	).Methods("POST").Name(UpdateProjectName)
 
 	r.Handle(
-		"/{id:[0-9]+}",
+		"/projects/{id:[0-9]+}",
 		httptransport.NewServer(
 			endpoints.GetProject,
 			decodeGetProjectReq,
@@ -46,7 +46,7 @@ func NewHTTPServer(
 	).Methods("GET").Name(GetProjectName)
 
 	r.Handle(
-		"/",
+		"/projects",
 		httptransport.NewServer(
 			endpoints.GetProjects,
 			decodeGetProjectsReq,
@@ -58,7 +58,7 @@ func NewHTTPServer(
 	).Methods("GET").Name(GetProjectsName)
 
 	r.Handle(
-		"/{id:[0-9]+}",
+		"/projects/{id:[0-9]+}",
 		httptransport.NewServer(
 			endpoints.DeleteProject,
 			decodeDeleteProjectsReq,

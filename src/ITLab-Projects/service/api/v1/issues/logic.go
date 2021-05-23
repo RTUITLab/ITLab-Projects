@@ -1,6 +1,7 @@
 package issues
 
 import (
+	e "github.com/ITLab-Projects/pkg/err"
 	"github.com/go-kit/kit/log/level"
 	"context"
 	"errors"
@@ -14,6 +15,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+func init() {
+	// to generate swagger
+	_ = e.Message{}
+}
 
 var (
 	ErrFailedToGetIssues 	= errors.New("Failed to get issues")
@@ -45,7 +51,7 @@ func New(
 //
 // @Description return issues according to query params
 //
-// @Router /api/projects/issues [get]
+// @Router /v1/issues [get]
 //
 // @Param start query integer false "represent how mush skip first issues"
 //
@@ -112,7 +118,7 @@ func (s *service) GetIssues(
 //
 // @Description return all unique labels of issues
 //
-// @Router /api/projects/issues/labels [get]
+// @Router /v1/issues/labels [get]
 //
 // @Success 200 {array} string
 //

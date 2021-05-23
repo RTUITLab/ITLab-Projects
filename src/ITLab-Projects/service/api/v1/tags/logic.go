@@ -1,6 +1,7 @@
 package tags
 
 import (
+	e "github.com/ITLab-Projects/pkg/err"
 	"context"
 	"errors"
 	"net/http"
@@ -15,6 +16,11 @@ import (
 var (
 	ErrGetTags		= errors.New("Faield to get tags")
 )
+
+func init() {
+	// to generate swagger
+	_ = e.Message{}
+}
 
 type service struct {
 	repository 	Repository
@@ -41,7 +47,7 @@ func New(
 //
 // @Description return all tags
 //
-// @Router /api/projects/tags [get]
+// @Router /v1/tags [get]
 //
 // @Success 200 {array} tag.Tag
 //
