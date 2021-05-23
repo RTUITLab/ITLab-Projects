@@ -62,6 +62,27 @@ func New(
 	}
 }
 
+// GetProject
+// 
+// @Summary return project according to id
+// 
+// @Tags projects
+// 
+// @Description return a project according to id value in path
+// 
+// @Produce json
+// 
+// @Router /api/projects/{id} [get]
+// 
+// @Param id path integer true "a uint value of repository id"
+// 
+// @Success 200 {object} repoasproj.RepoAsProj
+// 
+// @Failure 404 {object} e.Message
+// 
+// @Failure 500 {object} e.Message
+// 
+// @Failure 401 {object} e.Message 
 func (s *service) GetProject(
 	ctx context.Context,
 	ID uint64,
@@ -100,11 +121,43 @@ func (s *service) GetProject(
 	return proj, nil
 }
 
+// GetProjects
+// 
+// @Tags projects
+// 
+// @Summary return projects according to query value
+// 
+// @Description return a projects you can filter count of them
+// 
+// @Description tags, name
+// 
+// @Produce json
+// 
+// @Router /api/projects/ [get]
+// 
+// @Param start query integer false "represents the number of skiped projects"
+// 
+// @Param count query integer false "represent a limit of projects, standart and max count equal 50"
+// 
+// @Param tag query string false "use to filter projects by tag"
+// 
+// @Param name query string false "use to filter by name"
+// 
+// @Success 200 {array} repoasproj.RepoAsProjCompact
+// 
+// @Failure 500 {object} e.Message "Failed to get projects"
+// 
+// @Failure 500 {object} e.Message "Failed to get repositories"
+// 
+// @Failure 401 {object} e.Message 
 func (s *service) GetProjects(
 	ctx 			context.Context, 
 	start, 	count 	int64,
 	name, 	tag		string,
 ) ([]*repoasproj.RepoAsProjCompactPointers, error) {
+	if count == 0 || count > 50 {
+		count = 50
+	}
 	logger := log.With(s.logger, "method", "GetProjects")
 	filter, err := s.buildFilterForGetProject(
 		ctx,
@@ -140,12 +193,35 @@ func (s *service) GetProjects(
 	projs, err := s.GetCompatcProj(ctx, repos)
 	if err != nil {
 		level.Error(logger).Log("Failed to get projects: err", err)
-		return nil, err
+		return nil, statuscode.WrapStatusError(
+			ErrFailedToGetProjects,
+			http.StatusInternalServerError,
+		)
 	}
 	sort.Sort(repoasproj.ByCreateDatePointers(projs))
 	return projs, nil
 }
 
+
+// UpdateProjects
+//
+// @Tags projects
+//
+// @Summary Update all projects
+//
+// @Description make all request to github to update repositories, milestones
+//
+// @Router /api/projects/ [post]
+//
+// @Success 200
+//
+// @Failure 409 {object} e.Err
+//
+// @Failure 500 {object} e.Message
+//
+// @Failure 401 {object} e.Message
+//
+// @Failure 403 {object} e.Message "if you are nor admin"
 func (s *service) UpdateProjects(
 	ctx context.Context,
 ) error {
@@ -229,6 +305,29 @@ func (s *service) UpdateProjects(
 	return nil
 }
 
+// DeleteProject
+// 
+// @Summary delete project by id
+// 
+// @Description delete project by id and all milestones in it
+// 
+// @Tags projects
+// 
+// @Router /api/projects/{id} [delete]
+// 
+// @Param id path integer true "id of project"
+// 
+// @Success 200
+// 
+// @Failure 404 {object} e.Message
+// 
+// @Failure 500 {object} e.Message
+// 
+// @Failure 409 {object} e.Message "some problems with microfileservice"
+// 
+// @Failure 401 {object} e.Message 
+// 
+// @Failure 403 {object} e.Message "if you are not admin"
 func (s *service) DeleteProject(
 	ctx context.Context, 
 	ID 	uint64,
