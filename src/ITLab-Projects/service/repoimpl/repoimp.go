@@ -1,6 +1,7 @@
 package repoimpl
 
 import (
+	"github.com/ITLab-Projects/pkg/repositories"
 	"github.com/ITLab-Projects/service/repoimpl/estimate"
 	"github.com/ITLab-Projects/service/repoimpl/functask"
 	"github.com/ITLab-Projects/service/repoimpl/issue"
@@ -18,4 +19,18 @@ type RepoImp struct {
 	*reales.RealeseRepositoryImp
 	*repo.RepoRepositoryImp
 	*tag.TagRepositoryImp
+}
+
+func New(
+	Repo	*repositories.Repositories,
+) *RepoImp {
+	return &RepoImp{
+		EstimateRepositoryImp: estimate.New(Repo.Estimate),
+		IssueRepositoryImp: issue.New(Repo.Issue),
+		FuncTaskRepositoryImp: functask.New(Repo.FuncTask),
+		MilestoneRepositoryImp: milestone.New(Repo.Milestone),
+		RealeseRepositoryImp: reales.New(Repo.Realese),
+		RepoRepositoryImp: repo.New(Repo.Repo),
+		TagRepositoryImp: tag.New(Repo.Tag),
+	}
 }
