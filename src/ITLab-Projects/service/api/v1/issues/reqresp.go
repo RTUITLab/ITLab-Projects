@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/ITLab-Projects/pkg/models/milestone"
-	"github.com/sirupsen/logrus"
 )
 
 type GetIssuesReq struct {
@@ -24,7 +23,6 @@ func (r *GetIssuesResp) StatusCode() int {
 }
 
 func (r *GetIssuesResp) Encode(w http.ResponseWriter) error {
-	logrus.Debug(w.Header())
 	return json.NewEncoder(w).Encode(r.Issues)
 }
 
