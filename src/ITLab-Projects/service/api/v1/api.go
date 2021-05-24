@@ -183,7 +183,7 @@ func (a *Api) update() {
 
 
 func (a *Api) Build(r *mux.Router) {
-	base := r.PathPrefix("/api/projecs").Subrouter()
+	base := r.PathPrefix("/api/projects").Subrouter()
 	docs := base.PathPrefix("/swagger")
 	// TODO refactor api path's
 	projectsR := base.PathPrefix("/v1").Subrouter()
