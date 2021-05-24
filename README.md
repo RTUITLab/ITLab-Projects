@@ -16,6 +16,8 @@ MONGO_INITDB_DATABASE=example_database
 
 # App settings
 ITLAB_PROJECTS_DBURI=mongodb://username:password@host:port/example_database
+# database name for tests
+ITLAB_PROJECTS_DBURI_TEST=mongodb://username:password@host:port/example_databaseTest
 ITLAB_PROJECTS_ACCESSKEY=some_access_key
 ITLABPROJ_ROLES="role role.admin"
 # url to jwks.json
