@@ -163,7 +163,9 @@ func (a *Api) update() {
 			},
 		).Error("Failed to update projects")
 	}
-	if err := a.projectService.UpdateProjects(sessctx); err != nil {
+	log.Debug("put session")
+	ctx := updater.WithUpdateContext(sessctx)
+	if err := a.projectService.UpdateProjects(ctx); err != nil {
 		log.WithFields(
 			log.Fields{
 				"package": "api/v1",

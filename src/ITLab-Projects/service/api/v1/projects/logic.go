@@ -232,15 +232,18 @@ func (s *service) UpdateProjects(
 	ctx context.Context,
 ) error {
 	logger := log.With(s.logger, "method", "UpdateProjects")
-	s.resetUpdater()
-	defer s.resetUpdater()
+	if !updater.IsUpdateContext(ctx) {
+		level.Debug(logger).Log("From user")
+		s.resetUpdater()
+		defer s.resetUpdater()
+	}
 
 	repos, ms, rs, tgs, err := s.getAllFromGithub(ctx)
 	switch {
 	case err == githubreq.ErrForbiden, err == githubreq.ErrUnatorizared:
 		level.Error(logger).Log("Failed to update projects: err", err)
 		return statuscode.WrapStatusError(
-			ErrFailedToUpdateProjects, //TODO think to make it real error to catch in future
+			ErrFailedToUpdateProjects,
 			http.StatusConflict,
 		)
 	case err != nil:
