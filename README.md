@@ -27,7 +27,7 @@ ITLABPROJ_AUDIENCE=audiance
 # issuer for JWT
 ITLABPROJ_ISSUER=https://example.com
 ITLAB_PROJECTS_APPPORT=8080
-# Test mode disable jwt validation and open /debug/pproh/ handlers to check app
+# Test mode disable jwt validation and open /debug/pprof/ handlers to check app
 ITLAB_PROJECTS_TESTMODE=false
 # How many times will the projects be updated, 
 # if it does not exist, it will not be updated itself
