@@ -29,6 +29,10 @@ func (r *AddFuncTaskResp) Encode(w http.ResponseWriter) error {
 	return nil
 }
 
+func (r *AddFuncTaskResp) Headers(ctx context.Context, w http.ResponseWriter) {
+
+}
+
 type DeleteFuncTaskReq struct {
 	MilestoneID		uint64
 	Req				*http.Request
@@ -43,6 +47,10 @@ func (r *DeleteFuncTaskResp) StatusCode() int {
 
 func (r *DeleteFuncTaskResp) Encode(w http.ResponseWriter) error {
 	return nil
+}
+
+func (r *DeleteFuncTaskResp) Headers(ctx context.Context, w http.ResponseWriter) {
+
 }
 
 func decodeAddFuncTaskReq(

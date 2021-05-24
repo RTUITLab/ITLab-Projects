@@ -33,8 +33,14 @@ type GetProjectResp struct {
 }
 
 func (r *GetProjectResp) Encode(w http.ResponseWriter) error {
-	w.Header().Add("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(r.RepoAsProjPointer)
+}
+
+func (r *GetProjectResp) Headers(
+	ctx 	context.Context,
+	w 		http.ResponseWriter,
+) {
+	w.Header().Add("Content-Type", "application/json")
 }
 
 func (r *GetProjectResp) StatusCode() int {
@@ -80,12 +86,18 @@ type GetProjectsResp struct {
 }
 
 func (r *GetProjectsResp) Encode(w http.ResponseWriter) error {
-	w.Header().Add("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(r.Projects)
 }
 
 func (r *GetProjectsResp) StatusCode() int {
 	return http.StatusOK
+}
+
+func (r *GetProjectsResp) Headers(
+	ctx 	context.Context,
+	w 		http.ResponseWriter,
+) {
+	w.Header().Add("Content-Type", "application/json")
 }
 
 type UpdateProjectsReq struct {
@@ -109,6 +121,13 @@ func (r *UpdateProjectsResp) Encode(w http.ResponseWriter) error {
 
 func (r *UpdateProjectsResp) StatusCode() int {
 	return http.StatusOK
+}
+
+func (r *UpdateProjectsResp) Headers(
+	ctx 	context.Context,
+	w 		http.ResponseWriter,
+) {
+
 }
 
 type DeleteProjectReq struct {
@@ -143,3 +162,9 @@ func (r *DeleteProjectsResp) StatusCode() int {
 	return http.StatusOK
 }
 
+func (r *DeleteProjectsResp) Headers(
+	ctx 	context.Context,
+	w 		http.ResponseWriter,
+) {
+
+}

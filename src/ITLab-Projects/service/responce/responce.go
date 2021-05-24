@@ -1,6 +1,7 @@
 package responce
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -25,9 +26,14 @@ type BodyEncoder interface {
 	Encode(w http.ResponseWriter) error
 }
 
+type Header interface {
+	Headers(ctx context.Context, w http.ResponseWriter)
+}
+
 type HTTPResponce interface {
 	Statuser
 	BodyEncoder
+	Header
 }
 
 type HTTPErrResponce interface {

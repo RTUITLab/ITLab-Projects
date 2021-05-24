@@ -12,6 +12,7 @@ func EncodeResponce(
 	resp interface{},
 ) error {
 	httpresp := resp.(responce.HTTPResponce)
+	httpresp.Headers(ctx, w)
 	w.WriteHeader(httpresp.StatusCode())
 	return httpresp.Encode(w)
 }

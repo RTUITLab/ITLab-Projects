@@ -30,6 +30,13 @@ func (r *AddEstimateResp) Encode(w http.ResponseWriter) error {
 	return nil
 }
 
+func (r *AddEstimateResp) Headers(
+	ctx 	context.Context,
+	w 		http.ResponseWriter,
+) {
+	
+}
+
 type DeleteEstimateReq struct {
 	MilestoneID		uint64
 	Req				*http.Request
@@ -44,6 +51,13 @@ func (r *DeleteEstimateResp) StatusCode() int {
 
 func (r *DeleteEstimateResp) Encode(w http.ResponseWriter) error {
 	return nil
+}
+
+func (r *DeleteEstimateResp) Headers(
+	ctx 	context.Context,
+	w 		http.ResponseWriter,
+) {
+
 }
 
 func decodeAddEstimateReq(

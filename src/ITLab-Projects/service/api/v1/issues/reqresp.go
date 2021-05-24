@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/ITLab-Projects/pkg/models/milestone"
+	"github.com/sirupsen/logrus"
 )
 
 type GetIssuesReq struct {
@@ -23,8 +24,12 @@ func (r *GetIssuesResp) StatusCode() int {
 }
 
 func (r *GetIssuesResp) Encode(w http.ResponseWriter) error {
-	w.Header().Add("Content-Type", "application/json")
+	logrus.Debug(w.Header())
 	return json.NewEncoder(w).Encode(r.Issues)
+}
+
+func (r *GetIssuesResp) Headers(ctx context.Context, w http.ResponseWriter) {
+	w.Header().Add("Content-Type", "application/json")
 }
 
 type GetLabelsReq struct {
@@ -40,8 +45,11 @@ func (r *GetLabelsResp) StatusCode() int {
 }
 
 func (r *GetLabelsResp) Encode(w http.ResponseWriter) error {
-	w.Header().Add("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(r.Labels)
+}
+
+func (r *GetLabelsResp) Headers(ctx context.Context, w http.ResponseWriter) {
+	w.Header().Add("Content-Type", "application/json")
 }
 
 func decodeGetIssuesReq(
