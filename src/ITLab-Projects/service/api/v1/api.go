@@ -22,7 +22,6 @@ import (
 	_ "github.com/ITLab-Projects/docs"
 	"github.com/ITLab-Projects/pkg/config"
 	"github.com/ITLab-Projects/service/middleware/auth"
-	"github.com/ITLab-Projects/service/middleware/mgsess"
 	swag "github.com/swaggo/http-swagger"
 
 	"github.com/ITLab-Projects/pkg/githubreq"
@@ -31,11 +30,6 @@ import (
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
-
-type beforeDeleteFunc func(
-	interface{},
-) error
-
 
 type Api struct {
 	Repository 		*repositories.Repositories
@@ -245,8 +239,6 @@ func (a *Api) Build(r *mux.Router) {
 		r.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 		r.HandleFunc("/debug/pprof/trace", pprof.Trace)
 	}
-
-	projectsR.Use(mgsess.PutSessionINTOCtx)
 
 	a.StartUpdater()
 }

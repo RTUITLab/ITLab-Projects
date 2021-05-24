@@ -1,9 +1,11 @@
 package v1
 
 import (
-	log "github.com/sirupsen/logrus"
-	"github.com/ITLab-Projects/service/middleware/auth"
 	"regexp"
+
+	"github.com/ITLab-Projects/service/middleware/auth"
+	"github.com/ITLab-Projects/service/middleware/mgsess"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/gorilla/mux"
 )
@@ -29,13 +31,24 @@ func (a *Api) buildAdmin(
 	}
 }
 
+func (a *Api) buildMongoSession(
+	route *mux.Route,
+) {
+	route.Handler(
+		mgsess.PutSessionINTOCtx(
+			route.GetHandler(),
+		),
+	)
+}
+
 func (a *Api) BuildMiddlewares(
 	route *mux.Route, 
 	router *mux.Router, 
 	ancestors []*mux.Route,
 ) error {
+	a.buildMongoSession(route)
+	
 	name := route.GetName()
-
 	if !a.Testmode {
 		a.buildAdmin(
 			name,
