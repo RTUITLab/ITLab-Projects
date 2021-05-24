@@ -16,6 +16,7 @@ type GetAllTagsResp struct {
 }
 
 func (r *GetAllTagsResp) Encode(w http.ResponseWriter) error {
+	w.Header().Add("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(r.Tags)
 }
 

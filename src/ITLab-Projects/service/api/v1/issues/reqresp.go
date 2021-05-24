@@ -23,6 +23,7 @@ func (r *GetIssuesResp) StatusCode() int {
 }
 
 func (r *GetIssuesResp) Encode(w http.ResponseWriter) error {
+	w.Header().Add("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(r.Issues)
 }
 
@@ -39,6 +40,7 @@ func (r *GetLabelsResp) StatusCode() int {
 }
 
 func (r *GetLabelsResp) Encode(w http.ResponseWriter) error {
+	w.Header().Add("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(r.Labels)
 }
 

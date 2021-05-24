@@ -33,6 +33,7 @@ type GetProjectResp struct {
 }
 
 func (r *GetProjectResp) Encode(w http.ResponseWriter) error {
+	w.Header().Add("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(r.RepoAsProjPointer)
 }
 
@@ -79,6 +80,7 @@ type GetProjectsResp struct {
 }
 
 func (r *GetProjectsResp) Encode(w http.ResponseWriter) error {
+	w.Header().Add("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(r.Projects)
 }
 
