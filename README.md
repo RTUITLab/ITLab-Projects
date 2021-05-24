@@ -1,6 +1,6 @@
 # ITLab-Projects
 ---
-[REST API requests for postman](https://www.postman.com/collections/4b43b349d416cb99319e)
+[REST API requests for postman](https://www.getpostman.com/collections/4b43b349d416cb99319e)
 
 ## Documantation 
 Can be open directly by swagger. All swagger files located in ```src/ITLab-Projects/docs```.
