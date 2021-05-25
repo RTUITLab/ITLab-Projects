@@ -70,7 +70,7 @@ func (er *EstimateRepository) DeleteEstimatesNotIn(ms []milestone.MilestoneInRep
 }
 
 func (er *EstimateRepository) save(ctx context.Context, v interface{}) error {
-	estimate, _ := v.(model.EstimateFile)
+	estimate := getPointer(v)
 
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"milestone_id": estimate.MilestoneID}
@@ -81,6 +81,15 @@ func (er *EstimateRepository) save(ctx context.Context, v interface{}) error {
 	}
 
 	return nil
+}
+
+func getPointer(v interface{}) *model.EstimateFile {
+	estimate, ok := v.(*model.EstimateFile)
+	if !ok {
+		_e, _ := v.(model.EstimateFile)
+		estimate = &_e
+	}
+	return estimate
 }
 
 func (er *EstimateRepository) Delete(MilestoneID uint64) error {

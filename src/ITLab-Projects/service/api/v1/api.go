@@ -1,44 +1,50 @@
 package v1
 
 import (
-	"context"
 	"net/http"
+	kl "github.com/go-kit/kit/log/logrus"
+	"context"
 	"net/http/pprof"
 	"net/url"
 	"strconv"
 	"time"
 
+	"github.com/ITLab-Projects/service/api/v1/estimate"
+	"github.com/ITLab-Projects/service/api/v1/functask"
+	"github.com/ITLab-Projects/service/repoimpl"
+
+	"github.com/ITLab-Projects/service/api/v1/issues"
+	"github.com/ITLab-Projects/service/api/v1/projects"
+	"github.com/ITLab-Projects/service/api/v1/tags"
 
 	"github.com/ITLab-Projects/pkg/updater"
-	"github.com/ITLab-Projects/service/middleware/contenttype"
 
 	_ "github.com/ITLab-Projects/docs"
 	"github.com/ITLab-Projects/pkg/config"
 	"github.com/ITLab-Projects/service/middleware/auth"
-	"github.com/ITLab-Projects/service/middleware/mgsess"
 	swag "github.com/swaggo/http-swagger"
 
 	"github.com/ITLab-Projects/pkg/githubreq"
 	"github.com/ITLab-Projects/pkg/mfsreq"
-	"github.com/ITLab-Projects/pkg/models/estimate"
-	"github.com/ITLab-Projects/pkg/models/functask"
 	"github.com/ITLab-Projects/pkg/repositories"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
-type beforeDeleteFunc func(
-	interface{},
-) error
-
-
 type Api struct {
 	Repository 		*repositories.Repositories
+	RepoImp			*repoimpl.RepoImp
 	Requester 		githubreq.Requester
 	MFSRequester	mfsreq.Requester
 	Testmode		bool
 	upd				*updater.Updater
 	Auth 			auth.AuthMiddleware
+
+	projectService	projects.Service
+	issueService	issues.Service
+	tagsService		tags.Service
+	taskService		functask.Service
+	estService		estimate.Service
 }
 
 type Config struct {
@@ -52,7 +58,7 @@ func New(
 	Repository *repositories.Repositories,
 	Requester githubreq.Requester,
 	MFSRequester	mfsreq.Requester,
-	) *Api {
+) *Api {
 	a := &Api{
 		Repository: Repository,
 		Requester: Requester,
@@ -67,6 +73,39 @@ func New(
 		a.WithUpdater(cfg.UpdateTime)
 	}
 	log.Debug(a.upd)
+
+	a.RepoImp = repoimpl.New(Repository)
+
+	logger := kl.NewLogrusLogger(log.StandardLogger())
+	a.projectService = projects.New(
+		a.RepoImp,
+		logger,
+		Requester,
+		MFSRequester,
+		a.upd,
+	)
+
+	a.estService = estimate.New(
+		a.RepoImp,
+		logger,
+		MFSRequester,
+	)
+
+	a.issueService = issues.New(
+		a.RepoImp,
+		logger,
+	)
+
+	a.tagsService = tags.New(
+		a.RepoImp,
+		logger,
+	)
+
+	a.taskService = functask.New(
+		a.RepoImp,
+		MFSRequester,
+		logger,
+	)
 
 	return a
 }
@@ -124,7 +163,9 @@ func (a *Api) update() {
 			},
 		).Error("Failed to update projects")
 	}
-	if err := a.updateAllProjects(sessctx); err != nil {
+	log.Debug("put session")
+	ctx := updater.WithUpdateContext(sessctx)
+	if err := a.projectService.UpdateProjects(ctx); err != nil {
 		log.WithFields(
 			log.Fields{
 				"package": "api/v1",
@@ -138,44 +179,60 @@ func (a *Api) update() {
 
 
 func (a *Api) Build(r *mux.Router) {
-	docs := r.PathPrefix("/api/projects/swagger")
+	base := r.PathPrefix("/api/projects").Subrouter()
+	docs := base.PathPrefix("/swagger")
 	// TODO refactor api path's
-	projects := r.PathPrefix("/api/projects").Subrouter()
-	admin := projects.NewRoute().Subrouter()
-	
-	admin.HandleFunc("/", a.UpdateAllProjects).Methods("POST")
-	admin.HandleFunc("/task", a.AddFuncTask).Methods("POST")
-	admin.HandleFunc("/estimate", a.AddEstimate).Methods("POST")
-	admin.HandleFunc("/task/{milestone_id:[0-9]+}", a.DeleteFuncTask).Methods("DELETE")
-	admin.HandleFunc("/estimate/{milestone_id:[0-9]+}", a.DeleteEstimate).Methods("DELETE")
-	admin.HandleFunc("/{id:[0-9]+}", a.DeleteProject).Methods("DELETE")
-	
-	projects.HandleFunc("/", a.GetProjects).Methods("GET")
-	projects.HandleFunc("/{id:[0-9]+}", a.GetProject).Methods("GET")
-	projects.HandleFunc("/tags", a.GetTags).Methods("GET")
-	projects.HandleFunc("/issues", a.GetIssues).Methods("GET")
-	projects.HandleFunc("/issues/labels", a.GetLabels).Methods("GET")
+	projectsR := base.PathPrefix("/v1").Subrouter()
 
+	// Docs
+	docs.Handler(
+		swag.WrapHandler,
+	)
 
-	projects.Use(contenttype.AppJSON)
+	projects.NewHTTPServer(
+		context.Background(),
+		projects.MakeEndpoints(a.projectService),
+		projectsR,
+	)
+
+	issues.NewHTTPServer(
+		context.Background(),
+		issues.MakeEndPoints(a.issueService),
+		projectsR,
+	)
+
+	tags.NewHTTPServer(
+		context.Background(),
+		tags.MakeEndpoints(a.tagsService),
+		projectsR,
+	)
+
+	functask.NewHTTPServer(
+		context.Background(),
+		functask.MakeEndPoints(a.taskService),
+		projectsR,
+	)
+
+	estimate.NewHTTPServer(
+		context.Background(),
+		estimate.MakeEndPoints(a.estService),
+		projectsR,
+	)
+
 	if !a.Testmode {
-		projects.Use(
-			mux.MiddlewareFunc(a.Auth),
-		)
-		
-		admin.Use(
-			auth.AdminMiddleware,
-		)
+		base.Use(mux.MiddlewareFunc(a.Auth))
+	}
 
-		docs.Handler(
-			a.Auth(
-				swag.WrapHandler,
-			),
-		)
-	} else {
-		docs.Handler(
-			swag.WrapHandler,
-		)
+	if err := projectsR.Walk(a.BuildMiddlewares); err != nil {
+		log.WithFields(
+			log.Fields{
+				"method": "Build",
+				"err": err,
+			},
+		).Panic("Failed to build")
+	}
+
+	if a.Testmode {
 		r.PathPrefix("/debug/").Handler(http.DefaultServeMux)
 		
 		r.HandleFunc("/debug/pprof/", pprof.Index)
@@ -185,12 +242,9 @@ func (a *Api) Build(r *mux.Router) {
 		r.HandleFunc("/debug/pprof/trace", pprof.Trace)
 	}
 
-	projects.Use(
-		mgsess.PutSessionINTOCtx,
-	)
-
 	a.StartUpdater()
 }
+
 
 
 func getUint(v url.Values, name string) uint64 {
@@ -206,50 +260,6 @@ func getUint(v url.Values, name string) uint64 {
 	}
 
 	return value
-}
-
-func (a *Api) beforeDeleteWithReq(r *http.Request) beforeDeleteFunc {
-	return func(v interface{}) error {
-		return a.beforeDelete(
-			a.MFSRequester.NewRequests(r),
-			v,
-		)
-	}
-}
-
-func (a *Api) beforeDelete(
-	deleter mfsreq.FileDeleter,
-	v interface{},
-	) error {
-	log.Debug("Before delete!")
-	switch v.(type) {
-	case estimate.EstimateFile:
-		est, _ := v.(estimate.EstimateFile)
-		if err := deleter.DeleteFile(est.FileID); err != nil {
-			return err
-		}
-	case []estimate.EstimateFile:
-		ests, _ := v.([]estimate.EstimateFile)
-		for _, est := range ests {
-			if err := deleter.DeleteFile(est.FileID); err != nil {
-				return err
-			}
-		}
-	case functask.FuncTaskFile:
-		task, _ := v.(functask.FuncTaskFile)
-		if err := deleter.DeleteFile(task.FileID); err != nil {
-			return err
-		}
-	case []functask.FuncTaskFile:
-		tasks, _ := v.([]functask.FuncTaskFile)
-		for _, task := range tasks {
-			if err := deleter.DeleteFile(task.FileID); err != nil {
-				return err
-			}
-		}
-	default:
-	}
-	return nil
 }
 
 func logError(message, Handler string, err error) {

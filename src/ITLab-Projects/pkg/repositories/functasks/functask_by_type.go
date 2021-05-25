@@ -47,7 +47,7 @@ func NewByType(
 }
 
 func (ftr *FuncTaskByType) save(ctx context.Context, v interface{}) error {
-	functask, _ := v.(model.FuncTaskFile)
+	functask := getPointer(v)
 
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"milestone_id": functask.MilestoneID}

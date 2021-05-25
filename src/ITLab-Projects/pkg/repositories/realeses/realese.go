@@ -47,7 +47,7 @@ func New(collection *mongo.Collection) Realeser {
 }
 
 func (r *RealeseRepo) buildFilter(v interface{}) interface{} {
-	rls, _ := v.([]model.RealeseInRepo)
+	rls, _ := v.([]*model.RealeseInRepo)
 
 	var ids []uint64
 	for _, r := range rls {
@@ -68,7 +68,7 @@ func (r *RealeseRepo) Save(ctx context.Context, v interface{}) error {
 }
 
 func (r *RealeseRepo) save(ctx context.Context, v interface{}) error {
-	real, _ := v.(model.RealeseInRepo)
+	real := getPointer(v)
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"repoid": real.ID}
 
@@ -89,4 +89,13 @@ func (r *RealeseRepo) SaveAndDeletedUnfind(ctx context.Context, rls interface{})
 	return nil
 }
 
+func getPointer(v interface{}) *model.RealeseInRepo {
+	r, ok := v.(*model.RealeseInRepo)
+	if !ok {
+		_r, _ := v.(model.RealeseInRepo)
+		r = &_r
+	}
+
+	return r
+}
 

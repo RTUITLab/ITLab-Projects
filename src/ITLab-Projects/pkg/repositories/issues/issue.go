@@ -52,7 +52,7 @@ func New(
 }
 
 func (i *IssueRepository) buildFilter(v interface{}) interface{} {
-	is, ok := v.([]model.IssuesWithMilestoneID)
+	is, ok := v.([]*model.IssuesWithMilestoneID)
 	if !ok {
 		logrus.WithFields(
 			logrus.Fields{
@@ -73,7 +73,7 @@ func (i *IssueRepository) buildFilter(v interface{}) interface{} {
 func (i *IssueRepository) save(
 	ctx context.Context, 
 	v interface{}) error {
-	issue, _ := v.(model.IssuesWithMilestoneID)
+	issue := getPointer(v)
 
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"id": issue.ID}
@@ -84,6 +84,15 @@ func (i *IssueRepository) save(
 	}
 
 	return nil
+}
+
+func getPointer(v interface{}) *model.IssuesWithMilestoneID {
+	i, ok := v.(*model.IssuesWithMilestoneID)
+	if !ok {
+		_i, _ := v.(model.IssuesWithMilestoneID)
+		i = &_i
+	}
+	return i
 }
 
 func (i *IssueRepository) Save(ctx context.Context, issue interface{}) error {

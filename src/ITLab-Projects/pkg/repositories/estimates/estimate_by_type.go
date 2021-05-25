@@ -45,7 +45,7 @@ func NewByType() *EstimateRepoByType {
 }
 
 func (er *EstimateRepoByType) save(ctx context.Context, v interface{}) error {
-	estimate, _ := v.(model.EstimateFile)
+	estimate := getPointer(v)
 
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"milestone_id": estimate.MilestoneID}

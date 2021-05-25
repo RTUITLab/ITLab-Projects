@@ -1,6 +1,6 @@
 # ITLab-Projects
 ---
-[REST API requests for postman](https://www.postman.com/collections/4b43b349d416cb99319e)
+[REST API requests for postman](https://www.getpostman.com/collections/4b43b349d416cb99319e)
 
 ## Documantation 
 Can be open directly by swagger. All swagger files located in ```src/ITLab-Projects/docs```.
@@ -16,6 +16,8 @@ MONGO_INITDB_DATABASE=example_database
 
 # App settings
 ITLAB_PROJECTS_DBURI=mongodb://username:password@host:port/example_database
+# database name for tests
+ITLAB_PROJECTS_DBURI_TEST=mongodb://username:password@host:port/example_databaseTest
 ITLAB_PROJECTS_ACCESSKEY=some_access_key
 ITLABPROJ_ROLES="role role.admin"
 # url to jwks.json
@@ -25,7 +27,7 @@ ITLABPROJ_AUDIENCE=audiance
 # issuer for JWT
 ITLABPROJ_ISSUER=https://example.com
 ITLAB_PROJECTS_APPPORT=8080
-# Test mode disable jwt validation and open /debug/pproh/ handlers to check app
+# Test mode disable jwt validation and open /debug/pprof/ handlers to check app
 ITLAB_PROJECTS_TESTMODE=false
 # How many times will the projects be updated, 
 # if it does not exist, it will not be updated itself

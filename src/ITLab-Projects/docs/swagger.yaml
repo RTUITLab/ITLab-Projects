@@ -1,3 +1,4 @@
+basePath: /api/projects
 definitions:
   assignee.Assignee:
     properties:
@@ -278,7 +279,150 @@ info:
   title: ITLab-Projects API
   version: "1.0"
 paths:
-  /api/projects/:
+  /v1/estimate:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        add estimate to milestone
+        if estimate is exist for milesotne will replace it
+      parameters:
+      - description: estimate that you want to add
+        in: body
+        name: estimate
+        required: true
+        schema:
+          $ref: '#/definitions/estimate.EstimateFile'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: ""
+        "400":
+          description: Unexpected body
+          schema:
+            $ref: '#/definitions/err.Message'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "403":
+          description: if you are not admin
+          schema:
+            $ref: '#/definitions/err.Message'
+        "404":
+          description: Don't find milestone with this id
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Failed to save estimate
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: add estimate to milestone
+      tags:
+      - estimate
+  /v1/estimate/{milestone_id}:
+    delete:
+      description: delete estimate from database
+      parameters:
+      - description: should be uint
+        in: path
+        name: milestone_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "403":
+          description: if you are not admin
+          schema:
+            $ref: '#/definitions/err.Message'
+        "404":
+          description: estimate not found
+          schema:
+            $ref: '#/definitions/err.Message'
+        "409":
+          description: some problems with microfileservice
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Failed to delete estimate
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: delete estimate from database
+      tags:
+      - estimate
+  /v1/issues:
+    get:
+      description: return issues according to query params
+      parameters:
+      - description: represent how mush skip first issues
+        in: query
+        name: start
+        type: integer
+      - description: set limit of getting issues standart and max 50
+        in: query
+        name: count
+        type: integer
+      - description: search to name of issues, title of milestones and repository
+          names
+        in: query
+        name: name
+        type: string
+      - description: search of label name of issues
+        in: query
+        name: tag
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/milestone.IssuesWithMilestoneID'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: return issues
+      tags:
+      - issues
+  /v1/issues/labels:
+    get:
+      description: return all unique labels of issues
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: return labels
+      tags:
+      - issues
+  /v1/projects:
     get:
       description: |-
         return a projects you can filter count of them
@@ -288,7 +432,7 @@ paths:
         in: query
         name: start
         type: integer
-      - description: represent a limit of projects
+      - description: represent a limit of projects, standart and max count equal 50
         in: query
         name: count
         type: integer
@@ -344,7 +488,7 @@ paths:
       summary: Update all projects
       tags:
       - projects
-  /api/projects/{id}:
+  /v1/projects/{id}:
     delete:
       description: delete project by id and all milestones in it
       parameters:
@@ -361,7 +505,7 @@ paths:
           schema:
             $ref: '#/definitions/err.Message'
         "403":
-          description: if you are nor admin
+          description: if you are not admin
           schema:
             $ref: '#/definitions/err.Message'
         "404":
@@ -409,150 +553,7 @@ paths:
       summary: return project according to id
       tags:
       - projects
-  /api/projects/estimate:
-    post:
-      consumes:
-      - application/json
-      description: |-
-        add estimate to milestone
-        if estimate is exist for milesotne will replace it
-      parameters:
-      - description: estimate that you want to add
-        in: body
-        name: estimate
-        required: true
-        schema:
-          $ref: '#/definitions/estimate.EstimateFile'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: ""
-        "400":
-          description: Unexpected body
-          schema:
-            $ref: '#/definitions/err.Message'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/err.Message'
-        "403":
-          description: if you are nor admin
-          schema:
-            $ref: '#/definitions/err.Message'
-        "404":
-          description: Don't find milestone with this id
-          schema:
-            $ref: '#/definitions/err.Message'
-        "500":
-          description: Failed to save estimate
-          schema:
-            $ref: '#/definitions/err.Message'
-      summary: add estimate to milestone
-      tags:
-      - estimate
-  /api/projects/estimate/{milestone_id}:
-    delete:
-      description: delete estimate from database
-      parameters:
-      - description: should be uint
-        in: path
-        name: milestone_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: ""
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/err.Message'
-        "403":
-          description: if you are nor admin
-          schema:
-            $ref: '#/definitions/err.Message'
-        "404":
-          description: estimate not found
-          schema:
-            $ref: '#/definitions/err.Message'
-        "409":
-          description: some problems with microfileservice
-          schema:
-            $ref: '#/definitions/err.Message'
-        "500":
-          description: Failed to delete estimate
-          schema:
-            $ref: '#/definitions/err.Message'
-      summary: delete estimate from database
-      tags:
-      - estimate
-  /api/projects/issues:
-    get:
-      description: return issues according to query params
-      parameters:
-      - description: represent how mush skip first issues
-        in: query
-        name: start
-        type: integer
-      - description: set limit of getting issues
-        in: query
-        name: count
-        type: integer
-      - description: search to name of issues, title of milestones and repository
-          names
-        in: query
-        name: name
-        type: string
-      - description: search of label name of issues
-        in: query
-        name: tag
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/milestone.IssuesWithMilestoneID'
-            type: array
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/err.Message'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/err.Message'
-      summary: return issues
-      tags:
-      - issues
-  /api/projects/issues/labels:
-    get:
-      description: return all unique labels of issues
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              type: string
-            type: array
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/err.Message'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/err.Message'
-      summary: return labels
-      tags:
-      - issues
-  /api/projects/tags:
+  /v1/tags:
     get:
       description: return all tags
       produces:
@@ -575,7 +576,7 @@ paths:
       summary: return all tags
       tags:
       - tags
-  /api/projects/task:
+  /v1/task:
     post:
       consumes:
       - application/json
@@ -603,7 +604,7 @@ paths:
           schema:
             $ref: '#/definitions/err.Message'
         "403":
-          description: if you are nor admin
+          description: if you are not admin
           schema:
             $ref: '#/definitions/err.Message'
         "404":
@@ -617,7 +618,7 @@ paths:
       summary: add func task to milestone
       tags:
       - functask
-  /api/projects/task/{milestone_id}:
+  /v1/task/{milestone_id}:
     delete:
       description: delete functask from database
       parameters:
@@ -636,7 +637,7 @@ paths:
           schema:
             $ref: '#/definitions/err.Message'
         "403":
-          description: if you are nor admin
+          description: if you are not admin
           schema:
             $ref: '#/definitions/err.Message'
         "404":
