@@ -52,5 +52,10 @@ Install [Docker](https://www.docker.com) and in ```src``` write:
 docker-compose up --build
 ```
 
+If you want to launch with mongodb
+```
+docker-compose -f docker-compose.override.yml up --build
+```
+
 If you’re using Docker natively on Linux, Docker Desktop for Mac, or Docker Desktop for Windows, then the server will be running on
 ```http://localhost:8080```
