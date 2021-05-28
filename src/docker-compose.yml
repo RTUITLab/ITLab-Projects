@@ -1,0 +1,9 @@
+version: "3.7"
+services:
+    api:
+        build: "./ITLab-Projects"
+        container_name: "api"
+        volumes: 
+            - ./.env:/root/.env
+        ports: 
+            - 8080:8080

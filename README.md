@@ -1,60 +1,61 @@
 # ITLab-Projects
-Service for listing RTUITLab projects work
+---
+[REST API requests for postman](https://www.getpostman.com/collections/4b43b349d416cb99319e)
 
-[![Build Status](https://dev.azure.com/rtuitlab/RTU%20IT%20Lab/_apis/build/status/ITLab/ITLab-Projects?branchName=master)](https://dev.azure.com/rtuitlab/RTU%20IT%20Lab/_build/latest?definitionId=139&branchName=master)
+## Documantation 
+Can be open directly by swagger. All swagger files located in ```src/ITLab-Projects/docs```.
+Or if the service is running in default settings http://localhost:8080/api/projects/swagger/
 
-REST API requests: https://www.postman.com/collections/a312d4a3f8da79bacc50
 ## Configuration
+File ```src/.env``` for laucnh from docker must contain:
+```.env
+# DATABASE Settings
+MONGO_INITDB_ROOT_USERNAME=username
+MONGO_INITDB_ROOT_PASSWORD=password
+MONGO_INITDB_DATABASE=example_database
 
-File ```src/api/auth_config.json``` must contain next content:
-
-```js
-{
-  "AuthOptions": {
-    "keyUrl": "https://examplesite/files/jwks.json", //url to jwks.json | env: ITLABPROJ_KEYURL
-    "audience": "example_audience", //audince for JWT | env: ITLABPROJ_AUDIENCE
-    "issuer" : "https://exampleissuersite.com", //issuer for JWT | env: ITLABPROJ_ISSUER
-    "scope" : "my_scope", //required scope for JWT | env: ITLABPROJ_SCOPE
-    "Github": {
-          "accessToken" : "github_access_token" // | env: ITLABPROJ_GHACCESSTOKEN
-    },
-    "Gitlab": {
-          "accessToken" : "gitlab_access_token"
-    }
-  }
-}
+# App settings
+ITLAB_PROJECTS_DBURI=mongodb://username:password@host:port/example_database
+# database name for tests
+ITLAB_PROJECTS_DBURI_TEST=mongodb://username:password@host:port/example_databaseTest
+ITLAB_PROJECTS_ACCESSKEY=some_access_key
+ITLABPROJ_ROLES="role role.admin"
+# url to jwks.json
+ITLABPROJ_KEYURL=https://example.com
+# audince for JW
+ITLABPROJ_AUDIENCE=audiance
+# issuer for JWT
+ITLABPROJ_ISSUER=https://example.com
+ITLAB_PROJECTS_APPPORT=8080
+# Test mode disable jwt validation and open /debug/pprof/ handlers to check app
+ITLAB_PROJECTS_TESTMODE=false
+# How many times will the projects be updated, 
+# if it does not exist, it will not be updated itself
+ITLAB_PROJECTS_UPDATETIME=2h
 ```
+If you want run app directly from Go, copy this ```.env``` file to ```src/ITLab-Projects```
 
-File ```src/api/config.json``` must contain next content:
-
-```js
-{
-  "DbOptions": {
-    "uri": "mongodb://user:password@localhost:27017/ITLabProjects"    // env: ITLABPROJ_URI
-  },
-  "AppOptions": {
-    "appPort": "8080", // env: ITLABPROJ_APPPORT
-    "testMode": false,      //testMode=true disables jwt validation | env: ITLABPROJ_TESTMODE
-    "projectFileBranch": "develop", //on which branch project_info.json is situated | env: ITLABPROJ_PROJFILEBRANCH
-    "elemsPerPage" : 40     //content is displayed with pagination | env: ITLABPROJ_ELEMSPERPAGE
-  }
-}
-```
-
-## Build 
+## Build
 ### Requirements
-- Go 1.13.8+
+- Go 1.15+
 
-In ```src``` directory:
+in ```src/ITLab-Projects``` directory:
 ```
-go build main.go
+go build -o main
 ./main
 ```
-## Build using Docker
 
-Install Docker and in ```src``` directory write this code:
+## Build using docker
+
+Install [Docker](https://www.docker.com) and in ```src``` write:
 ```
-docker-compose up -d
+docker-compose up --build
 ```
+
+If you want to launch with mongodb
+```
+docker-compose -f docker-compose.override.yml up --build
+```
+
 If you’re using Docker natively on Linux, Docker Desktop for Mac, or Docker Desktop for Windows, then the server will be running on
 ```http://localhost:8080```
