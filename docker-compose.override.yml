@@ -5,6 +5,17 @@ services:
       context: "${BACK_PROJECTS_CONTEXT-.}/src/ITLab-Projects"
     ports:
       - 8080:8080
+    environment:
+      ITLAB_PROJECTS_DBURI: mongodb://root:root@db:27017/itlab-projects
+      ITLAB_PROJECTS_DBURI_TEST: mongodb://root:root@db:27017/itlab-projects-test
+      ITLAB_PROJECTS_ACCESSKEY: some_access_key
+      ITLABPROJ_ROLES: "projects projects.admin"
+      ITLABPROJ_KEYURL: https://example.com
+      ITLABPROJ_AUDIENCE: audiance
+      ITLABPROJ_ISSUER: https://example.com
+      ITLAB_PROJECTS_APPPORT: 8080
+      ITLAB_PROJECTS_TESTMODE: "false"
+      ITLAB_PROJECTS_UPDATETIME: 2h
   db:
     image: "mongo:latest"
     ports:
@@ -12,6 +23,6 @@ services:
     volumes:
       - ./mongodb_data:/data/db
     environment:
-      MONGO_INITDB_ROOT_USERNAME: "${MONGO_INITDB_ROOT_USERNAME}"
-      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_INITDB_ROOT_PASSWORD}"
-      MONGO_INITDB_DATABASE: "${MONGO_INITDB_DATABASE}"
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: itlab-projects
