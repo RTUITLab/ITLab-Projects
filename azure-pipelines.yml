@@ -1,0 +1,90 @@
+name: $(BuildID)-$(Build.SourceBranchName)
+
+resources:
+- repo: self
+
+variables:
+  CGO_ENABLED: 0
+  GOOS: linux
+  ${{ if notIn(variables['Build.SourceBranchName'], 'master', 'develop') }}:
+    buildImage: false
+    deployService: false
+    deployEnvironment: 'no'
+    imageTags: 'no'
+    serviceName: 'no'
+  ${{ if eq(variables['Build.SourceBranchName'], 'develop') }}:
+    buildImage: true
+    deployService: true
+    deployEnvironment: development
+    imageTags: |
+      $(Build.BuildId)
+      develop
+    serviceName: itlab-develop_projects-back
+  ${{ if eq(variables['Build.SourceBranchName'], 'master') }}:
+    buildImage: true
+    deployService: true
+    deployEnvironment: production
+    imageTags: |
+      $(Build.BuildId)
+      latest
+    serviceName: itlab_projects-back
+
+stages:
+- stage: Build
+  displayName: Build image
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: Go@0
+      displayName: build
+      inputs:
+        command: 'build'
+        arguments: '-a -installsuffix cgo -o $(Build.ArtifactStagingDirectory)/main -v'
+        workingDirectory: 'src'
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: 'deploy'
+        Contents: 'Dockerfile'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+        OverWrite: true
+    - publish: $(Build.ArtifactStagingDirectory)
+      artifact: itlab-projects-build
+- stage: buildImage
+  condition: and(succeeded(), ${{variables.buildImage}})
+  displayName: Pack docker image
+  jobs:
+  - job: build
+    displayName: Build
+    steps:
+    - download: current
+      artifact: itlab-projects-build
+    - task: Docker@2
+      inputs:
+        containerRegistry: 'rtuitlab connection by admin'
+        repository: 'rtuitlab/itlab-projects-back'
+        command: 'buildAndPush'
+        Dockerfile: '$(Pipeline.Workspace)/itlab-projects-build/Dockerfile'
+        buildContext: '$(Pipeline.Workspace)/itlab-projects-build'
+        tags: ${{variables.ImageTags}}
+- stage: deploy
+  displayName: Deploy
+  condition: and(succeeded(), ${{variables.deployService}})
+  jobs:
+    - deployment: Deploy
+      pool:
+        vmImage: 'ubuntu-latest'
+      environment: ${{variables.deployEnvironment}}
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - download: none
+              - task: SSH@0
+                inputs:
+                  sshEndpoint: 'swarm manager'
+                  runOptions: 'commands'
+                  commands: 'docker service update --image rtuitlab/itlab-projects-back:$(Build.BuildId) ${{variables.serviceName}} --with-registry-auth'
+                  readyTimeout: '20000'
