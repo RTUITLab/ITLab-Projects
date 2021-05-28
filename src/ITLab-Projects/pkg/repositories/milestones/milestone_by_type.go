@@ -1,7 +1,6 @@
 package milestones
 
 import (
-	"github.com/sirupsen/logrus"
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -100,26 +99,23 @@ func (m *MilestoneByType) SaveAndUpdatenUnfind(
 }
 
 func (m *MilestoneByType) buildFilter(v interface{}) interface{} {
-	ms, ok := v.([]model.MilestoneInRepo)
-	if !ok {
-		logrus.WithFields(
-			logrus.Fields{
-				"package": "repositories/milestones",
-				"func": "buildfilter",
-			},
-		).Panic()
-	}
-
 	var ids []uint64
-	for _, m := range ms {
-		ids = append(ids, m.Milestone.ID)
+
+	if ms, ok := v.([]*model.MilestoneInRepo); ok {
+		for _, m := range ms {
+			ids = append(ids, m.Milestone.ID)
+		}
+	} else if ms, ok := v.([]model.MilestoneInRepo); ok {
+		for _, m := range ms {
+			ids = append(ids, m.Milestone.ID)
+		}
 	}
 
 	return bson.M{"id": bson.M{"$nin": ids}}
 }
 
 func (m *MilestoneByType) save(ctx context.Context, v interface{}) error {
-	milestone, _ := v.(model.MilestoneInRepo)
+	milestone := getPointer(v)
 
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"id": milestone.Milestone.ID}

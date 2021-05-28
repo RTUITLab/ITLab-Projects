@@ -1,8 +1,11 @@
 package updater
 
 import (
+	"context"
 	"time"
 )
+
+type UpdateKey struct{}
 
 type Updater struct {
 	*time.Ticker
@@ -39,4 +42,20 @@ func (u *Updater) Reset() {
 	u.reset <- struct{}{}
 	u.Ticker.Reset(u.d)
 	u.reset <- struct{}{}
+}
+
+func WithUpdateContext(ctx context.Context) context.Context {
+	return context.WithValue(
+		ctx,
+		UpdateKey{},
+		struct{}{},
+	)
+}
+
+func IsUpdateContext(ctx context.Context) bool {
+	val := ctx.Value(UpdateKey{})
+
+	_, ok := val.(struct{})
+
+	return ok
 }

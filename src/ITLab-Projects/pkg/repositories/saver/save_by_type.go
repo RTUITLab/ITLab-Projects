@@ -14,6 +14,7 @@ type SaveByType struct {
 	_type 		mgm.Model
 	save 		saveWithReplaceFunc
 	t			reflect.Type
+	tPtr		reflect.Type
 }
 
 func (s *SaveByType) Save(ctx context.Context, v interface{}) error {
@@ -42,16 +43,24 @@ func NewSaverByType(
 		).Panic()
 	}
 	s.t = t
+	s.tPtr = reflect.PtrTo(t)
 
 	saveFunc := func(ctx context.Context, v interface{}) error {
 		typeOfV := reflect.TypeOf(v)
 
 		if typeOfV.AssignableTo(t) {
 			return fun(ctx, v)
-		} else if typeOfV.AssignableTo(reflect.PtrTo(t)) {
-			v = reflect.ValueOf(v).Elem().Interface()
+		} else if typeOfV.AssignableTo(s.tPtr) {
 			return fun(ctx, v)
 		} else if typeOfV.AssignableTo(reflect.SliceOf(t)) {
+			slice := reflect.ValueOf(v)
+			for i := 0; i < slice.Len(); i++ {
+				value := slice.Index(i).Addr().Interface()
+				if err := fun(ctx, value); err != nil {
+					return err
+				}
+			}
+		} else if typeOfV.AssignableTo(reflect.SliceOf(s.tPtr)) {
 			slice := reflect.ValueOf(v)
 			for i := 0; i < slice.Len(); i++ {
 				value := slice.Index(i).Interface()
@@ -61,8 +70,8 @@ func NewSaverByType(
 			}
 		} else {
 			return fmt.Errorf(
-				"Unexpected Type %T, Expected %s or %s or %s",
-				v, t, reflect.PtrTo(t), reflect.SliceOf(t),
+				"Unexpected Type %T, Expected %s or %s or %s or %s",
+				v, t, reflect.PtrTo(t), reflect.SliceOf(t), reflect.SliceOf(s.tPtr),
 			)
 		}
 
@@ -76,13 +85,13 @@ func NewSaverByType(
 
 func (s *SaveByType) makeSliceOfValue(value reflect.Value) interface{} {
 	if value.Type().AssignableTo(
-		reflect.PtrTo(s.t),
+		s.t,
 	) {
-		value = value.Elem()
+		value = value.Addr()
 	}
 
 	if value.Type().AssignableTo(
-		s.t,
+		s.tPtr,
 	) {
 		slice := reflect.MakeSlice(s.t, 0, 1)
 		slice = reflect.Append(slice, value)
@@ -128,15 +137,15 @@ func (swd *SaveWithDeleteByType) SaveAndDeletedUnfind(
 
 	value := reflect.ValueOf(v)
 	if value.Type().AssignableTo(
-		reflect.PtrTo(swd.s.t),
+		swd.s.t,
 	) {
-		value = value.Elem()
+		value = value.Addr()
 	}
 
 	if value.Type().AssignableTo(
-		swd.s.t,
+		swd.s.tPtr,
 	) {
-		value = reflect.MakeSlice(swd.s.t, 0, 1)
+		value = reflect.MakeSlice(swd.s.tPtr, 0, 1)
 		value = reflect.Append(value, reflect.ValueOf(v))
 	}
 
@@ -187,7 +196,7 @@ func NewSaveWithUpdateByType(
 
 func(swu *SaveWithUpdateByType) SaveAndUpdatenUnfind(
 	ctx context.Context, 
-	v interface{},	// value that we  
+	v interface{},	// value that we  save
 	updateFilter interface{},	// filter where you change field
 ) error {
 	if err := swu.s.Save(ctx, v); err != nil {

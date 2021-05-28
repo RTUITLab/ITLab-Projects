@@ -58,8 +58,10 @@ func (d *DeleteByType) DeleteOne(
 		return err
 	}
 
-	if err := f(res); err != nil {
-		return err
+	if f != nil {
+		if err := f(res); err != nil {
+			return err
+		}
 	}
 
 	return nil

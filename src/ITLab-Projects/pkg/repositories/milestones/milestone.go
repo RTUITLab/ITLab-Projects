@@ -52,7 +52,7 @@ func New(collection *mongo.Collection) Milestoner {
 }
 
 func (m *MilestoneRepository) buildFilter(v interface{}) interface{} {
-	ms, ok := v.([]model.MilestoneInRepo)
+	ms, ok := v.([]*model.MilestoneInRepo)
 	if !ok {
 		logrus.WithFields(
 			logrus.Fields{
@@ -84,7 +84,7 @@ func (m *MilestoneRepository) Save(ctx context.Context, milestone interface{}) e
 }
 
 func (m *MilestoneRepository) save(ctx context.Context, v interface{}) error {
-	milestone, _ := v.(model.MilestoneInRepo)
+	milestone := getPointer(v)
 
 	opts := options.Replace().SetUpsert(true)
 	filter := bson.M{"id": milestone.Milestone.ID}
@@ -95,6 +95,15 @@ func (m *MilestoneRepository) save(ctx context.Context, v interface{}) error {
 	}
 
 	return nil
+}
+
+func getPointer(v interface{}) *model.MilestoneInRepo {
+	m, ok := v.(*model.MilestoneInRepo)
+	if !ok {
+		_m, _ := v.(model.MilestoneInRepo)
+		m = &_m
+	}
+	return m
 }
 
 func (m *MilestoneRepository) SaveAndDeletedUnfind(

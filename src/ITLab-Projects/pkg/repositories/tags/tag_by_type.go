@@ -9,7 +9,6 @@ import (
 	"github.com/ITLab-Projects/pkg/repositories/getter"
 	"github.com/ITLab-Projects/pkg/repositories/saver"
 	"github.com/Kamva/mgm"
-	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -52,7 +51,7 @@ func NewByType(
 }
 
 func (tg *TagsByType) save(ctx context.Context, v interface{}) error {
-	tag, _ := v.(model.Tag)
+	tag := getPointer(v)
 
 	_, err := mgm.Coll(tg.model).ReplaceOne(
 		ctx,
@@ -68,21 +67,18 @@ func (tg *TagsByType) save(ctx context.Context, v interface{}) error {
 }
 
 func (tg *TagsByType) buildFilter(v interface{}) interface{} {
-	tgs, ok := v.([]model.Tag)
-	if !ok {
-		log.WithFields(
-			log.Fields{
-				"package": "repositories/tags",
-				"func": "buildFilter",
-				"err": "Unable to cast type",
-			},
-		).Panic()
+	var ids []uint64
+
+	if tgs, ok := v.([]*model.Tag); ok {
+		for _, t := range tgs {
+			ids = append(ids, t.RepoID)
+		}
+	} else if tgs, ok := v.([]model.Tag); ok {
+		for _, t := range tgs {
+			ids = append(ids, t.RepoID)
+		}
 	}
 
-	var ids []uint64
-	for _, t := range tgs {
-		ids = append(ids, t.RepoID)
-	}
 
 	return bson.M{"repo_id": bson.M{"$nin": ids}}
 }

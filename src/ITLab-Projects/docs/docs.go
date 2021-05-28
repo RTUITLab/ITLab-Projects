@@ -24,7 +24,220 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/projects/": {
+        "/v1/estimate": {
+            "post": {
+                "description": "add estimate to milestone\nif estimate is exist for milesotne will replace it",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "estimate"
+                ],
+                "summary": "add estimate to milestone",
+                "parameters": [
+                    {
+                        "description": "estimate that you want to add",
+                        "name": "estimate",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/estimate.EstimateFile"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Unexpected body",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "403": {
+                        "description": "if you are not admin",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "404": {
+                        "description": "Don't find milestone with this id",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to save estimate",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/estimate/{milestone_id}": {
+            "delete": {
+                "description": "delete estimate from database",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "estimate"
+                ],
+                "summary": "delete estimate from database",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "should be uint",
+                        "name": "milestone_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "403": {
+                        "description": "if you are not admin",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "404": {
+                        "description": "estimate not found",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "409": {
+                        "description": "some problems with microfileservice",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete estimate",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/issues": {
+            "get": {
+                "description": "return issues according to query params",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "issues"
+                ],
+                "summary": "return issues",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "represent how mush skip first issues",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "set limit of getting issues standart and max 50",
+                        "name": "count",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "search to name of issues, title of milestones and repository names",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "search of label name of issues",
+                        "name": "tag",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/milestone.IssuesWithMilestoneID"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/issues/labels": {
+            "get": {
+                "description": "return all unique labels of issues",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "issues"
+                ],
+                "summary": "return labels",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/projects": {
             "get": {
                 "description": "return a projects you can filter count of them\ntags, name",
                 "produces": [
@@ -43,7 +256,7 @@ var doc = `{
                     },
                     {
                         "type": "integer",
-                        "description": "represent a limit of projects",
+                        "description": "represent a limit of projects, standart and max count equal 50",
                         "name": "count",
                         "in": "query"
                     },
@@ -121,372 +334,7 @@ var doc = `{
                 }
             }
         },
-        "/api/projects/estimate": {
-            "post": {
-                "description": "add estimate to milestone\nif estimate is exist for milesotne will replace it",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "estimate"
-                ],
-                "summary": "add estimate to milestone",
-                "parameters": [
-                    {
-                        "description": "estimate that you want to add",
-                        "name": "estimate",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/estimate.EstimateFile"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": ""
-                    },
-                    "400": {
-                        "description": "Unexpected body",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "403": {
-                        "description": "if you are nor admin",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "404": {
-                        "description": "Don't find milestone with this id",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to save estimate",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/projects/estimate/{milestone_id}": {
-            "delete": {
-                "description": "delete estimate from database",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "estimate"
-                ],
-                "summary": "delete estimate from database",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "should be uint",
-                        "name": "milestone_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "403": {
-                        "description": "if you are nor admin",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "404": {
-                        "description": "estimate not found",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "409": {
-                        "description": "some problems with microfileservice",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to delete estimate",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/projects/issues": {
-            "get": {
-                "description": "return issues according to query params",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "issues"
-                ],
-                "summary": "return issues",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "represent how mush skip first issues",
-                        "name": "start",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "set limit of getting issues",
-                        "name": "count",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "search to name of issues, title of milestones and repository names",
-                        "name": "name",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "search of label name of issues",
-                        "name": "tag",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/milestone.IssuesWithMilestoneID"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/projects/issues/labels": {
-            "get": {
-                "description": "return all unique labels of issues",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "issues"
-                ],
-                "summary": "return labels",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/projects/tags": {
-            "get": {
-                "description": "return all tags",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "tags"
-                ],
-                "summary": "return all tags",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/tag.Tag"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/projects/task": {
-            "post": {
-                "description": "add func task to milestone\nif func task is exist for milesotne will replace it",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "functask"
-                ],
-                "summary": "add func task to milestone",
-                "parameters": [
-                    {
-                        "description": "function task that you want to add",
-                        "name": "functask",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/functask.FuncTaskFile"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": ""
-                    },
-                    "400": {
-                        "description": "Unexpected body",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "403": {
-                        "description": "if you are nor admin",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "404": {
-                        "description": "Don't find milestone with this id",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to save functask",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/projects/task/{milestone_id}": {
-            "delete": {
-                "description": "delete functask from database",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "functask"
-                ],
-                "summary": "delete functask from database",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "should be uint",
-                        "name": "milestone_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": ""
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "403": {
-                        "description": "if you are nor admin",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "404": {
-                        "description": "func task not found",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "409": {
-                        "description": "some problems with microfileservice",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "500": {
-                        "description": "Failed to delete func task",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/projects/{id}": {
+        "/v1/projects/{id}": {
             "get": {
                 "description": "return a project according to id value in path",
                 "produces": [
@@ -558,7 +406,7 @@ var doc = `{
                         }
                     },
                     "403": {
-                        "description": "if you are nor admin",
+                        "description": "if you are not admin",
                         "schema": {
                             "$ref": "#/definitions/err.Message"
                         }
@@ -577,6 +425,158 @@ var doc = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/tags": {
+            "get": {
+                "description": "return all tags",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tags"
+                ],
+                "summary": "return all tags",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/tag.Tag"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/task": {
+            "post": {
+                "description": "add func task to milestone\nif func task is exist for milesotne will replace it",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "functask"
+                ],
+                "summary": "add func task to milestone",
+                "parameters": [
+                    {
+                        "description": "function task that you want to add",
+                        "name": "functask",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/functask.FuncTaskFile"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Unexpected body",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "403": {
+                        "description": "if you are not admin",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "404": {
+                        "description": "Don't find milestone with this id",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to save functask",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/task/{milestone_id}": {
+            "delete": {
+                "description": "delete functask from database",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "functask"
+                ],
+                "summary": "delete functask from database",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "should be uint",
+                        "name": "milestone_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "403": {
+                        "description": "if you are not admin",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "404": {
+                        "description": "func task not found",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "409": {
+                        "description": "some problems with microfileservice",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to delete func task",
                         "schema": {
                             "$ref": "#/definitions/err.Message"
                         }
@@ -1020,7 +1020,7 @@ type swaggerInfo struct {
 var SwaggerInfo = swaggerInfo{
 	Version:     "1.0",
 	Host:        "",
-	BasePath:    "",
+	BasePath:    "/api/projects",
 	Schemes:     []string{},
 	Title:       "ITLab-Projects API",
 	Description: "This is a server to get projects from github",
