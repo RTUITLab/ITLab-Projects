@@ -34,7 +34,7 @@ var RepoImp *repoimpl.RepoImp
 func init() {
 	logrus.SetLevel(logrus.DebugLevel)
 	if err := godotenv.Load("../../../../.env"); err != nil {
-		panic(err)
+		logrus.Warn("Don't find env")
 	}
 
 	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI_TEST")

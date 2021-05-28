@@ -1,6 +1,7 @@
 package projects_test
 
 import (
+	"github.com/sirupsen/logrus"
 	mre "github.com/ITLab-Projects/pkg/models/realese"
 	mt "github.com/ITLab-Projects/pkg/models/tag"
 
@@ -41,7 +42,7 @@ var RepoImp *repoimpl.RepoImp
 
 func init() {
 	if err := godotenv.Load("../../../../.env"); err != nil {
-		panic(err)
+		logrus.Warn("Don't find env")
 	}
 
 	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI_TEST")

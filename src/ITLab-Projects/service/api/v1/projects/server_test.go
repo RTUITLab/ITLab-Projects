@@ -1,6 +1,7 @@
 package projects_test
 
 import (
+	"github.com/sirupsen/logrus"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -39,7 +40,7 @@ var Router *mux.Router
 var Requester githubreq.Requester
 func init() {
 	if err := godotenv.Load("../../../../.env"); err != nil {
-		panic(err)
+		logrus.Warn("Don't find env")
 	}
 
 	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI_TEST")

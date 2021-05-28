@@ -1,6 +1,7 @@
 package tags_test
 
 import (
+	"github.com/sirupsen/logrus"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -28,7 +29,7 @@ import (
 var Router *mux.Router
 func init() {
 	if err := godotenv.Load("../../../../.env"); err != nil {
-		panic(err)
+		logrus.Warn("Don't find env")
 	}
 
 	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI_TEST")
