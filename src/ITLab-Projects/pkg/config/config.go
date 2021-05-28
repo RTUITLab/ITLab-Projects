@@ -57,7 +57,7 @@ type AppConfig struct {
 func GetConfig() *Config {
 	var config Config
 	if err := godotenv.Load("./.env"); err != nil {
-		panic(err)
+		log.Warn("Don't find .env file")
 	}
 
 	if err := envconfig.Process("itlab_projects", &config); err != nil {
