@@ -2,3 +2,24 @@ version: "3.8"
 services:
   projects-back:
     image: rtuitlab/itlab-projects-back:${ITLAB_SERVICE_TAG-latest}
+    environment:
+      ITLAB_PROJECTS_DBURI=${ITLAB_PROJECTS_MONGO_DB?Provide database url ITLAB_PROJECTS_MONGO_DB}
+      ITLAB_PROJECTS_DBURI_TEST=${ITLAB_PROJECTS_MONGO_DB_TEST?Provide testing database url ITLAB_PROJECTS_MONGO_DB_TEST}
+      ITLAB_PROJECTS_ACCESSKEY=${ITLAB_PROJECTS_GH_ACCESS_TOKEN?Provide github access token ITLAB_PROJECTS_GH_ACCESS_TOKEN}
+      ITLABPROJ_ROLES="projects projects.admin"
+      ITLABPROJ_KEYURL=${ITLAB_PROJECTS_JWKS_URL?Provide url to jwks settings ITLAB_PROJECTS_JWKS_URL}
+      ITLABPROJ_AUDIENCE=itlab
+      ITLABPROJ_ISSUER=${ITLAB_PROJECTS_ISSUER?Provide token issuer ITLAB_PROJECTS_ISSUER}
+      ITLAB_PROJECTS_APPPORT=${ITLAB_PROJECTS_APP_PORT?Provide app port ITLAB_PROJECTS_APP_PORT}
+      ITLAB_PROJECTS_TESTMODE=${ITLAB_PROJECTS_APP_TEST?Provide true if app need to be tested ITLAB_PROJECTS_APP_TEST}
+      ITLAB_PROJECTS_UPDATETIME=${ITLAB_PROJECTS_UPDATE_TIME-2h}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 250M

@@ -4,7 +4,7 @@ services:
     build:
       context: "${BACK_PROJECTS_CONTEXT-.}/src/ITLab-Projects"
     ports:
-      - 8080:8080
+      - 5505:5505
     environment:
       ITLAB_PROJECTS_DBURI: mongodb://root:root@db:27017/itlab-projects
       ITLAB_PROJECTS_DBURI_TEST: mongodb://root:root@db:27017/itlab-projects-test
@@ -13,13 +13,13 @@ services:
       ITLABPROJ_KEYURL: https://example.com
       ITLABPROJ_AUDIENCE: audiance
       ITLABPROJ_ISSUER: https://example.com
-      ITLAB_PROJECTS_APPPORT: 8080
-      ITLAB_PROJECTS_TESTMODE: "false"
+      ITLAB_PROJECTS_APPPORT: 5505
+      ITLAB_PROJECTS_TESTMODE: "true"
       ITLAB_PROJECTS_UPDATETIME: 2h
   db:
     image: "mongo:latest"
     ports:
-      - 27017:27017
+      - 27018:27017
     volumes:
       - ./mongodb_data:/data/db
     environment:
