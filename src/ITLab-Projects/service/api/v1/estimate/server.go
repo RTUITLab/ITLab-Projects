@@ -1,6 +1,7 @@
 package estimate
 
 import (
+	serverbefore "github.com/ITLab-Projects/service/serverbefore/http"
 	"github.com/ITLab-Projects/service/api/v1/errorencoder"
 	httptransport "github.com/go-kit/kit/transport/http"
 	"context"
@@ -30,6 +31,9 @@ func NewHTTPServer(
 			httptransport.ServerErrorEncoder(
 				errorencoder.ErrorEncoder,
 			),
+			httptransport.ServerBefore(
+				serverbefore.TokenFromReq,
+			),
 		),
 	).Methods("POST").Name(AddEstimateName)
 
@@ -41,6 +45,9 @@ func NewHTTPServer(
 			encodeResponce,
 			httptransport.ServerErrorEncoder(
 				errorencoder.ErrorEncoder,
+			),
+			httptransport.ServerBefore(
+				serverbefore.TokenFromReq,
 			),
 		),
 	).Methods("DELETE").Name(DeleteEstimateName)

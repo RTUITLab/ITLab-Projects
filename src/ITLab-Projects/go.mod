@@ -27,5 +27,6 @@ require (
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20210421221651-33663a62ff08 // indirect
 	golang.org/x/tools v0.1.0 // indirect
+	google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55
 	gopkg.in/square/go-jose.v2 v2.5.1
 )

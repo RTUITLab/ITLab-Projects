@@ -1,13 +1,15 @@
 package v1
 
 import (
-	"net/http"
-	kl "github.com/go-kit/kit/log/logrus"
 	"context"
+	"net/http"
 	"net/http/pprof"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/go-kit/kit/endpoint"
+	kl "github.com/go-kit/kit/log/logrus"
 
 	"github.com/ITLab-Projects/service/api/v1/estimate"
 	"github.com/ITLab-Projects/service/api/v1/functask"
@@ -38,7 +40,7 @@ type Api struct {
 	MFSRequester	mfsreq.Requester
 	Testmode		bool
 	upd				*updater.Updater
-	Auth 			auth.AuthMiddleware
+	NewAuth			endpoint.Middleware
 
 	projectService	projects.Service
 	issueService	issues.Service
@@ -53,6 +55,14 @@ type Config struct {
 	Config config.AuthConfig
 }
 
+type ServiceEndpoints struct {
+	Issues 		issues.Endpoints
+	Projects 	projects.Endpoints
+	Tags		tags.Endpoints
+	Task		functask.Endpoints
+	Est			estimate.Endpoints
+}
+
 func New(
 	cfg Config,
 	Repository *repositories.Repositories,
@@ -65,9 +75,8 @@ func New(
 		MFSRequester: MFSRequester,
 	}
 
-	a.Auth = auth.New(cfg.Config)
 	a.Testmode = cfg.Testmode
-
+	a.NewAuth = auth.NewGoKitAuth(&cfg.Config)
 	if cfg.UpdateTime != "" {
 		log.Debug("WithUpdater")
 		a.WithUpdater(cfg.UpdateTime)
@@ -189,48 +198,42 @@ func (a *Api) Build(r *mux.Router) {
 		swag.WrapHandler,
 	)
 
+	var endpoints ServiceEndpoints
+	if a.Testmode {
+		endpoints = a._buildEndpoint()
+	} else {
+		endpoints = a.buildEndpoints()
+	}
+
 	projects.NewHTTPServer(
 		context.Background(),
-		projects.MakeEndpoints(a.projectService),
+		endpoints.Projects,
 		projectsR,
 	)
 
 	issues.NewHTTPServer(
 		context.Background(),
-		issues.MakeEndPoints(a.issueService),
+		endpoints.Issues,
 		projectsR,
 	)
 
 	tags.NewHTTPServer(
 		context.Background(),
-		tags.MakeEndpoints(a.tagsService),
+		endpoints.Tags,
 		projectsR,
 	)
 
 	functask.NewHTTPServer(
 		context.Background(),
-		functask.MakeEndPoints(a.taskService),
+		endpoints.Task,
 		projectsR,
 	)
 
 	estimate.NewHTTPServer(
 		context.Background(),
-		estimate.MakeEndPoints(a.estService),
+		endpoints.Est,
 		projectsR,
 	)
-
-	if !a.Testmode {
-		base.Use(mux.MiddlewareFunc(a.Auth))
-	}
-
-	if err := projectsR.Walk(a.BuildMiddlewares); err != nil {
-		log.WithFields(
-			log.Fields{
-				"method": "Build",
-				"err": err,
-			},
-		).Panic("Failed to build")
-	}
 
 	if a.Testmode {
 		r.PathPrefix("/debug/").Handler(http.DefaultServeMux)

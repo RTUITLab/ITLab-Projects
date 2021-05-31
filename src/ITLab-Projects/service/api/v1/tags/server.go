@@ -1,6 +1,7 @@
 package tags
 
 import (
+	serverbefore "github.com/ITLab-Projects/service/serverbefore/http"
 	"context"
 
 	"github.com/ITLab-Projects/service/api/v1/encoder"
@@ -27,6 +28,9 @@ func NewHTTPServer(
 			encoder.EncodeResponce,
 			httptransport.ServerErrorEncoder(
 				errorencoder.ErrorEncoder,
+			),
+			httptransport.ServerBefore(
+				serverbefore.TokenFromReq,
 			),
 		),
 	).Methods("GET").Name(GetAllTagsName)
