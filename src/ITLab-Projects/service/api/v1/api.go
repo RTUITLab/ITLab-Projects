@@ -40,7 +40,6 @@ type Api struct {
 	MFSRequester	mfsreq.Requester
 	Testmode		bool
 	upd				*updater.Updater
-	Auth 			auth.AuthMiddleware
 	NewAuth			endpoint.Middleware
 
 	projectService	projects.Service
@@ -76,7 +75,6 @@ func New(
 		MFSRequester: MFSRequester,
 	}
 
-	a.Auth = auth.New(cfg.Config)
 	a.Testmode = cfg.Testmode
 	a.NewAuth = auth.NewGoKitAuth(&cfg.Config)
 	if cfg.UpdateTime != "" {
@@ -200,7 +198,12 @@ func (a *Api) Build(r *mux.Router) {
 		swag.WrapHandler,
 	)
 
-	endpoints := a.buildEndpoints()
+	var endpoints ServiceEndpoints
+	if a.Testmode {
+		endpoints = a._buildEndpoint()
+	} else {
+		endpoints = a.buildEndpoints()
+	}
 
 	projects.NewHTTPServer(
 		context.Background(),
@@ -231,19 +234,6 @@ func (a *Api) Build(r *mux.Router) {
 		endpoints.Est,
 		projectsR,
 	)
-
-	if !a.Testmode {
-		base.Use(mux.MiddlewareFunc(a.Auth))
-	}
-
-	if err := projectsR.Walk(a.BuildMiddlewares); err != nil {
-		log.WithFields(
-			log.Fields{
-				"method": "Build",
-				"err": err,
-			},
-		).Panic("Failed to build")
-	}
 
 	if a.Testmode {
 		r.PathPrefix("/debug/").Handler(http.DefaultServeMux)
