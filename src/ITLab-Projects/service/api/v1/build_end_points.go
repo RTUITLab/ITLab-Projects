@@ -107,6 +107,42 @@ func (a *Api) buildEndpoints() ServiceEndpoints {
 		a.NewAuth,
 		mgsess.PutMongoSessIntoCtx(),
 	)(endpoints.Tags.GetAllTags)
+	// ----------		----------
 
+	// ---------- Issues ---------- 
+	endpoints.Issues.GetIssues = endpoint.Chain(
+		a.NewAuth,
+		mgsess.PutMongoSessIntoCtx(),
+	)(endpoints.Issues.GetIssues)
+
+	endpoints.Issues.GetLabels = endpoint.Chain(
+		a.NewAuth,
+		mgsess.PutMongoSessIntoCtx(),
+	)(endpoints.Issues.GetLabels)
+	// ----------		----------
+
+	// ---------- Projects ----------
+	endpoints.Projects.DeleteProject = endpoint.Chain(
+		a.NewAuth,
+		auth.EndpointAdminMiddleware(),
+		mgsess.PutMongoSessIntoCtx(),
+	)(endpoints.Projects.DeleteProject)
+
+	endpoints.Projects.GetProject = endpoint.Chain(
+		a.NewAuth,
+		mgsess.PutMongoSessIntoCtx(),
+	)(endpoints.Projects.GetProject)
+
+	endpoints.Projects.GetProjects = endpoint.Chain(
+		a.NewAuth,
+		mgsess.PutMongoSessIntoCtx(),
+	)(endpoints.Projects.GetProjects)
+
+	endpoints.Projects.UpdateProjects = endpoint.Chain(
+		a.NewAuth,
+		auth.EndpointAdminMiddleware(),
+		mgsess.PutMongoSessIntoCtx(),
+	)(endpoints.Projects.UpdateProjects)
+	// ----------		----------
 	return endpoints
 }

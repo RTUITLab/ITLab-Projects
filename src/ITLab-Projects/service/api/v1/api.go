@@ -200,33 +200,35 @@ func (a *Api) Build(r *mux.Router) {
 		swag.WrapHandler,
 	)
 
+	endpoints := a.buildEndpoints()
+
 	projects.NewHTTPServer(
 		context.Background(),
-		projects.MakeEndpoints(a.projectService),
+		endpoints.Projects,
 		projectsR,
 	)
 
 	issues.NewHTTPServer(
 		context.Background(),
-		issues.MakeEndPoints(a.issueService),
+		endpoints.Issues,
 		projectsR,
 	)
 
 	tags.NewHTTPServer(
 		context.Background(),
-		tags.MakeEndpoints(a.tagsService),
+		endpoints.Tags,
 		projectsR,
 	)
 
 	functask.NewHTTPServer(
 		context.Background(),
-		functask.MakeEndPoints(a.taskService),
+		endpoints.Task,
 		projectsR,
 	)
 
 	estimate.NewHTTPServer(
 		context.Background(),
-		estimate.MakeEndPoints(a.estService),
+		endpoints.Est,
 		projectsR,
 	)
 
