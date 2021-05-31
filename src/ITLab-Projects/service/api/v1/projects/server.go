@@ -1,8 +1,9 @@
 package projects
 
 import (
-	serverbefore "github.com/ITLab-Projects/service/serverbefore/http"
 	"context"
+
+	serverbefore "github.com/ITLab-Projects/service/serverbefore/http"
 
 	"github.com/ITLab-Projects/service/api/v1/encoder"
 	"github.com/ITLab-Projects/service/api/v1/errorencoder"
@@ -61,6 +62,9 @@ func NewHTTPServer(
 			httptransport.ServerErrorEncoder(
 				errorencoder.ErrorEncoder,
 			),
+			httptransport.ServerBefore(
+				serverbefore.TokenFromReq,
+			),
 		),
 	).Methods("GET").Name(GetProjectsName)
 
@@ -72,6 +76,9 @@ func NewHTTPServer(
 			encoder.EncodeResponce,
 			httptransport.ServerErrorEncoder(
 				errorencoder.ErrorEncoder,
+			),
+			httptransport.ServerBefore(
+				serverbefore.TokenFromReq,
 			),
 		),
 	).Methods("DELETE").Name(DeleteProjectName)
