@@ -1,10 +1,14 @@
 package mgsess
 
 import (
-	"github.com/ITLab-Projects/pkg/repositories"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+
+	"github.com/ITLab-Projects/pkg/repositories"
+	"github.com/ITLab-Projects/pkg/statuscode"
+	"github.com/go-kit/kit/endpoint"
 
 	e "github.com/ITLab-Projects/pkg/err"
 	"github.com/sirupsen/logrus"
@@ -42,4 +46,37 @@ func PutSessionINTOCtx(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		},
 	)
+}
+
+func PutMongoSessIntoCtx() endpoint.Middleware {
+	return func(next endpoint.Endpoint) endpoint.Endpoint {
+		return func(
+			ctx context.Context, 
+			request interface{},
+		) (response interface{}, err error) {
+			logrus.Debug("Session middleware")
+			sessctx, err := repositories.GetMongoSessionContext(
+				ctx,
+			)
+			if err != nil {
+				logrus.WithFields(
+					logrus.Fields{
+						"pkg": "middlewares/mgsess",
+						"func": "PutMongoSessIntoCtx",
+						"err": err,
+					},
+				).Error()
+				return nil, statuscode.WrapStatusError(
+					fmt.Errorf("faield to get mongosession"),
+					http.StatusInternalServerError,
+				)
+			}
+
+			defer sessctx.EndSession(
+				context.Background(),
+			)
+
+			return next(sessctx, request)
+		}
+	}
 }

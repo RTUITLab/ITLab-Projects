@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"strings"
 	"regexp"
 	"github.com/ITLab-Projects/pkg/conextvalue/rolecontext"
 	"context"
@@ -19,6 +20,24 @@ import (
 )
 
 func NewGoKitAuth(
+	cfg		*config.AuthConfig,
+) endpoint.Middleware {
+	rolesSet := map[string]struct{}{}
+
+	for _, role := range strings.Split(cfg.RolesConfig.Roles, " ") {
+		rolesSet[role] = struct{}{}
+	}
+
+	return newGoKitAuth(
+		cfg,
+		NewRoleGetter(
+			"itlab",
+			rolesSet,
+		),
+	)
+}
+
+func newGoKitAuth(
 	cfg 	*config.AuthConfig,
 	f		getRoleFromClaim,
 ) endpoint.Middleware {

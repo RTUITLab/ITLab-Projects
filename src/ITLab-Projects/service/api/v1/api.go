@@ -1,13 +1,15 @@
 package v1
 
 import (
-	"net/http"
-	kl "github.com/go-kit/kit/log/logrus"
 	"context"
+	"net/http"
 	"net/http/pprof"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/go-kit/kit/endpoint"
+	kl "github.com/go-kit/kit/log/logrus"
 
 	"github.com/ITLab-Projects/service/api/v1/estimate"
 	"github.com/ITLab-Projects/service/api/v1/functask"
@@ -39,6 +41,7 @@ type Api struct {
 	Testmode		bool
 	upd				*updater.Updater
 	Auth 			auth.AuthMiddleware
+	NewAuth			endpoint.Middleware
 
 	projectService	projects.Service
 	issueService	issues.Service
@@ -51,6 +54,14 @@ type Config struct {
 	Testmode 		bool
 	UpdateTime		string
 	Config config.AuthConfig
+}
+
+type ServiceEndpoints struct {
+	Issues 		issues.Endpoints
+	Projects 	projects.Endpoints
+	Tags		tags.Endpoints
+	Task		functask.Endpoints
+	Est			estimate.Endpoints
 }
 
 func New(
@@ -67,7 +78,7 @@ func New(
 
 	a.Auth = auth.New(cfg.Config)
 	a.Testmode = cfg.Testmode
-
+	a.NewAuth = auth.NewGoKitAuth(&cfg.Config)
 	if cfg.UpdateTime != "" {
 		log.Debug("WithUpdater")
 		a.WithUpdater(cfg.UpdateTime)

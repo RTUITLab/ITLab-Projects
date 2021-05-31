@@ -5,8 +5,14 @@ import (
 
 	"github.com/ITLab-Projects/service/middleware/auth"
 	"github.com/ITLab-Projects/service/middleware/mgsess"
+	"github.com/go-kit/kit/endpoint"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/ITLab-Projects/service/api/v1/estimate"
+	"github.com/ITLab-Projects/service/api/v1/functask"
+	"github.com/ITLab-Projects/service/api/v1/issues"
+	"github.com/ITLab-Projects/service/api/v1/projects"
+	"github.com/ITLab-Projects/service/api/v1/tags"
 	"github.com/gorilla/mux"
 )
 
@@ -57,4 +63,50 @@ func (a *Api) BuildMiddlewares(
 	}
 
 	return nil
+}
+
+func (a *Api) buildEndpoints() ServiceEndpoints {
+	endpoints := ServiceEndpoints{
+		Projects: projects.MakeEndpoints(a.projectService),
+		Issues: issues.MakeEndPoints(a.issueService),
+		Tags: tags.MakeEndpoints(a.tagsService),
+		Task: functask.MakeEndPoints(a.taskService),
+		Est: estimate.MakeEndPoints(a.estService),
+	}
+
+	// ---------- Estimate ----------
+	endpoints.Est.AddEstimate = endpoint.Chain(
+		a.NewAuth,
+		auth.EndpointAdminMiddleware(),
+		mgsess.PutMongoSessIntoCtx(),
+	)(endpoints.Est.AddEstimate)
+
+	endpoints.Est.DeleteEstimate = endpoint.Chain(
+		a.NewAuth,
+		auth.EndpointAdminMiddleware(),
+		mgsess.PutMongoSessIntoCtx(),
+	)(endpoints.Est.DeleteEstimate)
+	// ----------		----------
+
+	// ---------- Task ----------
+	endpoints.Task.AddFuncTask = endpoint.Chain(
+		a.NewAuth,
+		auth.EndpointAdminMiddleware(),
+		mgsess.PutMongoSessIntoCtx(),
+	)(endpoints.Task.AddFuncTask)
+
+	endpoints.Task.DeleteFuncTask = endpoint.Chain(
+		a.NewAuth,
+		auth.EndpointAdminMiddleware(),
+		mgsess.PutMongoSessIntoCtx(),
+	)(endpoints.Task.DeleteFuncTask)
+	// ----------		----------
+
+	// ---------- Tags ----------
+	endpoints.Tags.GetAllTags = endpoint.Chain(
+		a.NewAuth,
+		mgsess.PutMongoSessIntoCtx(),
+	)(endpoints.Tags.GetAllTags)
+
+	return endpoints
 }
