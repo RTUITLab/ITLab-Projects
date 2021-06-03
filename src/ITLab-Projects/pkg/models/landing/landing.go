@@ -17,6 +17,7 @@ type LandingCompact struct {
 
 type Landing struct {
 	LandingCompact				`bson:",inline"`
+	Description	string			`json:"description"`
 	Videos		[]string		`json:"videos"`
 	Tech		[]string		`json:"tech"`
 	Developers	[]string		`json:"developers"`
