@@ -50,7 +50,7 @@ func (lp *LandingParser) Parse(data []byte) *landing.Landing {
 				case "Images":
 					l.Image = getImagesURL(ast.GetNextNode(child))
 				case "Videos":
-					l.Videos = getStringList(ast.GetNextNode(child))
+					l.Videos = getLinkList(ast.GetNextNode(child))
 				case "Tags":
 					l.Tags = getStringList(ast.GetNextNode(child))
 				case "Tech":
@@ -93,6 +93,30 @@ func getImagesURL(
 	)
 
 	return urls
+}
+
+func getLinkList(
+	node ast.Node,
+) []string {
+	var links []string
+
+	ast.WalkFunc(
+		node,
+		func(node ast.Node, entering bool) ast.WalkStatus {
+			if !entering {
+				return ast.GoToNext
+			}
+
+			switch n := node.(type) {
+			case *ast.Link:
+				links = append(links, string(n.Destination))
+			}
+
+			return ast.GoToNext
+		},
+	)
+
+	return links
 }
 
 func getStringList(
