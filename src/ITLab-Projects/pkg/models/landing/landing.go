@@ -8,7 +8,7 @@ import (
 
 type LandingCompact struct {
 	mgm.DefaultModel			`json:"-" bson:",inline" swaggerignore:"true"`
-	RepoId			uint64		`json:"repo_id" bson:"repo_id"`
+	RepoId			uint64		`json:"id" bson:"repo_id"`
 	Title			string		`json:"title"`
 	Image			[]string	`json:"image"`
 	Date			time.Time	`json:"date"`

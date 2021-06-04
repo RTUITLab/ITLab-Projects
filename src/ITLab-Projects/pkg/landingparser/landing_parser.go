@@ -25,7 +25,9 @@ func (lp *LandingParser) Parse(data []byte) *landing.Landing {
 
 	node := lp.parser.Parse(data)
 	
-	l := &landing.Landing{}
+	l := &landing.Landing{
+		Videos: []string{},
+	}
 
 	for _, child := range node.GetChildren() {
 		switch n := child.(type) {
