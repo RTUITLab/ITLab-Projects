@@ -1,8 +1,10 @@
 package landing
 
 import (
-	"go.mongodb.org/mongo-driver/mongo"
 	"context"
+	"fmt"
+
+	"go.mongodb.org/mongo-driver/mongo"
 
 	model "github.com/ITLab-Projects/pkg/models/landing"
 	"github.com/ITLab-Projects/pkg/models/tag"
@@ -45,7 +47,7 @@ func (l *LandingRepositoryImp) DeleteLandingsByRepoID(
 	)
 }
 
-func (l *LandingRepositoryImp) GetFilteredLanding(
+func (l *LandingRepositoryImp) GetFilteredLandings(
 	ctx context.Context,
 	filter interface{},
 ) ([]*model.Landing, error) {
@@ -95,7 +97,7 @@ func (l *LandingRepositoryImp) GetIDsOfReposByLandingTags(
 	ctx		context.Context,
 	Tags	[]string,
 ) ([]uint64, error) {
-	ls, err := l.GetFilteredLanding(
+	ls, err := l.GetFilteredLandings(
 		ctx,
 		bson.M{"tags": bson.M{"$in": Tags}},
 	)
@@ -131,4 +133,26 @@ func (l *LandingRepositoryImp) GetLandingTagsByRepoID(
 	}
 
 	return tgs, nil
+}
+
+func (l *LandingRepositoryImp) GetAllTags(
+	ctx context.Context,
+) ([]*tag.Tag, error) {
+	_tags, err := l.Landing.Distinct(
+		ctx,
+		"tags",
+		bson.M{},
+		options.Distinct(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var tags []*tag.Tag
+
+	for _, t := range _tags {
+		tags = append(tags, &tag.Tag{Tag: fmt.Sprint(t)})
+	}
+
+	return tags, nil
 }

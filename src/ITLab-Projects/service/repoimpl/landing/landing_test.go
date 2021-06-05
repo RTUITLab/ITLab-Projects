@@ -298,3 +298,52 @@ func TestFunc_GetIdsOfReposByTags(t *testing.T) {
 		}
 	}
 }
+
+func TestFunc_GetAllTags(t *testing.T) {
+	if err := LandingRepository.SaveAndDeleteUnfindLanding(
+		context.Background(),
+		[]model.Landing{
+			{
+				LandingCompact: model.LandingCompact{
+					RepoId: 1,
+					Tags: []string{"VR", "AR"},
+				},
+			},
+			{
+				LandingCompact: model.LandingCompact{
+					RepoId: 2,
+					Tags: []string{"Backend", "AR"},
+				},
+			},
+			{
+				LandingCompact: model.LandingCompact{
+					RepoId: 3,
+					Tags: []string{"VR", "Web"},
+				},
+			},
+		},
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	tags, err := LandingRepository.GetAllTags(
+		context.Background(),
+	)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if len(tags) == 0 {
+		t.Log("Assert error")
+		t.FailNow()
+	}
+
+	if len(tags) != 4 {
+		t.Log("assert error")
+		t.FailNow()
+	}
+
+	// TODO доделать тест
+}

@@ -5,10 +5,10 @@ import (
 	"github.com/ITLab-Projects/service/repoimpl/estimate"
 	"github.com/ITLab-Projects/service/repoimpl/functask"
 	"github.com/ITLab-Projects/service/repoimpl/issue"
+	"github.com/ITLab-Projects/service/repoimpl/landing"
 	"github.com/ITLab-Projects/service/repoimpl/milestone"
 	"github.com/ITLab-Projects/service/repoimpl/reales"
 	"github.com/ITLab-Projects/service/repoimpl/repo"
-	"github.com/ITLab-Projects/service/repoimpl/tag"
 )
 
 type RepoImp struct {
@@ -18,7 +18,7 @@ type RepoImp struct {
 	*milestone.MilestoneRepositoryImp
 	*reales.RealeseRepositoryImp
 	*repo.RepoRepositoryImp
-	*tag.TagRepositoryImp
+	*landing.LandingRepositoryImp
 }
 
 func New(
@@ -31,6 +31,6 @@ func New(
 		MilestoneRepositoryImp: milestone.New(Repo.Milestone),
 		RealeseRepositoryImp: reales.New(Repo.Realese),
 		RepoRepositoryImp: repo.New(Repo.Repo),
-		TagRepositoryImp: tag.New(Repo.Tag),
+		LandingRepositoryImp: landing.New(Repo.Landing),
 	}
 }

@@ -91,29 +91,6 @@ type IssueRepository interface {
 	) error
 }
 
-type TagRepository interface {
-	SaveAndDeleteUnfindTags(
-		ctx context.Context,
-		tgs interface{},
-	) error
-
-	DeleteTagsByRepoID(
-		ctx 	context.Context,
-		RepoID	uint64,
-	) (error)
-	
-	GetFilteredTags(
-		ctx context.Context,
-		filter interface{},
-	) ([]*tag.Tag, error)
-
-	GetFilteredTagsByRepoID(
-		ctx 	context.Context,
-		RepoID	uint64,
-	) ([]*tag.Tag, error)
-	
-}
-
 type RealeseRepository interface {
 	SaveRealeses(
 		ctx context.Context,
@@ -181,10 +158,10 @@ type LandingRepository interface {
 		filter interface{},
 	) ([]*landing.Landing, error)
 
-	GetFilteredLandingsByRepoID(
+	GetLandingByRepoID(
 		ctx 	context.Context,
 		RepoID	uint64,
-	) ([]*landing.Landing, error)
+	) (*landing.Landing, error)
 
 	GetIDsOfReposByLandingTags(
 		ctx		context.Context,

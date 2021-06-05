@@ -1,7 +1,6 @@
 package tags_test
 
 import (
-	"github.com/sirupsen/logrus"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -9,18 +8,14 @@ import (
 	"os"
 	"testing"
 
+	"github.com/sirupsen/logrus"
+
+	"github.com/ITLab-Projects/pkg/models/landing"
 	mt "github.com/ITLab-Projects/pkg/models/tag"
 
 	"github.com/ITLab-Projects/pkg/repositories"
 	s "github.com/ITLab-Projects/service/api/v1/tags"
 	"github.com/ITLab-Projects/service/repoimpl"
-	"github.com/ITLab-Projects/service/repoimpl/estimate"
-	"github.com/ITLab-Projects/service/repoimpl/functask"
-	"github.com/ITLab-Projects/service/repoimpl/issue"
-	"github.com/ITLab-Projects/service/repoimpl/milestone"
-	"github.com/ITLab-Projects/service/repoimpl/reales"
-	"github.com/ITLab-Projects/service/repoimpl/repo"
-	"github.com/ITLab-Projects/service/repoimpl/tag"
 	"github.com/go-kit/kit/log"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -45,15 +40,7 @@ func init() {
 	}
 
 	Repositories = _r
-	RepoImp = &repoimpl.RepoImp{
-		estimate.New(Repositories.Estimate),
-		issue.New(Repositories.Issue),
-		functask.New(Repositories.FuncTask),
-		milestone.New(Repositories.Milestone),
-		reales.New(Repositories.Realese),
-		repo.New(Repositories.Repo),
-		tag.New(Repositories.Tag),
-	}
+	RepoImp = repoimpl.New(Repositories)
 
 	service = s.New(
 		RepoImp,
@@ -70,24 +57,26 @@ func init() {
 }
 
 func TestFunc_GetTagsHTTP(t *testing.T) {
-	if err := Repositories.Tag.Save(
+	if err := Repositories.Landing.Save(
 		context.Background(),
-		[]mt.Tag{
+		[]landing.Landing{
 			{
-				RepoID: 1,
-				Tag: "mock_tag_1",
+				LandingCompact: landing.LandingCompact{
+					RepoId: 1,
+					Tags: []string{"mock_tag_1", "mock_tag_2"},
+				},
 			},
 			{
-				RepoID: 1,
-				Tag: "mock_tag_2",
+				LandingCompact: landing.LandingCompact{
+					RepoId: 2,
+					Tags: []string{"mock_tag_3"},
+				},
 			},
 			{
-				RepoID: 2,
-				Tag: "mock_tag_3",
-			},
-			{
-				RepoID: 4,
-				Tag: "mock_tag_4",
+				LandingCompact: landing.LandingCompact{
+					RepoId: 4,
+					Tags: []string{"mock_tag_4"},
+				},
 			},
 		},
 	); err != nil {
@@ -95,15 +84,15 @@ func TestFunc_GetTagsHTTP(t *testing.T) {
 		t.FailNow()
 	}
 
-	defer RepoImp.DeleteTagsByRepoID(
+	defer RepoImp.LandingRepositoryImp.DeleteLandingsByRepoID(
 		context.Background(),
 		1,
 	)
-	defer RepoImp.DeleteTagsByRepoID(
+	defer RepoImp.LandingRepositoryImp.DeleteLandingsByRepoID(
 		context.Background(),
 		2,
 	)
-	defer RepoImp.DeleteTagsByRepoID(
+	defer RepoImp.LandingRepositoryImp.DeleteLandingsByRepoID(
 		context.Background(),
 		4,
 	)
@@ -129,6 +118,7 @@ func TestFunc_GetTagsHTTP(t *testing.T) {
 	for _, tag := range tags {
 		switch tag.Tag {
 		case "mock_tag_1", "mock_tag_2", "mock_tag_3", "mock_tag_4":
+			t.Log(tag.Tag)
 		default:
 			t.Log("Assert error")
 			t.FailNow()
