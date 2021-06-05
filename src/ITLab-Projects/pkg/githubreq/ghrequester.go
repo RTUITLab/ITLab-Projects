@@ -1,6 +1,8 @@
 package githubreq
 
 import (
+	"github.com/ITLab-Projects/pkg/landingparser"
+	"github.com/ITLab-Projects/pkg/models/landing"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -48,6 +50,7 @@ func New(cfg *Config) *GHRequester {
 				MaxIdleConnsPerHost: 20,
 			},
 		},
+		parser: landingparser.New(),
 	}
 
 	r.clientWithWrap = clientwrapper.New(r.client)
@@ -72,6 +75,8 @@ type GHRequester struct {
 	maxRepsPage		int
 
 	clientWithWrap	*clientwrapper.ClientWithWrap
+	
+	parser			*landingparser.LandingParser
 }
 
 
@@ -266,6 +271,70 @@ func (r *GHRequester) getTagsByURL(c content.Content) ([]tag.Tag, error) {
 	return tags, nil
 }
 
+func (r *GHRequester) GetAllLandingsForRepoWithID(
+	ctx 	context.Context,
+	reps	[]repo.Repo,
+	f		func(error),
+) ([]*landing.Landing, error) {
+	var ls []*landing.Landing
+
+	lsChan := make(chan []*landing.Landing)
+
+	var count = 0
+	for i, _ := range reps {
+		count++
+		go func(rep repo.Repo) {
+			defer catchPanic()
+			c, err := r.getLandingForRepo(rep)
+			if err != nil {
+				if f != nil {
+					f(err)
+				}
+				lsChan <- nil
+				return
+			}
+
+			if err := r.getLastCommit(
+				rep, 
+				c,
+			); err != nil {
+				if f != nil {
+					f(err)
+				}
+				lsChan <- nil
+				return
+			}
+
+			data, err := c.GetContent()
+			if err != nil {
+				if f != nil {
+					f(err)
+				}
+				lsChan <- nil
+				return
+			}
+
+			l := r.parser.Parse(data)
+
+			l.RepoId = c.RepoID
+			l.Date.Time = c.GetDate()
+
+			lsChan <- []*landing.Landing{l}
+		}(reps[i])
+
+		for i := 0; i < count; i++ {
+			select {
+			case <-ctx.Done():
+				defer close(lsChan)
+				return nil, ctx.Err()
+			case l := <- lsChan:
+				ls = append(ls, l...)
+			}
+		}
+	}
+	return ls, nil
+}
+
 func (r *GHRequester) getLandingForRepo(
 	rep repo.Repo,
 ) (*content.Content, error) {
@@ -297,6 +366,45 @@ func (r *GHRequester) getLandingForRepo(
 	content.RepoID = rep.ID
 
 	return &content, nil
+}
+
+func (r *GHRequester) getLastCommit(
+	rep	repo.Repo,
+	c	*content.Content,
+) error {
+	url := r.baseUrl
+	url.Path += fmt.Sprintf("/repos/%s/%s/commits?per_page=1", orgName, rep.Name)
+	req, err := http.NewRequest("GET", url.String(), nil)
+	if err != nil {
+		return  err
+	}
+
+	resp, err := r.clientWithWrap.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if err := checkStatusIfForbiddenOrUnathorizated(resp); err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.Wrapf(UnexpectedCode, "%v for repo %s", resp.StatusCode, rep.Name)
+	}
+
+	var commits []*content.Commit
+	if err := json.NewDecoder(resp.Body).Decode(&commits); err != nil {
+		return err
+	}
+
+	if len(commits) != 1 {
+		return nil
+	}
+
+	c.Commit = commits[0]
+
+	return nil
 }
 
 func (r *GHRequester) getIssueByPage(repName string, page int) ([]milestone.IssueFromGH, error) {
