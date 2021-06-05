@@ -9,7 +9,7 @@ type LandingCompact struct {
 	RepoId			uint64		`json:"id" bson:"repo_id"`
 	Title			string		`json:"title"`
 	Image			[]string	`json:"images"`
-	Date			Time		`json:"date"`
+	Date			Time		`json:"date" bson:"date"`
 	Tags			[]string	`json:"tags"`
 }
 

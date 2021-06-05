@@ -45,7 +45,7 @@ func (l *LandingRepositoryImp) DeleteLandingsByRepoID(
 	)
 }
 
-func (l *LandingRepositoryImp) GetFilteredLandings(
+func (l *LandingRepositoryImp) GetFilteredLanding(
 	ctx context.Context,
 	filter interface{},
 ) ([]*model.Landing, error) {
@@ -72,36 +72,34 @@ func (l *LandingRepositoryImp) GetFilteredLandings(
 	return ls, nil
 }
 
-func (l *LandingRepositoryImp) GetFilteredLandingsByRepoID(
+func (l *LandingRepositoryImp) GetLandingByRepoID(
 	ctx 	context.Context,
 	RepoID	uint64,
-) ([]*model.Landing, error) {
-	return l.GetFilteredLandings(
+) (*model.Landing, error) {
+	landing := model.Landing{}
+	err := l.Landing.GetOne(
 		ctx,
 		bson.M{"repo_id": RepoID},
+		func(sr *mongo.SingleResult) error {
+			return sr.Decode(&landing)
+		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &landing, nil
 }
 
 func (l *LandingRepositoryImp) GetIDsOfReposByLandingTags(
 	ctx		context.Context,
 	Tags	[]string,
 ) ([]uint64, error) {
-	var ls []*model.Landing
-
-	if err := l.Landing.GetAllFiltered(
+	ls, err := l.GetFilteredLanding(
 		ctx,
 		bson.M{"tags": bson.M{"$in": Tags}},
-		func(c *mongo.Cursor) error {
-			if c.RemainingBatchLength() == 0 {
-				return mongo.ErrNoDocuments
-			}
-
-			return c.All(
-				ctx,
-				&ls,
-			)
-		},
-	); err != nil {
+	)
+	if err != nil {
 		return nil, err
 	}
 
@@ -118,16 +116,11 @@ func (l *LandingRepositoryImp) GetLandingTagsByRepoID(
 	ctx		context.Context,
 	RepoID	uint64,
 ) ([]*tag.Tag, error) {
-	var landing model.Landing
-
-	if err := l.Landing.GetOne(
+	landing, err := l.GetLandingByRepoID(
 		ctx,
-		bson.M{"repo_id": RepoID},
-		func(sr *mongo.SingleResult) error {
-			return sr.Decode(&landing)
-		},
-		options.FindOne(),
-	); err != nil {
+		RepoID,
+	)
+	if err != nil {
 		return nil, err
 	}
 
