@@ -2,6 +2,7 @@ package content
 
 import (
 	"encoding/base64"
+	"fmt"
 	"time"
 )
 
@@ -14,7 +15,16 @@ type Content struct {
 }
 
 func (c *Content) GetContent() ([]byte, error) {
-	return base64.StdEncoding.DecodeString(c.Content)
+	data, err := base64.StdEncoding.DecodeString(c.Content)
+	if err != nil {
+		return nil, err
+	}
+
+	if data == nil {
+		return nil, fmt.Errorf("Nil data")
+	}
+
+	return data, nil
 }
 
 func (c *Content) GetDate() time.Time {

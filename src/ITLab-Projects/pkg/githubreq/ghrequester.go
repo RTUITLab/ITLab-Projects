@@ -284,7 +284,7 @@ func (r *GHRequester) GetAllLandingsForRepoWithID(
 	for i, _ := range reps {
 		count++
 		go func(rep repo.Repo) {
-			defer catchPanic()
+			defer catchPanicWithMsg(rep.Name)
 			c, err := r.getLandingForRepo(rep)
 			if err != nil {
 				if f != nil {
@@ -314,22 +314,24 @@ func (r *GHRequester) GetAllLandingsForRepoWithID(
 				return
 			}
 
-			l := r.parser.Parse(data)
+			l := r.parser.Parse(
+				landingparser.PrepareLandingToParse(data),
+			)
 
 			l.RepoId = c.RepoID
 			l.Date.Time = c.GetDate()
 
 			lsChan <- []*landing.Landing{l}
 		}(reps[i])
+	}
 
-		for i := 0; i < count; i++ {
-			select {
-			case <-ctx.Done():
-				defer close(lsChan)
-				return nil, ctx.Err()
-			case l := <- lsChan:
-				ls = append(ls, l...)
-			}
+	for i := 0; i < count; i++ {
+		select {
+		case <-ctx.Done():
+			close(lsChan)
+			return nil, ctx.Err()
+		case l := <- lsChan:
+			ls = append(ls, l...)
 		}
 	}
 	return ls, nil
@@ -373,7 +375,10 @@ func (r *GHRequester) getLastCommit(
 	c	*content.Content,
 ) error {
 	url := r.baseUrl
-	url.Path += fmt.Sprintf("/repos/%s/%s/commits?per_page=1", orgName, rep.Name)
+	url.Path += fmt.Sprintf("/repos/%s/%s/commits", orgName, rep.Name)
+	q := url.Query()
+	q.Add("per_page", "1")
+	url.RawQuery = q.Encode()
 	req, err := http.NewRequest("GET", url.String(), nil)
 	if err != nil {
 		return  err
@@ -866,6 +871,18 @@ func catchPanic() {
 			log.Fields{
 				"package": "requster",
 				"err": r,
+			},
+		).Info("Catch panic")
+	}
+}
+
+func catchPanicWithMsg(msg string) {
+	if r := recover(); r != nil {
+		logrus.WithFields(
+			log.Fields{
+				"package": "requster",
+				"err": r,
+				"msg": msg,
 			},
 		).Info("Catch panic")
 	}
