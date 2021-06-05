@@ -1,8 +1,6 @@
 package landing
 
 import (
-	"time"
-
 	"github.com/Kamva/mgm"
 )
 
@@ -10,8 +8,8 @@ type LandingCompact struct {
 	mgm.DefaultModel			`json:"-" bson:",inline" swaggerignore:"true"`
 	RepoId			uint64		`json:"id" bson:"repo_id"`
 	Title			string		`json:"title"`
-	Image			[]string	`json:"image"`
-	Date			time.Time	`json:"date"`
+	Image			[]string	`json:"images"`
+	Date			Time		`json:"date"`
 	Tags			[]string	`json:"tags"`
 }
 
@@ -22,11 +20,11 @@ type Landing struct {
 	Tech		[]string		`json:"tech"`
 	Developers	[]string		`json:"developers"`
 	Site		string			`json:"site"`
-	SourceCode	[]*SourceCode	`json:"source_code"`
+	SourceCode	[]*SourceCode	`json:"sourceCode"`
 }
 
 type SourceCode	struct {
 	Name		string		`json:"name"`
 	// repository link
-	Value		string		`json:"value"`
+	Value		string		`json:"link"`
 }

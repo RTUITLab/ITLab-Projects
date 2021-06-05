@@ -1,18 +1,20 @@
 package projects
 
 import (
-	e "github.com/ITLab-Projects/pkg/err"
-	"fmt"
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"sort"
 	"strings"
+
+	e "github.com/ITLab-Projects/pkg/err"
 
 	"github.com/ITLab-Projects/service/api/v1/beforedelete"
 
 	"github.com/ITLab-Projects/pkg/models/estimate"
 	"github.com/ITLab-Projects/pkg/models/functask"
+	"github.com/ITLab-Projects/pkg/models/landing"
 	"github.com/ITLab-Projects/pkg/models/repo"
 	"github.com/ITLab-Projects/pkg/statuscode"
 	"go.mongodb.org/mongo-driver/bson"
@@ -26,7 +28,6 @@ import (
 	"github.com/ITLab-Projects/pkg/models/milestone"
 	"github.com/ITLab-Projects/pkg/models/realese"
 	"github.com/ITLab-Projects/pkg/models/repoasproj"
-	"github.com/ITLab-Projects/pkg/models/tag"
 	"github.com/ITLab-Projects/pkg/updater"
 	"github.com/go-kit/kit/log"
 )
@@ -238,7 +239,7 @@ func (s *service) UpdateProjects(
 		defer s.resetUpdater()
 	}
 
-	repos, ms, rs, tgs, err := s.getAllFromGithub(ctx)
+	repos, ms, rs, ls, err := s.getAllFromGithub(ctx)
 	switch {
 	case err == githubreq.ErrForbiden, err == githubreq.ErrUnatorizared:
 		level.Error(logger).Log("Failed to update projects: err", err)
@@ -300,9 +301,9 @@ func (s *service) UpdateProjects(
 		)
 	}
 
-	if err := s.repository.SaveAndDeleteUnfindTags(
+	if err := s.repository.SaveAndDeleteUnfindLanding(
 		ctx,
-		tgs,
+		ls,
 	); err != nil {
 		level.Error(logger).Log("Failed to update projects: err", err)
 		return statuscode.WrapStatusError(
@@ -393,7 +394,7 @@ func (s *service) DeleteProject(
 		)
 	}
 
-	if err := s.repository.DeleteTagsByRepoID(
+	if err := s.repository.DeleteLandingsByRepoID(
 		ctx,
 		rep.ID,
 	); err == mongo.ErrNoDocuments {
@@ -407,19 +408,6 @@ func (s *service) DeleteProject(
 	}
 
 	if err := s.repository.DeleteRealeseByRepoID(
-		ctx,
-		rep.ID,
-	); err == mongo.ErrNoDocuments {
-		// Pass
-	} else if err != nil {
-		level.Error(logger).Log("Failed to delete project: err", err)
-		return statuscode.WrapStatusError(
-			ErrFailedToDeleteProject,
-			http.StatusInternalServerError,
-		)
-	}
-
-	if err := s.repository.DeleteTagsByRepoID(
 		ctx,
 		rep.ID,
 	); err == mongo.ErrNoDocuments {
@@ -455,7 +443,7 @@ func (s *service) resetUpdater() {
 
 func (s *service) getAllFromGithub(
 	ctx context.Context,
-) ([]repo.Repo, []milestone.MilestoneInRepo, []realese.RealeseInRepo, []tag.Tag, error) {
+) ([]repo.Repo, []milestone.MilestoneInRepo, []realese.RealeseInRepo, []*landing.Landing, error) {
 	repos, err := s.requester.GetRepositories()
 	if err != nil {
 		return nil, nil, nil, nil, err
@@ -463,7 +451,7 @@ func (s *service) getAllFromGithub(
 
 	msChan := make(chan []milestone.MilestoneInRepo, 1)
 	rsChan := make(chan []realese.RealeseInRepo, 1)
-	tgsChan := make(chan []tag.Tag, 1)
+	lsChan := make(chan []*landing.Landing, 1)
 	errChan := make(chan error, 1)
 
 	ctx, cancel := context.WithCancel(
@@ -516,7 +504,7 @@ func (s *service) getAllFromGithub(
 	}()
 
 	go func() {
-		tgs, err := s.requester.GetAllTagsForRepoWithID(
+		ls, err := s.requester.GetAllLandingsForRepoWithID(
 			ctx,
 			repo.ToRepo(repos),
 			func(err error) {
@@ -534,13 +522,13 @@ func (s *service) getAllFromGithub(
 			return
 		}
 
-		tgsChan <- tgs
+		lsChan <- ls
 	}()
 
 	var (
 		ms 	[]milestone.MilestoneInRepo = nil
 		rs 	[]realese.RealeseInRepo		= nil
-		tgs	[]tag.Tag					= nil
+		ls	[]*landing.Landing			= nil
 	)
 
 
@@ -553,16 +541,16 @@ func (s *service) getAllFromGithub(
 			ms = _ms
 		case _rs := <- rsChan:
 			rs = _rs
-		case _tgs := <- tgsChan:
-			tgs = _tgs
+		case _ls := <- lsChan:
+			ls = _ls
 		}
 	}
 
 	close(msChan)
 	close(rsChan)
-	close(tgsChan)
+	close(lsChan)
 
-	return repo.ToRepo(repos) ,ms, rs, tgs, nil
+	return repo.ToRepo(repos) ,ms, rs, ls, nil
 }
 
 func getIssuesFromMilestone(
@@ -632,19 +620,14 @@ func (s *service) buildTagFilterForGetProjects(
 ) (error) {
 	massOfTags := strings.Split(t, " ")
 
-	tags, err := s.repository.GetFilteredTags(
+	ids, err := s.repository.GetIDsOfReposByLandingTags(
 		ctx,
-		bson.M{"tag": bson.M{"$in": massOfTags}},
+		massOfTags,
 	)
 	if err == mongo.ErrNoDocuments {
-		return nil
-	}else if err != nil {
+		// Pass
+	} else if err != nil {
 		return err
-	}
-
-	var ids []uint64
-	for _, t := range tags {
-		ids = append(ids, t.RepoID)
 	}
 
 	(map[string]interface{})(*filter)["id"] = bson.M{"$in": ids}
@@ -696,7 +679,7 @@ func (s *service) GetCompatcProj(
 				proj.Completed = countCompleted(ms)
 			}
 
-			tgs, err := s.repository.GetFilteredTagsByRepoID(
+			tgs, err := s.repository.GetLandingTagsByRepoID(
 				ctx,
 				r.ID,
 			)
@@ -793,7 +776,7 @@ func (s *service) getProjects(
 		proj.LastRealese = &rls.Realese
 	}
 
-	tgs, err := s.repository.GetFilteredTagsByRepoID(
+	tgs, err := s.repository.GetLandingTagsByRepoID(
 		ctx,
 		rep.ID,
 	)

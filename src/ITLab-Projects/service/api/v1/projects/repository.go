@@ -7,6 +7,7 @@ import (
 
 	"github.com/ITLab-Projects/pkg/models/estimate"
 	"github.com/ITLab-Projects/pkg/models/functask"
+	"github.com/ITLab-Projects/pkg/models/landing"
 	"github.com/ITLab-Projects/pkg/models/milestone"
 	"github.com/ITLab-Projects/pkg/models/realese"
 	"github.com/ITLab-Projects/pkg/models/repo"
@@ -17,10 +18,10 @@ type Repository interface {
 	RepoRepository
 	MilestoneRepository
 	IssueRepository
-	TagRepository
 	RealeseRepository
 	FuncTaskRepository
 	EstimeateRepository
+	LandingRepository
 }
 
 type RepoRepository interface{
@@ -162,4 +163,37 @@ type EstimeateRepository interface {
 		ctx 			context.Context,
 		MilestonesID	[]uint64,
 	) error
+}
+
+type LandingRepository interface {
+	SaveAndDeleteUnfindLanding(
+		ctx context.Context,
+		ls interface{},
+	) error
+
+	DeleteLandingsByRepoID(
+		ctx 	context.Context,
+		RepoID	uint64,
+	) (error)
+	
+	GetFilteredLandings(
+		ctx context.Context,
+		filter interface{},
+	) ([]*landing.Landing, error)
+
+	GetFilteredLandingsByRepoID(
+		ctx 	context.Context,
+		RepoID	uint64,
+	) ([]*landing.Landing, error)
+
+	GetIDsOfReposByLandingTags(
+		ctx		context.Context,
+		Tags	[]string,
+	) ([]uint64, error)
+
+	GetLandingTagsByRepoID(
+		ctx		context.Context,
+		RepoID	uint64,
+	) ([]*tag.Tag, error)
+
 }

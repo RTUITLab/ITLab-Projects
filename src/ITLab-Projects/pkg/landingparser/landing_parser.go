@@ -2,8 +2,8 @@ package landingparser
 
 import (
 	"github.com/ITLab-Projects/pkg/models/landing"
-	"github.com/gomarkdown/markdown/parser"
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/parser"
 )
 
 type LandingParser struct {
@@ -26,7 +26,6 @@ func (lp *LandingParser) Parse(data []byte) *landing.Landing {
 	node := lp.parser.Parse(data)
 	
 	l := &landing.Landing{
-		Videos: []string{},
 	}
 
 	for _, child := range node.GetChildren() {
@@ -100,7 +99,7 @@ func getImagesURL(
 func getLinkList(
 	node ast.Node,
 ) []string {
-	var links []string
+	links := make([]string, 0)
 
 	ast.WalkFunc(
 		node,
