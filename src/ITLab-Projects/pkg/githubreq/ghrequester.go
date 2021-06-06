@@ -50,7 +50,6 @@ func New(cfg *Config) *GHRequester {
 				MaxIdleConnsPerHost: 20,
 			},
 		},
-		parser: landingparser.New(),
 	}
 
 	r.clientWithWrap = clientwrapper.New(r.client)
@@ -75,8 +74,6 @@ type GHRequester struct {
 	maxRepsPage		int
 
 	clientWithWrap	*clientwrapper.ClientWithWrap
-	
-	parser			*landingparser.LandingParser
 }
 
 
@@ -285,6 +282,7 @@ func (r *GHRequester) GetAllLandingsForRepoWithID(
 		count++
 		go func(rep repo.Repo) {
 			defer catchPanicWithMsg(rep.Name)
+			parser := landingparser.New()
 			c, err := r.getLandingForRepo(rep)
 			if err != nil {
 				if f != nil {
@@ -294,7 +292,7 @@ func (r *GHRequester) GetAllLandingsForRepoWithID(
 				return
 			}
 
-			if err := r.getLastCommit(
+			if err = r.getLastCommit(
 				rep, 
 				c,
 			); err != nil {
@@ -313,8 +311,8 @@ func (r *GHRequester) GetAllLandingsForRepoWithID(
 				lsChan <- nil
 				return
 			}
-
-			l := r.parser.Parse(
+			
+			l := parser.Parse(
 				landingparser.PrepareLandingToParse(data),
 			)
 
@@ -381,7 +379,7 @@ func (r *GHRequester) getLastCommit(
 	url.RawQuery = q.Encode()
 	req, err := http.NewRequest("GET", url.String(), nil)
 	if err != nil {
-		return  err
+		return err
 	}
 
 	resp, err := r.clientWithWrap.Do(req)
@@ -404,7 +402,7 @@ func (r *GHRequester) getLastCommit(
 	}
 
 	if len(commits) != 1 {
-		return nil
+		return fmt.Errorf("Don't find commits")
 	}
 
 	c.Commit = commits[0]
@@ -872,7 +870,7 @@ func catchPanic() {
 				"package": "requster",
 				"err": r,
 			},
-		).Info("Catch panic")
+		).Error("Catch panic without name")
 	}
 }
 
@@ -884,6 +882,6 @@ func catchPanicWithMsg(msg string) {
 				"err": r,
 				"msg": msg,
 			},
-		).Info("Catch panic")
+		).Error("Catch panic with name")
 	}
 }

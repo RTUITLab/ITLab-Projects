@@ -8,7 +8,11 @@ func PrepareLandingToParse(
 	data []byte,
 ) []byte {
 	return bytes.Replace(
-		data,
+		bytes.ReplaceAll(
+			data,
+			[]byte("\r"),
+			[]byte(""),
+		),
 		[]byte("---\n"),
 		[]byte("\n---\n\n"),
 		-1,

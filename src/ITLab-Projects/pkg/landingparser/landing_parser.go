@@ -22,7 +22,7 @@ func (lp *LandingParser) Parse(data []byte) *landing.Landing {
 	if lp.parser == nil {
 		lp.parser = parser.New()
 	}
-
+	
 	node := lp.parser.Parse(data)
 	
 	l := &landing.Landing{

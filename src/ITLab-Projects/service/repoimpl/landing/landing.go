@@ -151,7 +151,9 @@ func (l *LandingRepositoryImp) GetAllTags(
 	var tags []*tag.Tag
 
 	for _, t := range _tags {
-		tags = append(tags, &tag.Tag{Tag: fmt.Sprint(t)})
+		if t != nil {
+			tags = append(tags, &tag.Tag{Tag: fmt.Sprint(t)})
+		}
 	}
 
 	return tags, nil
