@@ -9,6 +9,7 @@ import (
 	model "github.com/ITLab-Projects/pkg/models/landing"
 	"github.com/ITLab-Projects/pkg/models/tag"
 	"github.com/ITLab-Projects/pkg/repositories/landing"
+	"github.com/ITLab-Projects/service/repoimpl/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -23,6 +24,45 @@ func New(
 	return &LandingRepositoryImp{
 		Landing: Landing,
 	}
+}
+
+func (l *LandingRepositoryImp) GetLandingAndScanTo(
+	ctx 		context.Context,
+	filter		interface{},
+	ls			interface{},
+	options ...*options.FindOptions,
+) error {
+	return utils.GetAndScanTo(
+		ctx,
+		l.Landing,
+		filter,
+		ls,
+		options...
+	)
+}
+
+func (l *LandingRepositoryImp) GetFiltrSortLandingCompactFromTo(
+	ctx		context.Context,
+	filter	interface{},
+	sort	interface{},
+	start	int64,
+	count	int64,
+) ([]*model.LandingCompact, error) {
+	var ls []*model.LandingCompact
+
+	if err := utils.GetFiltrSortFromToAndScan(
+		ctx,
+		l.Landing,
+		filter,
+		sort,
+		&ls,
+		start,
+		count,
+	); err != nil {
+		return nil, err
+	}
+
+	return ls, nil
 }
 
 func (l *LandingRepositoryImp) SaveAndDeleteUnfindLanding(
