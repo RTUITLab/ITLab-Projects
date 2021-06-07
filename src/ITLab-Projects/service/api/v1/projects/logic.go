@@ -43,6 +43,7 @@ var (
 	ErrFailedToGetProjects		= errors.New("Failed to get projects")
 	ErrFailedToUpdateProjects	= errors.New("Failed to update projects")
 	ErrFailedToDeleteProject	= errors.New("Failed to delete project")
+	ErrTagNotFound				= errors.New("Tag not found")
 )
 
 type service struct {
@@ -171,7 +172,9 @@ func (s *service) GetProjects(
 		name,
 		tag,
 	)
-	if err != nil {
+	if err == ErrTagNotFound {
+		return []*repoasproj.RepoAsProjCompactPointers{}, nil
+	} else if err != nil {
 		return nil, statuscode.WrapStatusError(
 			ErrFailedToGetProjects,
 			http.StatusInternalServerError,
@@ -629,8 +632,11 @@ func (s *service) buildTagFilterForGetProjects(
 	} else if err != nil {
 		return err
 	}
-
-	(map[string]interface{})(*filter)["id"] = bson.M{"$in": ids}
+	if len(ids) > 0 {
+		(map[string]interface{})(*filter)["id"] = bson.M{"$in": ids}
+	} else {
+		return ErrTagNotFound
+	}
 
 	return nil
 }
