@@ -48,6 +48,7 @@ func New(cfg *Config) *GHRequester {
 			Timeout: 10 * time.Second,
 			Transport: &http.Transport{
 				MaxIdleConnsPerHost: 20,
+				// DisableKeepAlives: true,
 			},
 		},
 	}
@@ -314,6 +315,10 @@ func (r *GHRequester) GetAllLandingsForRepoWithID(
 			l := parser.Parse(
 				landingparser.PrepareLandingToParse(data),
 			)
+
+			for i, img := range l.Image {
+				l.Image[i] = c.GetURLForContent(img)
+			}
 
 			l.RepoId = c.RepoID
 			l.Date.Time = c.GetDate()

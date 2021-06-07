@@ -3,6 +3,7 @@ package content
 import (
 	"encoding/base64"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -11,6 +12,7 @@ type Content struct {
 	// Deprecated
 	DownloadURL string 	`json:"download_url"`
 	Content		string	`json:"content"`
+	HTMLURL		string	`json:"html_url"`
 	Commit		*Commit
 }
 
@@ -25,6 +27,20 @@ func (c *Content) GetContent() ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+func (c *Content) GetURLForContent(content string) string {
+	return strings.Replace(
+		strings.Replace(
+			c.HTMLURL,
+			"/blob/",
+			"/raw/",
+			1,
+		),
+		"/LANDING.md",
+		"/" + content,
+		1,
+	)
 }
 
 func (c *Content) GetDate() time.Time {
