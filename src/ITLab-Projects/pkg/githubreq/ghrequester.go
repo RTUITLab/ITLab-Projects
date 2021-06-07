@@ -282,7 +282,6 @@ func (r *GHRequester) GetAllLandingsForRepoWithID(
 		count++
 		go func(rep repo.Repo) {
 			defer catchPanicWithMsg(rep.Name)
-			parser := landingparser.New()
 			c, err := r.getLandingForRepo(rep)
 			if err != nil {
 				if f != nil {
@@ -311,7 +310,7 @@ func (r *GHRequester) GetAllLandingsForRepoWithID(
 				lsChan <- nil
 				return
 			}
-			
+			parser := landingparser.New()
 			l := parser.Parse(
 				landingparser.PrepareLandingToParse(data),
 			)
