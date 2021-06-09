@@ -39,14 +39,18 @@ func GetFiltrSortFromToAndScan(
 	value		interface{},
 	from, to	int64,
 ) error {
+	opts := options.Find().
+				SetSort(sort).
+				SetSkip(from)
+	if to != 0 {
+		opts = opts.SetLimit(to)
+	}
+	
 	return GetAndScanTo(
 		ctx,
 		Get,
 		filter,
 		value,
-		options.Find().
-			SetSort(sort).
-			SetSkip(from).
-			SetLimit(to),
+		opts,
 	)
 }
