@@ -5,21 +5,17 @@ import (
 	"github.com/ITLab-Projects/service/middleware/mgsess"
 	"github.com/go-kit/kit/endpoint"
 
+
 	"github.com/ITLab-Projects/service/api/v1/estimate"
 	"github.com/ITLab-Projects/service/api/v1/functask"
 	"github.com/ITLab-Projects/service/api/v1/issues"
+	"github.com/ITLab-Projects/service/api/v1/landing"
 	"github.com/ITLab-Projects/service/api/v1/projects"
 	"github.com/ITLab-Projects/service/api/v1/tags"
 )
 
 func (a *Api) buildEndpoints() ServiceEndpoints {
-	endpoints := ServiceEndpoints{
-		Projects: projects.MakeEndpoints(a.projectService),
-		Issues: issues.MakeEndPoints(a.issueService),
-		Tags: tags.MakeEndpoints(a.tagsService),
-		Task: functask.MakeEndPoints(a.taskService),
-		Est: estimate.MakeEndPoints(a.estService),
-	}
+	endpoints := a.endpoints()
 
 	// ---------- Estimate ----------
 	endpoints.Est.AddEstimate = endpoint.Chain(
@@ -91,17 +87,22 @@ func (a *Api) buildEndpoints() ServiceEndpoints {
 		mgsess.PutMongoSessIntoCtx(),
 	)(endpoints.Projects.UpdateProjects)
 	// ----------		----------
+
+	// ---------- Landing ----------
+	endpoints.Landing.GetLanding = endpoint.Chain(
+		mgsess.PutMongoSessIntoCtx(),
+	)(endpoints.Landing.GetLanding)
+
+	endpoints.Landing.GetAllLandings = endpoint.Chain(
+		mgsess.PutMongoSessIntoCtx(),
+	)(endpoints.Landing.GetAllLandings)
+	// ----------		----------
+	
 	return endpoints
 }
 
 func (a *Api) _buildEndpoint() ServiceEndpoints {
-	endpoints := ServiceEndpoints{
-		Projects: projects.MakeEndpoints(a.projectService),
-		Issues: issues.MakeEndPoints(a.issueService),
-		Tags: tags.MakeEndpoints(a.tagsService),
-		Task: functask.MakeEndPoints(a.taskService),
-		Est: estimate.MakeEndPoints(a.estService),
-	}
+	endpoints := a.endpoints()
 
 	// ---------- Estimate ----------
 	endpoints.Est.AddEstimate = endpoint.Chain(
@@ -151,10 +152,32 @@ func (a *Api) _buildEndpoint() ServiceEndpoints {
 	endpoints.Projects.GetProjects = endpoint.Chain(
 		mgsess.PutMongoSessIntoCtx(),
 	)(endpoints.Projects.GetProjects)
-
+	
 	endpoints.Projects.UpdateProjects = endpoint.Chain(
 		mgsess.PutMongoSessIntoCtx(),
 	)(endpoints.Projects.UpdateProjects)
 	// ----------		----------
+
+
+	// ---------- Landing ----------
+	endpoints.Landing.GetLanding = endpoint.Chain(
+		mgsess.PutMongoSessIntoCtx(),
+	)(endpoints.Landing.GetLanding)
+
+	endpoints.Landing.GetAllLandings = endpoint.Chain(
+		mgsess.PutMongoSessIntoCtx(),
+	)(endpoints.Landing.GetAllLandings)
+	// ----------		----------
 	return endpoints
+}
+
+func (a *Api) endpoints() ServiceEndpoints {
+	return ServiceEndpoints{
+		Projects: projects.MakeEndpoints(a.projectService),
+		Issues: issues.MakeEndPoints(a.issueService),
+		Tags: tags.MakeEndpoints(a.tagsService),
+		Task: functask.MakeEndPoints(a.taskService),
+		Est: estimate.MakeEndPoints(a.estService),
+		Landing: landing.MakeEndpoints(a.landingService),
+	}
 }
