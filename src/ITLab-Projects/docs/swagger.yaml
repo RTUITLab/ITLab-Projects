@@ -68,6 +68,68 @@ definitions:
       url:
         type: string
     type: object
+  landing.Landing:
+    properties:
+      date:
+        type: string
+      description:
+        type: string
+      developers:
+        items:
+          type: string
+        type: array
+      id:
+        type: integer
+      images:
+        items:
+          type: string
+        type: array
+      site:
+        type: string
+      sourceCode:
+        items:
+          $ref: '#/definitions/landing.SourceCode'
+        type: array
+      tags:
+        items:
+          type: string
+        type: array
+      tech:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+      videos:
+        items:
+          type: string
+        type: array
+    type: object
+  landing.LandingCompact:
+    properties:
+      date:
+        type: string
+      id:
+        type: integer
+      images:
+        items:
+          type: string
+        type: array
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+    type: object
+  landing.SourceCode:
+    properties:
+      link:
+        description: repository link
+        type: string
+      name:
+        type: string
+    type: object
   milestone.Issue:
     properties:
       assignees:
@@ -422,6 +484,68 @@ paths:
       summary: return labels
       tags:
       - issues
+  /v1/landing:
+    get:
+      parameters:
+      - description: represent how much landins need to skip
+        in: query
+        name: start
+        type: integer
+      - description: represent a max count of returing landing
+        in: query
+        name: count
+        type: integer
+      - description: return a landings with this tags
+        in: query
+        name: tag
+        type: string
+      - description: return landing with this names
+        in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/landing.LandingCompact'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: return all landings according to path params
+      tags:
+      - landing
+  /v1/landing/{id}:
+    get:
+      description: return a landing according to id
+      parameters:
+      - description: id of landing
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/landing.Landing'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: return a current landing
+      tags:
+      - landing
   /v1/projects:
     get:
       description: |-

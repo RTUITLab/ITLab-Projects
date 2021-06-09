@@ -41,7 +41,27 @@ func New(
 		logger: logger,
 	}
 }
-
+// GetAllLanding
+// 
+// @Summary return all landings according to path params
+// 
+// @Tags landing
+// 
+// @Produce json
+// 
+// @Router /v1/landing [get]
+// 
+// @Param start query integer false "represent how much landins need to skip"
+// 
+// @Param count query integer false "represent a max count of returing landing"
+// 
+// @Param tag query string false "return a landings with this tags"
+// 
+// @Param name query string false "return landing with this names"
+// 
+// @Success 200 {array} landing.LandingCompact
+// 
+// @Failure 500 {object} e.Message
 func (s *service) GetAllLandings(
 	ctx context.Context, 
 	start int64, 
@@ -149,6 +169,25 @@ func (s *service) buildNameFilterForGetLanding(
 	return nil
 }
 
+// GetLanding
+// 
+// @Tags landing
+// 
+// @Summary return a current landing
+// 
+// @Description return a landing according to id
+// 
+// @Produce json
+// 
+// @Router /v1/landing/{id} [get]
+// 
+// @Param id path integer true "id of landing"
+// 
+// @Success 200 {object} landing.Landing
+// 
+// @Failure 404 {object} e.Message
+// 
+// @Failure 500 {object} e.Message
 func (s *service) GetLanding(
 	ctx context.Context, 
 	ID uint64,
