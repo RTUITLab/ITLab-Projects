@@ -7,6 +7,7 @@ import (
 
 	model "github.com/ITLab-Projects/pkg/models/landing"
 	"github.com/ITLab-Projects/pkg/statuscode"
+	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/ITLab-Projects/pkg/repositories"
@@ -20,8 +21,10 @@ import (
 var service landing.Service
 var Repositories *repositories.Repositories
 var RepoImp *repoimpl.RepoImp
+var Router *mux.Router
 
 func init() {
+	Router = mux.NewRouter()
 	if err := godotenv.Load("../../../../.env"); err != nil {
 		logrus.Warn("Don't find env")
 	}
@@ -44,6 +47,12 @@ func init() {
 	service = landing.New(
 		RepoImp,
 		log.NewJSONLogger(os.Stdout),
+	)
+
+	landing.NewHTTPServer(
+		context.Background(),
+		landing.MakeEndpoints(service),
+		Router,
 	)
 }
 

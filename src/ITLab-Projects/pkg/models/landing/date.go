@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/sirupsen/logrus"
 
 )
 
@@ -72,7 +71,6 @@ func (t *Time) FromString(dayString, monthString, yearString string) error {
 }
 
 func (t *Time) FromBytes(data []byte) error {
-	logrus.Info(string(data))
 	date := bytes.Split(bytes.Trim(data, `"`), []byte{'/'})
 	if len(date) != 3 {
 		return fmt.Errorf("Not valid date")
