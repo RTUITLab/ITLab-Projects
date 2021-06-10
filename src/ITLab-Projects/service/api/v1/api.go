@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ITLab-Projects/service/api/v1/landing"
+
 	"github.com/go-kit/kit/endpoint"
 	kl "github.com/go-kit/kit/log/logrus"
 
@@ -47,6 +49,7 @@ type Api struct {
 	tagsService		tags.Service
 	taskService		functask.Service
 	estService		estimate.Service
+	landingService	landing.Service
 }
 
 type Config struct {
@@ -61,6 +64,7 @@ type ServiceEndpoints struct {
 	Tags		tags.Endpoints
 	Task		functask.Endpoints
 	Est			estimate.Endpoints
+	Landing		landing.Endpoints
 }
 
 func New(
@@ -113,6 +117,11 @@ func New(
 	a.taskService = functask.New(
 		a.RepoImp,
 		MFSRequester,
+		logger,
+	)
+
+	a.landingService = landing.New(
+		a.RepoImp,
 		logger,
 	)
 
@@ -232,6 +241,12 @@ func (a *Api) Build(r *mux.Router) {
 	estimate.NewHTTPServer(
 		context.Background(),
 		endpoints.Est,
+		projectsR,
+	)
+
+	landing.NewHTTPServer(
+		context.Background(),
+		endpoints.Landing,
 		projectsR,
 	)
 

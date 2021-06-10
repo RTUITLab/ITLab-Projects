@@ -139,13 +139,14 @@ func (swd *SaveWithDeleteByType) SaveAndDeletedUnfind(
 	if value.Type().AssignableTo(
 		swd.s.t,
 	) {
-		value = value.Addr()
+		value = reflect.MakeSlice( reflect.SliceOf(swd.s.t), 0, 1)
+		value = reflect.Append(value, reflect.ValueOf(v))
 	}
 
 	if value.Type().AssignableTo(
 		swd.s.tPtr,
 	) {
-		value = reflect.MakeSlice(swd.s.tPtr, 0, 1)
+		value = reflect.MakeSlice(reflect.SliceOf(swd.s.tPtr), 0, 1)
 		value = reflect.Append(value, reflect.ValueOf(v))
 	}
 
