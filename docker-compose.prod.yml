@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   projects-back:
-    image: rtuitlab/itlab-projects-back:${ITLAB_SERVICE_TAG-latest}
+    image: registry.rtuitlab.dev/rtuitlab/itlab-projects-back:${ITLAB_SERVICE_TAG-latest}
     environment:
       - ITLAB_PROJECTS_DBURI=${ITLAB_PROJECTS_MONGO_DB?Provide database url ITLAB_PROJECTS_MONGO_DB}
       - ITLAB_PROJECTS_DBURI_TEST=${ITLAB_PROJECTS_MONGO_DB_TEST?Provide testing database url ITLAB_PROJECTS_MONGO_DB_TEST}
