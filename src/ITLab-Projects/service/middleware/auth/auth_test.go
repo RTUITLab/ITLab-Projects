@@ -30,10 +30,10 @@ func init() {
 
 func TestFunc_FindRole_Admin(t *testing.T) {
 	role, err := auth.NewRoleGetter("itlab", rolesSet)(
-		map[string]interface{} {
-			"itlab": []string {
+		map[string]interface{}{
+			"itlab": []interface{}{
 				"user",
-    			"projects.admin",
+				"projects.admin",
 			},
 		},
 	)
@@ -47,10 +47,10 @@ func TestFunc_FindRole_Admin(t *testing.T) {
 
 func TestFunc_FindRole_User(t *testing.T) {
 	role, err := auth.NewRoleGetter("itlab", rolesSet)(
-		map[string]interface{} {
-			"itlab": []string {
+		map[string]interface{}{
+			"itlab": []interface{}{
 				"user",
-    			"projects",
+				"projects",
 			},
 		},
 	)
@@ -64,8 +64,8 @@ func TestFunc_FindRole_User(t *testing.T) {
 
 func TestFunc_FindRole_DontFind(t *testing.T) {
 	_, err := auth.NewRoleGetter("itlab", rolesSet)(
-		map[string]interface{} {
-			"itlab": []string {
+		map[string]interface{}{
+			"itlab": []interface{}{
 				"user",
 			},
 		},
@@ -79,7 +79,7 @@ func TestFunc_FindRole_DontFind(t *testing.T) {
 
 func TestFunc_FailedToCast(t *testing.T) {
 	_, err := auth.NewRoleGetter("itlab", rolesSet)(
-		map[string]interface{} {
+		map[string]interface{}{
 			"itlab": nil,
 		},
 	)

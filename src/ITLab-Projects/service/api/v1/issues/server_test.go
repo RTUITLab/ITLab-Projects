@@ -1,6 +1,7 @@
 package issues_test
 
 import (
+	"github.com/sirupsen/logrus"
 	"context"
 	"net/http"
 	"net/http/httptest"
@@ -14,13 +15,6 @@ import (
 	"github.com/ITLab-Projects/pkg/repositories"
 	s "github.com/ITLab-Projects/service/api/v1/issues"
 	"github.com/ITLab-Projects/service/repoimpl"
-	"github.com/ITLab-Projects/service/repoimpl/estimate"
-	"github.com/ITLab-Projects/service/repoimpl/functask"
-	"github.com/ITLab-Projects/service/repoimpl/issue"
-	"github.com/ITLab-Projects/service/repoimpl/milestone"
-	"github.com/ITLab-Projects/service/repoimpl/reales"
-	"github.com/ITLab-Projects/service/repoimpl/repo"
-	"github.com/ITLab-Projects/service/repoimpl/tag"
 	"github.com/go-kit/kit/log"
 	"github.com/joho/godotenv"
 )
@@ -29,7 +23,7 @@ var Router *mux.Router
 
 func init() {
 	if err := godotenv.Load("../../../../.env"); err != nil {
-		panic(err)
+		logrus.Warn("Don't find env")
 	}
 
 	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI_TEST")
@@ -45,15 +39,7 @@ func init() {
 	}
 
 	Repositories = _r
-	RepoImp = &repoimpl.RepoImp{
-		estimate.New(Repositories.Estimate),
-		issue.New(Repositories.Issue),
-		functask.New(Repositories.FuncTask),
-		milestone.New(Repositories.Milestone),
-		reales.New(Repositories.Realese),
-		repo.New(Repositories.Repo),
-		tag.New(Repositories.Tag),
-	}
+	RepoImp = repoimpl.New(Repositories)
 
 	service = s.New(
 		RepoImp,

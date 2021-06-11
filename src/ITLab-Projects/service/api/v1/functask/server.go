@@ -1,6 +1,7 @@
 package functask
 
 import (
+	serverbefore "github.com/ITLab-Projects/service/serverbefore/http"
 	"context"
 
 	"github.com/ITLab-Projects/service/api/v1/errorencoder"
@@ -28,6 +29,9 @@ func NewHTTPServer(
 			httptransport.ServerErrorEncoder(
 				errorencoder.ErrorEncoder,
 			),
+			httptransport.ServerBefore(
+				serverbefore.TokenFromReq,
+			),
 		),
 	).Methods("POST").Name(AddFuncTaskName)
 
@@ -39,6 +43,9 @@ func NewHTTPServer(
 			encodeResponce,
 			httptransport.ServerErrorEncoder(
 				errorencoder.ErrorEncoder,
+			),
+			httptransport.ServerBefore(
+				serverbefore.TokenFromReq,
 			),
 		),
 	).Methods("DELETE").Name(DeleteFuncTaskName)

@@ -10,10 +10,10 @@ import (
 	"github.com/ITLab-Projects/pkg/repositories/estimates"
 	"github.com/ITLab-Projects/pkg/repositories/functasks"
 	"github.com/ITLab-Projects/pkg/repositories/issues"
+	"github.com/ITLab-Projects/pkg/repositories/landing"
 	"github.com/ITLab-Projects/pkg/repositories/milestones"
 	"github.com/ITLab-Projects/pkg/repositories/realeses"
 	"github.com/ITLab-Projects/pkg/repositories/repos"
-	"github.com/ITLab-Projects/pkg/repositories/tags"
 	"github.com/ITLab-Projects/pkg/repositories/utils"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -26,8 +26,8 @@ type Repositories struct {
 	Realese 	realeses.Realeser
 	FuncTask 	functasks.FuncTaskRepositorier
 	Estimate 	estimates.EstimateRepositorier
-	Tag			tags.Tager
 	Issue		issues.Issuer
+	Landing		landing.LandingRepositorier
 }
 
 type Config struct {
@@ -83,8 +83,8 @@ func New(cfg *Config) (*Repositories, error) {
 		Realese: realeses.NewByType(),
 		Estimate: estimates.NewByType(),
 		FuncTask: functasks.NewByType(),
-		Tag: tags.NewByType(),
 		Issue: issues.NewByType(),
+		Landing: landing.NewByType(),
 	}, 
 	nil
 }

@@ -8,11 +8,13 @@ import (
 	"os"
 	"testing"
 
+	"github.com/sirupsen/logrus"
+
 	me "github.com/ITLab-Projects/pkg/models/estimate"
+	"github.com/ITLab-Projects/pkg/models/landing"
 	mm "github.com/ITLab-Projects/pkg/models/milestone"
 	"github.com/ITLab-Projects/pkg/models/milestonefile"
 	"github.com/ITLab-Projects/pkg/models/repoasproj"
-	mt "github.com/ITLab-Projects/pkg/models/tag"
 	"github.com/ITLab-Projects/pkg/models/user"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
@@ -23,13 +25,6 @@ import (
 	"github.com/ITLab-Projects/pkg/repositories"
 	s "github.com/ITLab-Projects/service/api/v1/projects"
 	"github.com/ITLab-Projects/service/repoimpl"
-	"github.com/ITLab-Projects/service/repoimpl/estimate"
-	"github.com/ITLab-Projects/service/repoimpl/functask"
-	"github.com/ITLab-Projects/service/repoimpl/issue"
-	"github.com/ITLab-Projects/service/repoimpl/milestone"
-	"github.com/ITLab-Projects/service/repoimpl/reales"
-	"github.com/ITLab-Projects/service/repoimpl/repo"
-	"github.com/ITLab-Projects/service/repoimpl/tag"
 	"github.com/go-kit/kit/log"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -39,7 +34,7 @@ var Router *mux.Router
 var Requester githubreq.Requester
 func init() {
 	if err := godotenv.Load("../../../../.env"); err != nil {
-		panic(err)
+		logrus.Warn("Don't find env")
 	}
 
 	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI_TEST")
@@ -66,15 +61,7 @@ func init() {
 	}
 
 	Repositories = _r
-	RepoImp = &repoimpl.RepoImp{
-		estimate.New(Repositories.Estimate),
-		issue.New(Repositories.Issue),
-		functask.New(Repositories.FuncTask),
-		milestone.New(Repositories.Milestone),
-		reales.New(Repositories.Realese),
-		repo.New(Repositories.Repo),
-		tag.New(Repositories.Tag),
-	}
+	RepoImp = repoimpl.New(Repositories)
 
 	service = s.New(
 		RepoImp,
@@ -270,27 +257,41 @@ func TestFunc_GetProjects_HTTP_ByTag(t *testing.T) {
 		3,
 	)
 
-	if err := Repositories.Tag.Save(
+
+	// {
+			// 	RepoID: 1,
+			// 	Tag: "mock_tag",
+			// },
+			// {
+			// 	RepoID: 2,
+			// 	Tag: "mock_tag",
+			// },
+
+	if err := Repositories.Landing.Save(
 		context.Background(),
-		[]mt.Tag{
+		[]landing.Landing{
 			{
-				RepoID: 1,
-				Tag: "mock_tag",
+				LandingCompact: landing.LandingCompact{
+					RepoId: 1,
+					Tags: []string{"mock_tag"},
+				},
 			},
 			{
-				RepoID: 2,
-				Tag: "mock_tag",
+				LandingCompact: landing.LandingCompact{
+					RepoId: 2,
+					Tags: []string{"mock_tag"},
+				},
 			},
 		},
 	); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
-	defer RepoImp.TagRepositoryImp.DeleteTagsByRepoID(
+	defer RepoImp.DeleteLandingsByRepoID(
 		context.Background(),
 		1,
 	)
-	defer RepoImp.TagRepositoryImp.DeleteTagsByRepoID(
+	defer RepoImp.DeleteLandingsByRepoID(
 		context.Background(),
 		2,
 	)
@@ -415,23 +416,6 @@ func TestFunc_GetProject_HTTP_AndDeleteThem(t *testing.T) {
 		t.Log(err)
 		t.FailNow()
 	}
-
-	if err := Repositories.Tag.Save(
-		context.Background(),
-		[]mt.Tag{
-			{
-				RepoID: 1,
-				Tag: "mock_tag_1",
-			},
-			{
-				RepoID: 1,
-				Tag: "mock_tag_2",
-			},
-		},
-	); err != nil {
-		t.Log(err)
-		t.FailNow()
-	}
 	
 	estimate_id := primitive.NewObjectID()
 
@@ -443,6 +427,19 @@ func TestFunc_GetProject_HTTP_AndDeleteThem(t *testing.T) {
 				FileID: estimate_id,
 			},
 		},	
+	); err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if err := Repositories.Landing.Save(
+		context.Background(),
+		landing.Landing{
+			LandingCompact: landing.LandingCompact{
+				RepoId: 1,
+				Tags: []string{"mock_tag_1", "mock_tag_2"},
+			},
+		},
 	); err != nil {
 		t.Log(err)
 		t.FailNow()
@@ -461,6 +458,8 @@ func TestFunc_GetProject_HTTP_AndDeleteThem(t *testing.T) {
 		t.FailNow()
 	}
 
+	t.Log(w.Body.String())
+	
 	if err := json.NewDecoder(w.Body).Decode(proj); err != nil {
 		t.Log(err)
 		t.FailNow()
@@ -472,10 +471,8 @@ func TestFunc_GetProject_HTTP_AndDeleteThem(t *testing.T) {
 	}
 
 	for _, tag := range proj.Tags {
-		switch tag.Tag {
-		case "mock_tag_1", "mock_tag_2":
-		default:
-			t.Log("assert error")
+		if !(tag.Tag == "mock_tag_1" || tag.Tag == "mock_tag_2") {
+			t.Log("Assert error")
 			t.FailNow()
 		}
 	}
@@ -508,4 +505,5 @@ func TestFunc_GetProject_HTTP_AndDeleteThem(t *testing.T) {
 		t.Log(w.Body.String())
 		t.FailNow()
 	}
+
 }

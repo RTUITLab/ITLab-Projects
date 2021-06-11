@@ -4,16 +4,9 @@ import (
 	"context"
 	"testing"
 
-	mt "github.com/ITLab-Projects/pkg/models/tag"
+	"github.com/ITLab-Projects/pkg/models/landing"
+	"github.com/Kamva/mgm"
 
-
-	"github.com/ITLab-Projects/service/repoimpl/estimate"
-	"github.com/ITLab-Projects/service/repoimpl/functask"
-	"github.com/ITLab-Projects/service/repoimpl/issue"
-	"github.com/ITLab-Projects/service/repoimpl/milestone"
-	"github.com/ITLab-Projects/service/repoimpl/reales"
-	"github.com/ITLab-Projects/service/repoimpl/repo"
-	"github.com/ITLab-Projects/service/repoimpl/tag"
 	"github.com/go-kit/kit/log"
 
 	"os"
@@ -34,7 +27,7 @@ var RepoImp *repoimpl.RepoImp
 func init() {
 	logrus.SetLevel(logrus.DebugLevel)
 	if err := godotenv.Load("../../../../.env"); err != nil {
-		panic(err)
+		logrus.Warn("Don't find env")
 	}
 
 	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI_TEST")
@@ -50,48 +43,42 @@ func init() {
 	}
 
 	Repositories = _r
-	RepoImp = &repoimpl.RepoImp{
-		estimate.New(Repositories.Estimate),
-		issue.New(Repositories.Issue),
-		functask.New(Repositories.FuncTask),
-		milestone.New(Repositories.Milestone),
-		reales.New(Repositories.Realese),
-		repo.New(Repositories.Repo),
-		tag.New(Repositories.Tag),
-	}
+	RepoImp = repoimpl.New(Repositories)
 
 	service = s.New(
 		RepoImp,
 		log.NewJSONLogger(os.Stdout),
 	)
+	
+	mgm.Coll(&landing.Landing{}).Drop(context.Background())
 }
 
 func TestFunc_GetTags(t *testing.T) {
-	if err := RepoImp.Tag.Save(
+	if err := RepoImp.Landing.Save(
 		context.Background(),
-		[]*mt.Tag{
+		[]landing.Landing{
 			{
-				RepoID: 1,
-				Tag: "mock_tag_1",
+				LandingCompact: landing.LandingCompact{
+					RepoId: 1,
+					Tags: []string{"mock_tag_1", "mock_tag_2"},
+				},
 			},
 			{
-				RepoID: 1,
-				Tag: "mock_tag_2",
-			},
-			{
-				RepoID: 2,
-				Tag: "mock_tag_3",
+				LandingCompact: landing.LandingCompact{
+					RepoId: 2,
+					Tags: []string{"mock_tag_3"},
+				},
 			},
 		},
 	); err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
-	defer RepoImp.DeleteTagsByRepoID(
+	defer RepoImp.DeleteLandingsByRepoID(
 		context.Background(),
 		1,
 	)
-	defer RepoImp.DeleteTagsByRepoID(
+	defer RepoImp.DeleteLandingsByRepoID(
 		context.Background(),
 		2,
 	)
@@ -109,6 +96,7 @@ func TestFunc_GetTags(t *testing.T) {
 		case "mock_tag_1", "mock_tag_2", "mock_tag_3":
 		default:
 			t.Log("Asser Error")
+			t.Log(tg.Tag)
 			t.FailNow()
 		}
 	}

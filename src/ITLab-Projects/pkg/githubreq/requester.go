@@ -1,6 +1,7 @@
 package githubreq
 
 import (
+	"github.com/ITLab-Projects/pkg/models/landing"
 	"github.com/ITLab-Projects/pkg/models/tag"
 	"github.com/ITLab-Projects/pkg/models/realese"
 	"context"
@@ -34,4 +35,9 @@ type Requester interface {
 		// if f nill would'nt call
 		f func(error),
 	) ([]tag.Tag, error)
+	GetAllLandingsForRepoWithID(
+		ctx 	context.Context,
+		reps	[]repo.Repo,
+		f		func(error),
+	) ([]*landing.Landing, error)
 }

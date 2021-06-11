@@ -1,8 +1,10 @@
 package projects_test
 
 import (
+	"github.com/ITLab-Projects/pkg/models/landing"
 	mre "github.com/ITLab-Projects/pkg/models/realese"
-	mt "github.com/ITLab-Projects/pkg/models/tag"
+	"github.com/Kamva/mgm"
+	"github.com/sirupsen/logrus"
 
 	"context"
 	"net/http"
@@ -25,13 +27,6 @@ import (
 
 	"github.com/ITLab-Projects/pkg/repositories"
 	"github.com/ITLab-Projects/service/repoimpl"
-	"github.com/ITLab-Projects/service/repoimpl/estimate"
-	"github.com/ITLab-Projects/service/repoimpl/functask"
-	"github.com/ITLab-Projects/service/repoimpl/issue"
-	"github.com/ITLab-Projects/service/repoimpl/milestone"
-	"github.com/ITLab-Projects/service/repoimpl/reales"
-	"github.com/ITLab-Projects/service/repoimpl/repo"
-	"github.com/ITLab-Projects/service/repoimpl/tag"
 	"github.com/joho/godotenv"
 )
 
@@ -41,7 +36,7 @@ var RepoImp *repoimpl.RepoImp
 
 func init() {
 	if err := godotenv.Load("../../../../.env"); err != nil {
-		panic(err)
+		logrus.Warn("Don't find env")
 	}
 
 	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI_TEST")
@@ -68,15 +63,7 @@ func init() {
 	}
 
 	Repositories = _r
-	RepoImp = &repoimpl.RepoImp{
-		estimate.New(Repositories.Estimate),
-		issue.New(Repositories.Issue),
-		functask.New(Repositories.FuncTask),
-		milestone.New(Repositories.Milestone),
-		reales.New(Repositories.Realese),
-		repo.New(Repositories.Repo),
-		tag.New(Repositories.Tag),
-	}
+	RepoImp = repoimpl.New(Repositories)
 
 	service = projects.New(
 		RepoImp,
@@ -94,6 +81,7 @@ func init() {
 
 func TestFunc_Init(t *testing.T) {
 	t.Log("Init")
+	mgm.Coll(&me.EstimateFile{}).Database().Drop(context.Background())
 }
 
 func TestFunc_UpdateAllProjects(t *testing.T) {
@@ -255,20 +243,12 @@ func TestFunc_DeleteProject(t *testing.T) {
 		t.FailNow()
 	}
 
-	if err := RepoImp.Tag.Save(
+	if err := RepoImp.Landing.Save(
 		context.Background(),
-		[]mt.Tag{
-			{
-				RepoID: 12,
-				Tag: "mock_tag_1",
-			},
-			{
-				RepoID: 12,
-				Tag: "mock_tag_2",
-			},
-			{
-				RepoID: 12,
-				Tag: "mock_tag_3",
+		landing.Landing{
+			LandingCompact: landing.LandingCompact{
+				RepoId: 12,
+				Title: "mock_1",
 			},
 		},
 	); err != nil {
@@ -297,14 +277,6 @@ func TestFunc_DeleteProject(t *testing.T) {
 			Header: http.Header{},
 		},
 	); err != nil {
-		t.Log(err)
-		t.FailNow()
-	}
-
-	if _, err := RepoImp.GetFilteredTagsByRepoID(
-		context.Background(),
-		12,
-	); err != mongo.ErrNoDocuments {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -342,6 +314,14 @@ func TestFunc_DeleteProject(t *testing.T) {
 	}
 
 	if _, err := RepoImp.GetEstimateByMilestoneID(
+		context.Background(),
+		1,
+	); err != mongo.ErrNoDocuments {
+		t.Log(err)
+		t.FailNow()
+	}
+
+	if _, err  := RepoImp.GetLandingByRepoID(
 		context.Background(),
 		1,
 	); err != mongo.ErrNoDocuments {

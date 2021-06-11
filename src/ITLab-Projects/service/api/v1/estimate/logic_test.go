@@ -21,13 +21,6 @@ import (
 	"github.com/ITLab-Projects/pkg/repositories"
 	s "github.com/ITLab-Projects/service/api/v1/estimate"
 	"github.com/ITLab-Projects/service/repoimpl"
-	"github.com/ITLab-Projects/service/repoimpl/estimate"
-	"github.com/ITLab-Projects/service/repoimpl/functask"
-	"github.com/ITLab-Projects/service/repoimpl/issue"
-	"github.com/ITLab-Projects/service/repoimpl/milestone"
-	"github.com/ITLab-Projects/service/repoimpl/reales"
-	"github.com/ITLab-Projects/service/repoimpl/repo"
-	"github.com/ITLab-Projects/service/repoimpl/tag"
 	"github.com/joho/godotenv"
 )
 
@@ -38,7 +31,7 @@ var RepoImp *repoimpl.RepoImp
 func init() {
 	logrus.SetLevel(logrus.DebugLevel)
 	if err := godotenv.Load("../../../../.env"); err != nil {
-		panic(err)
+		logrus.Warn("Don't find env")
 	}
 
 	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI_TEST")
@@ -54,15 +47,7 @@ func init() {
 	}
 
 	Repositories = _r
-	RepoImp = &repoimpl.RepoImp{
-		estimate.New(Repositories.Estimate),
-		issue.New(Repositories.Issue),
-		functask.New(Repositories.FuncTask),
-		milestone.New(Repositories.Milestone),
-		reales.New(Repositories.Realese),
-		repo.New(Repositories.Repo),
-		tag.New(Repositories.Tag),
-	}
+	RepoImp = repoimpl.New(Repositories)
 
 
 
@@ -90,6 +75,7 @@ func TestFunc_AddEstimate_ErrFailedToSave_NotFoundMilestone(t *testing.T) {
 	)
 	if status, _ := statuscode.GetStatus(err); status != http.StatusNotFound {
 		t.Log("Assert error")
+		t.Log(status)
 		t.FailNow()
 	}
 
