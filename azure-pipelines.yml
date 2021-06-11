@@ -43,7 +43,7 @@ stages:
       inputs:
         command: 'build'
         arguments: '-a -installsuffix cgo -o $(Build.ArtifactStagingDirectory)/main -v'
-        workingDirectory: 'src'
+        workingDirectory: 'src/ITLab-Projects'
     - task: CopyFiles@2
       inputs:
         SourceFolder: 'deploy'
