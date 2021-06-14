@@ -1,6 +1,7 @@
 package projects_test
 
 import (
+	"github.com/ITLab-Projects/pkg/repositories/utils/test"
 	"github.com/ITLab-Projects/pkg/models/landing"
 	mre "github.com/ITLab-Projects/pkg/models/realese"
 	"github.com/Kamva/mgm"
@@ -39,11 +40,6 @@ func init() {
 		logrus.Warn("Don't find env")
 	}
 
-	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI_TEST")
-	if !find {
-		panic("Don't find dburi")
-	}
-
 	token, find := os.LookupEnv("ITLAB_PROJECTS_ACCESSKEY")
 	if !find {
 		panic("Don't find token")
@@ -55,14 +51,7 @@ func init() {
 		},
 	)
 
-	_r, err := repositories.New(&repositories.Config{
-		DBURI: dburi,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	Repositories = _r
+	Repositories = test.GetTestRepository()
 	RepoImp = repoimpl.New(Repositories)
 
 	service = projects.New(
@@ -76,6 +65,9 @@ func init() {
 			},
 		),
 		nil,
+	)
+	mgm.Coll(&mgm.DefaultModel{}).Database().Drop(
+		context.Background(),
 	)
 }
 

@@ -1,9 +1,10 @@
 package reales_test
 
 import (
+	"github.com/Kamva/mgm"
+	"github.com/ITLab-Projects/pkg/repositories/utils/test"
 	"go.mongodb.org/mongo-driver/mongo"
 	"context"
-	"os"
 	"testing"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -24,21 +25,12 @@ func init() {
 		panic(err)
 	}
 
-	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI_TEST")
-	if !find {
-		panic("Don't find dburi")
-	}
+	Repositories = test.GetTestRepository()
 
-	_r, err := repositories.New(&repositories.Config{
-		DBURI: dburi,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	Repositories = _r
-
-	RealeseRepository = reales.New(_r.Realese)
+	RealeseRepository = reales.New(Repositories.Realese)
+	mgm.Coll(&mgm.DefaultModel{}).Database().Drop(
+		context.Background(),
+	)
 }
 
 func TestFunc_Init(t *testing.T) {

@@ -26,7 +26,9 @@ type MFSConfig struct {
 
 type DBConfig struct {
 	URI 		string		`envconfig:"ITLAB_PROJECTS_DBURI" json:"uri"`
+	TestURI		string		`envconfig:"ITLAB_PROJECTS_DBURI_TEST"`
 }
+
 type AuthConfig struct {
 	KeyURL		string		`envconfig:"ITLAB_PROJECTS_KEYURL" json:"keyUrl"`
 	Audience	string		`envconfig:"ITLAB_PROJECTS_AUDIENCE" json:"audience"`

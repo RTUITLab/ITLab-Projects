@@ -1,10 +1,12 @@
 package repo_test
 
 import (
-	"sort"
 	"context"
-	"os"
+	"sort"
 	"testing"
+
+	"github.com/ITLab-Projects/pkg/repositories/utils/test"
+	"github.com/Kamva/mgm"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -23,21 +25,12 @@ func init() {
 		panic(err)
 	}
 
-	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI_TEST")
-	if !find {
-		panic("Don't find dburi")
-	}
+	Repositories = test.GetTestRepository()
 
-	_r, err := repositories.New(&repositories.Config{
-		DBURI: dburi,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	Repositories = _r
-
-	RepoRepository = repo.New(_r.Repo)
+	RepoRepository = repo.New(Repositories.Repo)
+	mgm.Coll(&mgm.DefaultModel{}).Database().Drop(
+		context.Background(),
+	)
 }
 
 func TestFunc_Init(t *testing.T) {

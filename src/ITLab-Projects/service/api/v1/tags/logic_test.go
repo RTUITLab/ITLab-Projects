@@ -1,6 +1,7 @@
 package tags_test
 
 import (
+	"github.com/ITLab-Projects/pkg/repositories/utils/test"
 	"context"
 	"testing"
 
@@ -30,19 +31,7 @@ func init() {
 		logrus.Warn("Don't find env")
 	}
 
-	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI_TEST")
-	if !find {
-		panic("Don't find dburi")
-	}
-
-	_r, err := repositories.New(&repositories.Config{
-		DBURI: dburi,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	Repositories = _r
+	Repositories = test.GetTestRepository()
 	RepoImp = repoimpl.New(Repositories)
 
 	service = s.New(
@@ -50,7 +39,9 @@ func init() {
 		log.NewJSONLogger(os.Stdout),
 	)
 	
-	mgm.Coll(&landing.Landing{}).Drop(context.Background())
+	mgm.Coll(&mgm.DefaultModel{}).Database().Drop(
+		context.Background(),
+	)
 }
 
 func TestFunc_GetTags(t *testing.T) {
