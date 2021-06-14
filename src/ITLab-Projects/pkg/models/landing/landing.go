@@ -1,6 +1,8 @@
 package landing
 
 import (
+	"bytes"
+
 	"github.com/Kamva/mgm"
 )
 
@@ -19,7 +21,7 @@ type Landing struct {
 	Videos		[]string		`json:"videos"`
 	Tech		[]string		`json:"tech"`
 	Developers	[]string		`json:"developers"`
-	Site		string			`json:"site"`
+	Site		Site			`json:"site"`
 	SourceCode	[]*SourceCode	`json:"sourceCode"`
 }
 
@@ -27,4 +29,33 @@ type SourceCode	struct {
 	Name		string		`json:"name"`
 	// repository link
 	Value		string		`json:"link"`
+}
+
+type Site string
+
+func (s Site) MarshalJSON() ([]byte, error) {
+	buf := bytes.Buffer{}
+
+	if len(string(s)) == 0 {
+		buf.WriteString(`null`)
+	} else {
+		buf.WriteString(`"` + string(s) + `"`)
+	}
+	return buf.Bytes(), nil
+}
+
+func (s *Site) UnmarshalJSON(data []byte) error {
+	str := string(data)
+
+	if str == `null` {
+		*s = ""
+		return nil
+	}
+	res := Site(str)
+
+	if len(res) >= 2 {
+		res = res[1:len(res)-1]
+	}
+	*s = res
+	return nil
 }
