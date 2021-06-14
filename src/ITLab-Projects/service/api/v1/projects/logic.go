@@ -191,7 +191,7 @@ func (s *service) GetProjects(
 	switch {
 	case err == mongo.ErrNoDocuments:
 		level.Info(logger).Log("Not found projects for this filters: filter", filter)
-		return nil, nil
+		return []*repoasproj.RepoAsProjCompactPointers{}, nil
 	case err != nil:
 		level.Error(logger).Log("Failed to get projects: err", err)
 		return nil, statuscode.WrapStatusError(
