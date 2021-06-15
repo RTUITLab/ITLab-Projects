@@ -61,6 +61,8 @@ func New(
 //
 // @Router /v1/estimate/{milestone_id} [post]
 //
+// @Security ApiKeyAuth
+// 
 // @Accept json
 //
 // @Produce json
@@ -131,6 +133,8 @@ func (s *service) AddEstimate(
 // @Summary delete estimate from database
 // 
 // @Description delete estimate from database
+// 
+// @Security ApiKeyAuth
 // 
 // @Router /v1/estimate/{milestone_id} [delete]
 // 

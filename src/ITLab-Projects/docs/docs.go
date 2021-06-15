@@ -26,6 +26,11 @@ var doc = `{
     "paths": {
         "/v1/estimate/{milestone_id}": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "add estimate to milestone\nif estimate is exist for milesotne will replace it",
                 "consumes": [
                     "application/json"
@@ -92,6 +97,11 @@ var doc = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "delete estimate from database",
                 "produces": [
                     "application/json"
@@ -148,6 +158,11 @@ var doc = `{
         },
         "/v1/issues": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "return issues according to query params",
                 "produces": [
                     "application/json"
@@ -209,6 +224,11 @@ var doc = `{
         },
         "/v1/issues/labels": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "return all unique labels of issues",
                 "produces": [
                     "application/json"
@@ -244,6 +264,11 @@ var doc = `{
         },
         "/v1/projects": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "return a projects you can filter count of them\ntags, name",
                 "produces": [
                     "application/json"
@@ -303,6 +328,11 @@ var doc = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "make all request to github to update repositories, milestones",
                 "tags": [
                     "projects"
@@ -436,6 +466,11 @@ var doc = `{
         },
         "/v1/projects/{id}": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "return a project according to id value in path",
                 "produces": [
                     "application/json"
@@ -481,6 +516,11 @@ var doc = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "delete project by id and all milestones in it",
                 "tags": [
                     "projects"
@@ -534,6 +574,11 @@ var doc = `{
         },
         "/v1/tags": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "return all tags",
                 "produces": [
                     "application/json"
@@ -569,6 +614,11 @@ var doc = `{
         },
         "/v1/task/{milestone_id}": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "add func task to milestone\nif func task is exist for milesotne will replace it",
                 "consumes": [
                     "application/json"
@@ -635,6 +685,11 @@ var doc = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "delete functask from database",
                 "produces": [
                     "application/json"
@@ -1196,6 +1251,13 @@ var doc = `{
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`

@@ -11,6 +11,9 @@ import (
 // @version 1.0
 // @description This is a server to get projects from github
 // @BasePath /api/projects
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 
 
 func main() {

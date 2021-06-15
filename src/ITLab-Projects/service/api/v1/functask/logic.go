@@ -56,6 +56,8 @@ func New(
 //
 // @Description if func task is exist for milesotne will replace it
 //
+// @Security ApiKeyAuth
+// 
 // @Router /v1/task/{milestone_id} [post]
 //
 // @Accept json
@@ -127,6 +129,8 @@ func (s *service) AddFuncTask(
 // @Summary delete functask from database
 // 
 // @Description delete functask from database
+// 
+// @Security ApiKeyAuth
 // 
 // @Router /v1/task/{milestone_id} [delete]
 // 

@@ -76,6 +76,8 @@ func New(
 // 
 // @Tags projects
 // 
+// @Security ApiKeyAuth
+// 
 // @Description return a project according to id value in path
 // 
 // @Produce json
@@ -140,6 +142,8 @@ func (s *service) GetProject(
 // @Description tags, name
 // 
 // @Produce json
+// 
+// @Security ApiKeyAuth
 // 
 // @Router /v1/projects [get]
 // 
@@ -221,6 +225,8 @@ func (s *service) GetProjects(
 //
 // @Description make all request to github to update repositories, milestones
 //
+// @Security ApiKeyAuth
+// 
 // @Router /v1/projects [post]
 //
 // @Success 200
@@ -327,6 +333,8 @@ func (s *service) UpdateProjects(
 // @Tags projects
 // 
 // @Router /v1/projects/{id} [delete]
+// 
+// @Security ApiKeyAuth
 // 
 // @Param id path integer true "id of project"
 // 

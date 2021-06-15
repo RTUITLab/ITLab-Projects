@@ -47,6 +47,8 @@ func New(
 //
 // @Tags issues
 //
+// @Security ApiKeyAuth
+// 
 // @Produce json
 //
 // @Description return issues according to query params
@@ -113,6 +115,8 @@ func (s *service) GetIssues(
 // @Summary return labels
 //
 // @Tags issues
+// 
+// @Security ApiKeyAuth
 //
 // @Produce json
 //

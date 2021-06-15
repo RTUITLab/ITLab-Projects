@@ -371,6 +371,8 @@ paths:
           description: Failed to delete estimate
           schema:
             $ref: '#/definitions/err.Message'
+      security:
+      - ApiKeyAuth: []
       summary: delete estimate from database
       tags:
       - estimate
@@ -417,6 +419,8 @@ paths:
           description: Failed to save estimate
           schema:
             $ref: '#/definitions/err.Message'
+      security:
+      - ApiKeyAuth: []
       summary: add estimate to milestone
       tags:
       - estimate
@@ -458,6 +462,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/err.Message'
+      security:
+      - ApiKeyAuth: []
       summary: return issues
       tags:
       - issues
@@ -481,6 +487,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/err.Message'
+      security:
+      - ApiKeyAuth: []
       summary: return labels
       tags:
       - issues
@@ -523,6 +531,8 @@ paths:
           description: Failed to get repositories
           schema:
             $ref: '#/definitions/err.Message'
+      security:
+      - ApiKeyAuth: []
       summary: return projects according to query value
       tags:
       - projects
@@ -547,6 +557,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/err.Message'
+      security:
+      - ApiKeyAuth: []
       summary: Update all projects
       tags:
       - projects
@@ -582,6 +594,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/err.Message'
+      security:
+      - ApiKeyAuth: []
       summary: delete project by id
       tags:
       - projects
@@ -612,6 +626,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/err.Message'
+      security:
+      - ApiKeyAuth: []
       summary: return project according to id
       tags:
       - projects
@@ -697,6 +713,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/err.Message'
+      security:
+      - ApiKeyAuth: []
       summary: return all tags
       tags:
       - tags
@@ -734,6 +752,8 @@ paths:
           description: Failed to delete func task
           schema:
             $ref: '#/definitions/err.Message'
+      security:
+      - ApiKeyAuth: []
       summary: delete functask from database
       tags:
       - functask
@@ -780,7 +800,14 @@ paths:
           description: Failed to save functask
           schema:
             $ref: '#/definitions/err.Message'
+      security:
+      - ApiKeyAuth: []
       summary: add func task to milestone
       tags:
       - functask
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

@@ -47,6 +47,8 @@ func New(
 //
 // @Description return all tags
 //
+// @Security ApiKeyAuth
+// 
 // @Router /v1/tags [get]
 //
 // @Success 200 {array} tag.Tag
