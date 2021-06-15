@@ -59,13 +59,15 @@ func New(
 //
 // @Description if estimate is exist for milesotne will replace it
 //
-// @Router /v1/estimate [post]
+// @Router /v1/estimate/{milestone_id} [post]
 //
 // @Accept json
 //
 // @Produce json
 //
-// @Param estimate body estimate.EstimateFile true "estimate that you want to add"
+// @Param estimate body estimate.AddEstimateReq true "estimate that you want to add"
+// 
+// @Param milestone_id path integer true "id of milestone"
 //
 // @Success 201
 //

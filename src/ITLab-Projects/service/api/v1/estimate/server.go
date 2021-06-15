@@ -23,7 +23,7 @@ func NewHTTPServer(
 	r			*mux.Router,
 ) {
 	r.Handle(
-		"/estimate",
+		"/estimate/{milestone_id:[0-9]+}",
 		httptransport.NewServer(
 			endpoints.AddEstimate,
 			decodeAddEstimateReq,

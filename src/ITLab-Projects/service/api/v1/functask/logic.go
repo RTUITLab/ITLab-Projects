@@ -56,13 +56,15 @@ func New(
 //
 // @Description if func task is exist for milesotne will replace it
 //
-// @Router /v1/task [post]
+// @Router /v1/task/{milestone_id} [post]
 //
 // @Accept json
 //
 // @Produce json
 //
-// @Param functask body functask.FuncTaskFile true "function task that you want to add"
+// @Param functask body functask.AddFuncTaskReq true "function task that you want to add"
+// 
+// @Param milestone_id path integer true "id of milestone"
 //
 // @Success 201
 //
