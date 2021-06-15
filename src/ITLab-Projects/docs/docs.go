@@ -24,7 +24,7 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/v1/estimate": {
+        "/v1/estimate/{milestone_id}": {
             "post": {
                 "description": "add estimate to milestone\nif estimate is exist for milesotne will replace it",
                 "consumes": [
@@ -44,8 +44,15 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/estimate.EstimateFile"
+                            "$ref": "#/definitions/estimate.AddEstimateReq"
                         }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "id of milestone",
+                        "name": "milestone_id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -83,9 +90,7 @@ var doc = `{
                         }
                     }
                 }
-            }
-        },
-        "/v1/estimate/{milestone_id}": {
+            },
             "delete": {
                 "description": "delete estimate from database",
                 "produces": [
@@ -237,101 +242,6 @@ var doc = `{
                 }
             }
         },
-        "/v1/landing": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "landing"
-                ],
-                "summary": "return all landings according to path params",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "represent how much landins need to skip",
-                        "name": "start",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "represent a max count of returing landing",
-                        "name": "count",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "return a landings with this tags",
-                        "name": "tag",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "return landing with this names",
-                        "name": "name",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/landing.LandingCompact"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/landing/{id}": {
-            "get": {
-                "description": "return a landing according to id",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "landing"
-                ],
-                "summary": "return a current landing",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "id of landing",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/landing.Landing"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    }
-                }
-            }
-        },
         "/v1/projects": {
             "get": {
                 "description": "return a projects you can filter count of them\ntags, name",
@@ -418,6 +328,101 @@ var doc = `{
                         "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/err.Err"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/projects/landing": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "projects"
+                ],
+                "summary": "return all landings according to path params",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "represent how much landins need to skip",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "represent a max count of returing landing",
+                        "name": "count",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "return a landings with this tags",
+                        "name": "tag",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "return landing with this names",
+                        "name": "name",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/landing.LandingCompact"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/projects/landing/{id}": {
+            "get": {
+                "description": "return a landing according to id",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "projects"
+                ],
+                "summary": "return a current landing",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "id of landing",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/landing.Landing"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
                         }
                     },
                     "500": {
@@ -562,7 +567,7 @@ var doc = `{
                 }
             }
         },
-        "/v1/task": {
+        "/v1/task/{milestone_id}": {
             "post": {
                 "description": "add func task to milestone\nif func task is exist for milesotne will replace it",
                 "consumes": [
@@ -582,8 +587,15 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/functask.FuncTaskFile"
+                            "$ref": "#/definitions/functask.AddFuncTaskReq"
                         }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "id of milestone",
+                        "name": "milestone_id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -621,9 +633,7 @@ var doc = `{
                         }
                     }
                 }
-            }
-        },
-        "/v1/task/{milestone_id}": {
+            },
             "delete": {
                 "description": "delete functask from database",
                 "produces": [
@@ -717,6 +727,14 @@ var doc = `{
                 }
             }
         },
+        "estimate.AddEstimateReq": {
+            "type": "object",
+            "properties": {
+                "file_id": {
+                    "type": "string"
+                }
+            }
+        },
         "estimate.Estimate": {
             "type": "object",
             "properties": {
@@ -728,14 +746,11 @@ var doc = `{
                 }
             }
         },
-        "estimate.EstimateFile": {
+        "functask.AddFuncTaskReq": {
             "type": "object",
             "properties": {
-                "id": {
+                "file_id": {
                     "type": "string"
-                },
-                "milestone_id": {
-                    "type": "integer"
                 }
             }
         },
@@ -743,17 +758,6 @@ var doc = `{
             "type": "object",
             "properties": {
                 "func_task_url": {
-                    "type": "string"
-                },
-                "milestone_id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "functask.FuncTaskFile": {
-            "type": "object",
-            "properties": {
-                "id": {
                     "type": "string"
                 },
                 "milestone_id": {

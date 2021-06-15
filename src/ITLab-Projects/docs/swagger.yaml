@@ -23,6 +23,11 @@ definitions:
       message:
         type: string
     type: object
+  estimate.AddEstimateReq:
+    properties:
+      file_id:
+        type: string
+    type: object
   estimate.Estimate:
     properties:
       estimate_url:
@@ -30,23 +35,14 @@ definitions:
       milestone_id:
         type: integer
     type: object
-  estimate.EstimateFile:
+  functask.AddFuncTaskReq:
     properties:
-      id:
+      file_id:
         type: string
-      milestone_id:
-        type: integer
     type: object
   functask.FuncTask:
     properties:
       func_task_url:
-        type: string
-      milestone_id:
-        type: integer
-    type: object
-  functask.FuncTaskFile:
-    properties:
-      id:
         type: string
       milestone_id:
         type: integer
@@ -341,48 +337,6 @@ info:
   title: ITLab-Projects API
   version: "1.0"
 paths:
-  /v1/estimate:
-    post:
-      consumes:
-      - application/json
-      description: |-
-        add estimate to milestone
-        if estimate is exist for milesotne will replace it
-      parameters:
-      - description: estimate that you want to add
-        in: body
-        name: estimate
-        required: true
-        schema:
-          $ref: '#/definitions/estimate.EstimateFile'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: ""
-        "400":
-          description: Unexpected body
-          schema:
-            $ref: '#/definitions/err.Message'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/err.Message'
-        "403":
-          description: if you are not admin
-          schema:
-            $ref: '#/definitions/err.Message'
-        "404":
-          description: Don't find milestone with this id
-          schema:
-            $ref: '#/definitions/err.Message'
-        "500":
-          description: Failed to save estimate
-          schema:
-            $ref: '#/definitions/err.Message'
-      summary: add estimate to milestone
-      tags:
-      - estimate
   /v1/estimate/{milestone_id}:
     delete:
       description: delete estimate from database
@@ -418,6 +372,52 @@ paths:
           schema:
             $ref: '#/definitions/err.Message'
       summary: delete estimate from database
+      tags:
+      - estimate
+    post:
+      consumes:
+      - application/json
+      description: |-
+        add estimate to milestone
+        if estimate is exist for milesotne will replace it
+      parameters:
+      - description: estimate that you want to add
+        in: body
+        name: estimate
+        required: true
+        schema:
+          $ref: '#/definitions/estimate.AddEstimateReq'
+      - description: id of milestone
+        in: path
+        name: milestone_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: ""
+        "400":
+          description: Unexpected body
+          schema:
+            $ref: '#/definitions/err.Message'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "403":
+          description: if you are not admin
+          schema:
+            $ref: '#/definitions/err.Message'
+        "404":
+          description: Don't find milestone with this id
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Failed to save estimate
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: add estimate to milestone
       tags:
       - estimate
   /v1/issues:
@@ -484,68 +484,6 @@ paths:
       summary: return labels
       tags:
       - issues
-  /v1/landing:
-    get:
-      parameters:
-      - description: represent how much landins need to skip
-        in: query
-        name: start
-        type: integer
-      - description: represent a max count of returing landing
-        in: query
-        name: count
-        type: integer
-      - description: return a landings with this tags
-        in: query
-        name: tag
-        type: string
-      - description: return landing with this names
-        in: query
-        name: name
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/landing.LandingCompact'
-            type: array
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/err.Message'
-      summary: return all landings according to path params
-      tags:
-      - landing
-  /v1/landing/{id}:
-    get:
-      description: return a landing according to id
-      parameters:
-      - description: id of landing
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/landing.Landing'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/err.Message'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/err.Message'
-      summary: return a current landing
-      tags:
-      - landing
   /v1/projects:
     get:
       description: |-
@@ -677,6 +615,68 @@ paths:
       summary: return project according to id
       tags:
       - projects
+  /v1/projects/landing:
+    get:
+      parameters:
+      - description: represent how much landins need to skip
+        in: query
+        name: start
+        type: integer
+      - description: represent a max count of returing landing
+        in: query
+        name: count
+        type: integer
+      - description: return a landings with this tags
+        in: query
+        name: tag
+        type: string
+      - description: return landing with this names
+        in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/landing.LandingCompact'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: return all landings according to path params
+      tags:
+      - projects
+  /v1/projects/landing/{id}:
+    get:
+      description: return a landing according to id
+      parameters:
+      - description: id of landing
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/landing.Landing'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: return a current landing
+      tags:
+      - projects
   /v1/tags:
     get:
       description: return all tags
@@ -700,48 +700,6 @@ paths:
       summary: return all tags
       tags:
       - tags
-  /v1/task:
-    post:
-      consumes:
-      - application/json
-      description: |-
-        add func task to milestone
-        if func task is exist for milesotne will replace it
-      parameters:
-      - description: function task that you want to add
-        in: body
-        name: functask
-        required: true
-        schema:
-          $ref: '#/definitions/functask.FuncTaskFile'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: ""
-        "400":
-          description: Unexpected body
-          schema:
-            $ref: '#/definitions/err.Message'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/err.Message'
-        "403":
-          description: if you are not admin
-          schema:
-            $ref: '#/definitions/err.Message'
-        "404":
-          description: Don't find milestone with this id
-          schema:
-            $ref: '#/definitions/err.Message'
-        "500":
-          description: Failed to save functask
-          schema:
-            $ref: '#/definitions/err.Message'
-      summary: add func task to milestone
-      tags:
-      - functask
   /v1/task/{milestone_id}:
     delete:
       description: delete functask from database
@@ -777,6 +735,52 @@ paths:
           schema:
             $ref: '#/definitions/err.Message'
       summary: delete functask from database
+      tags:
+      - functask
+    post:
+      consumes:
+      - application/json
+      description: |-
+        add func task to milestone
+        if func task is exist for milesotne will replace it
+      parameters:
+      - description: function task that you want to add
+        in: body
+        name: functask
+        required: true
+        schema:
+          $ref: '#/definitions/functask.AddFuncTaskReq'
+      - description: id of milestone
+        in: path
+        name: milestone_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: ""
+        "400":
+          description: Unexpected body
+          schema:
+            $ref: '#/definitions/err.Message'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "403":
+          description: if you are not admin
+          schema:
+            $ref: '#/definitions/err.Message'
+        "404":
+          description: Don't find milestone with this id
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Failed to save functask
+          schema:
+            $ref: '#/definitions/err.Message'
+      summary: add func task to milestone
       tags:
       - functask
 swagger: "2.0"
