@@ -96,7 +96,7 @@ func (s *service) GetIssues(
 		count,
 	)
 	if err == mongo.ErrNoDocuments {
-		// Pass
+		is = []*milestone.IssuesWithMilestoneID{}
 	} else if err != nil {
 		level.Error(logger).Log("Failed to get issues: err", err)
 		return nil, statuscode.WrapStatusError(
@@ -133,7 +133,7 @@ func (s *service) GetLabels(
 		ctx,
 	)
 	if err == mongo.ErrNoDocuments {
-		// Pass
+		labels = []interface{}{}
 	} else if err != nil {
 		level.Error(logger).Log("Failed to get issues labels: err", err)
 		return nil, statuscode.WrapStatusError(

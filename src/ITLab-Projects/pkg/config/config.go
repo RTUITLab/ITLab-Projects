@@ -26,19 +26,21 @@ type MFSConfig struct {
 
 type DBConfig struct {
 	URI 		string		`envconfig:"ITLAB_PROJECTS_DBURI" json:"uri"`
+	TestURI		string		`envconfig:"ITLAB_PROJECTS_DBURI_TEST"`
 }
+
 type AuthConfig struct {
-	KeyURL		string		`envconfig:"ITLABPROJ_KEYURL" json:"keyUrl"`
-	Audience	string		`envconfig:"ITLABPROJ_AUDIENCE" json:"audience"`
-	Issuer		string		`envconfig:"ITLABPROJ_ISSUER" json:"issuer"`
-	Scope		string		`envconfig:"ITLABPROJ_SCOPE" json:"scope"`
+	KeyURL		string		`envconfig:"ITLAB_PROJECTS_KEYURL" json:"keyUrl"`
+	Audience	string		`envconfig:"ITLAB_PROJECTS_AUDIENCE" json:"audience"`
+	Issuer		string		`envconfig:"ITLAB_PROJECTS_ISSUER" json:"issuer"`
+	Scope		string		`envconfig:"ITLAB_PROJECTS_SCOPE" json:"scope"`
 	*RolesConfig
 	Github		Github		`json:"Github"`
 }
 
 type RolesConfig struct {
 	// looks like roles = "admin user" parse to ["admin", "user"]
-	Roles string			`envconfig:"ITLABPROJ_ROLES" json:"roles"`
+	Roles string			`envconfig:"ITLAB_PROJECTS_ROLES" json:"roles"`
 }
 
 type Github struct {

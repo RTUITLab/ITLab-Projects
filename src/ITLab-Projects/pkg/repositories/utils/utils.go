@@ -1,8 +1,13 @@
 package utils
 
 import (
-	"regexp"
+	"strings"
 	"errors"
+	"fmt"
+	"regexp"
+
+	"github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/connstring"
 )
 
 const (
@@ -42,4 +47,52 @@ func getGroupFromURI(URI string, group int) string {
 	}
 
 	return all[group]
+}
+
+// If in database name not found word test panic
+func ValidateTestURI(URI, TestURI string) {
+	uri, err := connstring.Parse(URI)
+	if err != nil {
+		logrus.WithFields(
+			logrus.Fields{
+				"package": "repositories/utils",
+				"func": "ValidateTestURI",
+				"err": err,
+			},
+		).Panic("Faield to parse mongodb uri")
+	}
+
+	testuri, err := connstring.Parse(TestURI)
+	if err != nil {
+		logrus.WithFields(
+			logrus.Fields{
+				"package": "repositories/utils",
+				"func": "ValidateTestURI",
+				"err": err,
+			},
+		).Panic("Faield to parse mongodb test uri")
+	}
+
+	if uri.Database == testuri.Database {
+		logrus.WithFields(
+			logrus.Fields{
+				"package": "repositories/utils",
+				"func": "ValidateTestURI",
+				"err": fmt.Errorf("URI and TestURI should be different because in test - drops test database to validate all data"),
+			},
+		).Panic()
+	}
+
+	if !strings.Contains(
+		strings.ToLower(testuri.Database),
+		"test",
+	) {
+		logrus.WithFields(
+			logrus.Fields{
+				"package": "repositories/utils",
+				"func": "ValidateTestURI",
+				"err": fmt.Errorf(`test uri database should contains word "test" example:"mongodb://user:pass@net:port/test_database"`),
+			},
+		).Panic()
+	}
 }

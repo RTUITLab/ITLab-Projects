@@ -59,7 +59,7 @@ func (lp *LandingParser) Parse(data []byte) *landing.Landing {
 				case "Developers":
 					l.Developers = getStringList(ast.GetNextNode(child))
 				case "Site":
-					l.Site = getLink(ast.GetNextNode(child))
+					l.Site = landing.Site(getLink(ast.GetNextNode(child)))
 				case "SourceCode":
 					l.SourceCode = getSourceCode(ast.GetNextNode(child))
 				}

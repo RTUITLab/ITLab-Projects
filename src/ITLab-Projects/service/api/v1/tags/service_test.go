@@ -1,6 +1,8 @@
 package tags_test
 
 import (
+	"github.com/Kamva/mgm"
+	"github.com/ITLab-Projects/pkg/repositories/utils/test"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -13,7 +15,6 @@ import (
 	"github.com/ITLab-Projects/pkg/models/landing"
 	mt "github.com/ITLab-Projects/pkg/models/tag"
 
-	"github.com/ITLab-Projects/pkg/repositories"
 	s "github.com/ITLab-Projects/service/api/v1/tags"
 	"github.com/ITLab-Projects/service/repoimpl"
 	"github.com/go-kit/kit/log"
@@ -27,19 +28,7 @@ func init() {
 		logrus.Warn("Don't find env")
 	}
 
-	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI_TEST")
-	if !find {
-		panic("Don't find dburi")
-	}
-
-	_r, err := repositories.New(&repositories.Config{
-		DBURI: dburi,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	Repositories = _r
+	Repositories = test.GetTestRepository()
 	RepoImp = repoimpl.New(Repositories)
 
 	service = s.New(
@@ -53,6 +42,9 @@ func init() {
 		context.Background(),
 		s.MakeEndpoints(service),
 		Router,
+	)
+	mgm.Coll(&mgm.DefaultModel{}).Database().Drop(
+		context.Background(),
 	)
 }
 

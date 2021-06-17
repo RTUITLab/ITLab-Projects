@@ -1,6 +1,8 @@
 package functask_test
 
 import (
+	"github.com/Kamva/mgm"
+	"github.com/ITLab-Projects/pkg/repositories/utils/test"
 	"github.com/pkg/errors"
 
 	"context"
@@ -36,19 +38,7 @@ func init() {
 		logrus.Warn("Don't find env")
 	}
 
-	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI_TEST")
-	if !find {
-		panic("Don't find dburi")
-	}
-
-	_r, err := repositories.New(&repositories.Config{
-		DBURI: dburi,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	Repositories = _r
+	Repositories = test.GetTestRepository()
 	RepoImp = repoimpl.New(Repositories)
 
 	service = s.New(
@@ -60,6 +50,9 @@ func init() {
 			},
 		),
 		log.NewJSONLogger(os.Stdout),
+	)
+	mgm.Coll(&mgm.DefaultModel{}).Database().Drop(
+		context.Background(),
 	)
 }
 

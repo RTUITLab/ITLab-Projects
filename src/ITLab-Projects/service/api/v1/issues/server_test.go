@@ -1,6 +1,8 @@
 package issues_test
 
 import (
+	"github.com/Kamva/mgm"
+	"github.com/ITLab-Projects/pkg/repositories/utils/test"
 	"github.com/sirupsen/logrus"
 	"context"
 	"net/http"
@@ -12,7 +14,6 @@ import (
 	mm "github.com/ITLab-Projects/pkg/models/milestone"
 	"github.com/gorilla/mux"
 
-	"github.com/ITLab-Projects/pkg/repositories"
 	s "github.com/ITLab-Projects/service/api/v1/issues"
 	"github.com/ITLab-Projects/service/repoimpl"
 	"github.com/go-kit/kit/log"
@@ -26,19 +27,7 @@ func init() {
 		logrus.Warn("Don't find env")
 	}
 
-	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI_TEST")
-	if !find {
-		panic("Don't find dburi")
-	}
-
-	_r, err := repositories.New(&repositories.Config{
-		DBURI: dburi,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	Repositories = _r
+	Repositories = test.GetTestRepository()
 	RepoImp = repoimpl.New(Repositories)
 
 	service = s.New(
@@ -52,6 +41,9 @@ func init() {
 		context.Background(),
 		s.MakeEndPoints(service),
 		Router,
+	)
+	mgm.Coll(&mgm.DefaultModel{}).Database().Drop(
+		context.Background(),
 	)
 }
 

@@ -62,7 +62,7 @@ func (s *service) GetAllTags(
 		ctx,
 	)
 	if err == mongo.ErrNoDocuments {
-		// Pass
+		tgs = []*tag.Tag{}
 	} else if err != nil {
 		logger.Log("Failed to get tags: err", err)
 		return nil, statuscode.WrapStatusError(

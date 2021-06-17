@@ -3,7 +3,10 @@ package repositories
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
+
+	"go.mongodb.org/mongo-driver/x/mongo/driver/connstring"
 
 	"github.com/Kamva/mgm"
 
@@ -14,7 +17,6 @@ import (
 	"github.com/ITLab-Projects/pkg/repositories/milestones"
 	"github.com/ITLab-Projects/pkg/repositories/realeses"
 	"github.com/ITLab-Projects/pkg/repositories/repos"
-	"github.com/ITLab-Projects/pkg/repositories/utils"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -35,14 +37,9 @@ type Config struct {
 }
 
 func New(cfg *Config) (*Repositories, error) {
-	URI, err := utils.GetDBURIWithoutName(cfg.DBURI)
-	if err != nil {
-		return nil, err
-	}
-
 	client, err := mongo.NewClient(
 		options.Client().
-			ApplyURI(URI).
+			ApplyURI(cfg.DBURI).
 			SetMaxPoolSize(50).
 			SetMaxConnIdleTime(0).
 			SetLocalThreshold(10*time.Millisecond),
@@ -62,16 +59,17 @@ func New(cfg *Config) (*Repositories, error) {
 	if err = client.Ping(ctx, nil); err != nil {
 		return nil, errors.New("Error on ping")
 	}
-
-	dbName, err := utils.GetDbNameByReg(cfg.DBURI)
+	constr, err := connstring.Parse(cfg.DBURI)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to parse URI: err: %v", err)
 	}
+	
+	dbName := constr.Database
 	
 	if err := mgm.SetDefaultConfig(
 		nil,
 		dbName,
-		options.Client().ApplyURI(URI),
+		options.Client().ApplyURI(cfg.DBURI),
 	); err != nil {
 		return nil, err
 	}

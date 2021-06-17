@@ -1,12 +1,13 @@
 package milestone_test
 
 import (
+	"github.com/Kamva/mgm"
+	"github.com/ITLab-Projects/pkg/repositories/utils/test"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/bson"
 	"context"
 	model "github.com/ITLab-Projects/pkg/models/milestone"
-	"os"
 	"github.com/joho/godotenv"
 	"github.com/ITLab-Projects/pkg/repositories"
 	"testing"
@@ -22,22 +23,13 @@ func init() {
 		panic(err)
 	}
 
-	dburi, find := os.LookupEnv("ITLAB_PROJECTS_DBURI_TEST")
-	if !find {
-		panic("Don't find dburi")
-	}
-
-	_r, err := repositories.New(&repositories.Config{
-		DBURI: dburi,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	Repositories = _r
+	Repositories = test.GetTestRepository()
 
 	MilestoneRepository = milestone.New(
-		_r.Milestone,
+		Repositories.Milestone,
+	)
+	mgm.Coll(&mgm.DefaultModel{}).Database().Drop(
+		context.Background(),
 	)
 }
 
