@@ -1,12 +1,13 @@
 package repo
 
 import (
-	"github.com/ITLab-Projects/service/repoimpl/utils"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/bson"
-	"github.com/ITLab-Projects/pkg/models/repo"
 	"context"
+
+	"github.com/ITLab-Projects/pkg/models/repo"
+	"github.com/ITLab-Projects/service/repoimpl/utils"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/ITLab-Projects/pkg/repositories/repos"
 )
@@ -156,4 +157,27 @@ func (r *RepoRepositoryImp) DeleteByID(
 	}
 
 	return nil
+}
+
+func (r *RepoRepositoryImp) GetChunckedRepos(
+	ctx 	context.Context,
+	filter,
+	sort	interface{},
+	start,
+	count 	int64,
+) ([]*repo.Repo, error) {
+	var repos []*repo.Repo
+	if err := utils.GetChuncked(
+		ctx,
+		r.Repo,
+		filter,
+		sort,
+		&repos,
+		start,
+		count,
+	); err != nil {
+		return nil, err
+	}
+
+	return repos, nil
 }
