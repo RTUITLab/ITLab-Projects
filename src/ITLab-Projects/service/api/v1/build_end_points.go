@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/ITLab-Projects/service/api/v1/updater"
 	"github.com/ITLab-Projects/service/middleware/auth"
 	"github.com/ITLab-Projects/service/middleware/mgsess"
 	"github.com/go-kit/kit/endpoint"
@@ -80,12 +81,6 @@ func (a *Api) buildEndpoints() ServiceEndpoints {
 		a.NewAuth,
 		mgsess.PutMongoSessIntoCtx(),
 	)(endpoints.Projects.GetProjects)
-
-	endpoints.Projects.UpdateProjects = endpoint.Chain(
-		a.NewAuth,
-		auth.EndpointAdminMiddleware(),
-		mgsess.PutMongoSessIntoCtx(),
-	)(endpoints.Projects.UpdateProjects)
 	// ----------		----------
 
 	// ---------- Landing ----------
@@ -96,6 +91,15 @@ func (a *Api) buildEndpoints() ServiceEndpoints {
 	endpoints.Landing.GetAllLandings = endpoint.Chain(
 		mgsess.PutMongoSessIntoCtx(),
 	)(endpoints.Landing.GetAllLandings)
+	// ----------		----------
+
+	// ---------- Updater ----------
+
+	endpoints.Update.UpdateProjects = endpoint.Chain(
+		a.NewAuth,
+		auth.EndpointAdminMiddleware(),
+		mgsess.PutMongoSessIntoCtx(),
+	)(endpoints.Update.UpdateProjects)
 	// ----------		----------
 	
 	return endpoints
@@ -152,10 +156,6 @@ func (a *Api) _buildEndpoint() ServiceEndpoints {
 	endpoints.Projects.GetProjects = endpoint.Chain(
 		mgsess.PutMongoSessIntoCtx(),
 	)(endpoints.Projects.GetProjects)
-	
-	endpoints.Projects.UpdateProjects = endpoint.Chain(
-		mgsess.PutMongoSessIntoCtx(),
-	)(endpoints.Projects.UpdateProjects)
 	// ----------		----------
 
 
@@ -168,6 +168,15 @@ func (a *Api) _buildEndpoint() ServiceEndpoints {
 		mgsess.PutMongoSessIntoCtx(),
 	)(endpoints.Landing.GetAllLandings)
 	// ----------		----------
+
+	// ---------- Updater ----------
+
+	endpoints.Update.UpdateProjects = endpoint.Chain(
+		mgsess.PutMongoSessIntoCtx(),
+	)(endpoints.Update.UpdateProjects)
+	// ----------		----------
+
+
 	return endpoints
 }
 
@@ -179,5 +188,6 @@ func (a *Api) endpoints() ServiceEndpoints {
 		Task: functask.MakeEndPoints(a.taskService),
 		Est: estimate.MakeEndPoints(a.estService),
 		Landing: landing.MakeEndpoints(a.landingService),
+		Update: updater.MakeEndpoints(a.updaterService),
 	}
 }

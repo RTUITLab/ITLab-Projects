@@ -14,7 +14,6 @@ import (
 
 	"github.com/ITLab-Projects/pkg/models/estimate"
 	"github.com/ITLab-Projects/pkg/models/functask"
-	"github.com/ITLab-Projects/pkg/models/landing"
 	"github.com/ITLab-Projects/pkg/models/repo"
 	"github.com/ITLab-Projects/pkg/statuscode"
 	"go.mongodb.org/mongo-driver/bson"
@@ -23,12 +22,9 @@ import (
 
 	"github.com/go-kit/kit/log/level"
 
-	"github.com/ITLab-Projects/pkg/githubreq"
 	"github.com/ITLab-Projects/pkg/mfsreq"
 	"github.com/ITLab-Projects/pkg/models/milestone"
-	"github.com/ITLab-Projects/pkg/models/realese"
 	"github.com/ITLab-Projects/pkg/models/repoasproj"
-	"github.com/ITLab-Projects/pkg/updater"
 	"github.com/go-kit/kit/log"
 )
 
@@ -46,27 +42,21 @@ var (
 	ErrTagNotFound				= errors.New("Tag not found")
 )
 
-type service struct {
+type ServiceImp struct {
 	repository 		Repository
 	logger 			log.Logger
-	requester		githubreq.Requester
 	mfsRequester	mfsreq.Requester
-	upd				*updater.Updater
 }
 
 func New(
 	repository 	Repository,
 	logger 		log.Logger,
-	requester	githubreq.Requester,
 	mfsreq		mfsreq.Requester,
-	upd			*updater.Updater,
-) *service {
-	return &service{
+) *ServiceImp {
+	return &ServiceImp{
 		repository: repository,
 		logger: logger,
-		requester: requester,
 		mfsRequester: mfsreq,
-		upd: upd,
 	}
 }
 
@@ -93,7 +83,7 @@ func New(
 // @Failure 500 {object} e.Message
 // 
 // @Failure 401 {object} e.Message 
-func (s *service) GetProject(
+func (s *ServiceImp) GetProject(
 	ctx context.Context,
 	ID uint64,
 ) (*repoasproj.RepoAsProjPointer, error) {
@@ -162,7 +152,7 @@ func (s *service) GetProject(
 // @Failure 500 {object} e.Message "Failed to get repositories"
 // 
 // @Failure 401 {object} e.Message 
-func (s *service) GetProjects(
+func (s *ServiceImp) GetProjects(
 	ctx 			context.Context, 
 	start, 	count 	int64,
 	name, 	tag		string,
@@ -216,114 +206,6 @@ func (s *service) GetProjects(
 	return projs, nil
 }
 
-
-// UpdateProjects
-//
-// @Tags projects
-//
-// @Summary Update all projects
-//
-// @Description make all request to github to update repositories, milestones
-//
-// @Security ApiKeyAuth
-// 
-// @Router /v1/projects [post]
-//
-// @Success 200
-//
-// @Failure 409 {object} e.Err
-//
-// @Failure 500 {object} e.Message
-//
-// @Failure 401 {object} e.Message
-//
-// @Failure 403 {object} e.Message "if you are nor admin"
-func (s *service) UpdateProjects(
-	ctx context.Context,
-) error {
-	logger := log.With(s.logger, "method", "UpdateProjects")
-	if !updater.IsUpdateContext(ctx) {
-		level.Debug(logger).Log("From user")
-		s.resetUpdater()
-		defer s.resetUpdater()
-	}
-
-	repos, ms, rs, ls, err := s.getAllFromGithub(ctx)
-	switch {
-	case err == githubreq.ErrForbiden, err == githubreq.ErrUnatorizared:
-		level.Error(logger).Log("Failed to update projects: err", err)
-		return statuscode.WrapStatusError(
-			ErrFailedToUpdateProjects,
-			http.StatusConflict,
-		)
-	case err != nil:
-		level.Error(logger).Log("Failed to update projects: err", err)
-		return statuscode.WrapStatusError(
-			ErrFailedToUpdateProjects,
-			http.StatusInternalServerError,
-		)
-	}
-
-	if err := s.repository.SaveReposAndSetDeletedUnfind(
-		ctx,
-		repos,
-	); err != nil {
-		level.Error(logger).Log("Failed to update projects: err", err)
-		return statuscode.WrapStatusError(
-			ErrFailedToUpdateProjects,
-			http.StatusInternalServerError,
-		)
-	}
-
-	if err := s.repository.SaveMilestonesAndSetDeletedUnfind(
-		ctx,
-		ms,
-	); err != nil {
-		level.Error(logger).Log("Failed to update projects: err", err)
-		return statuscode.WrapStatusError(
-			ErrFailedToUpdateProjects,
-			http.StatusInternalServerError,
-		)
-	}
-
-	is := getIssuesFromMilestone(ms)
-
-	if err := s.repository.SaveIssuesAndSetDeletedUnfind(
-		ctx,
-		is,
-	); err != nil {
-		level.Error(logger).Log("Failed to update projects: err", err)
-		return statuscode.WrapStatusError(
-			ErrFailedToUpdateProjects,
-			http.StatusInternalServerError,
-		)
-	}
-
-	if err := s.repository.SaveRealeses(
-		ctx,
-		rs,
-	); err != nil {
-		level.Error(logger).Log("Failed to update projects: err", err)
-		return statuscode.WrapStatusError(
-			ErrFailedToUpdateProjects,
-			http.StatusInternalServerError,
-		)
-	}
-
-	if err := s.repository.SaveAndDeleteUnfindLanding(
-		ctx,
-		ls,
-	); err != nil {
-		level.Error(logger).Log("Failed to update projects: err", err)
-		return statuscode.WrapStatusError(
-			ErrFailedToUpdateProjects,
-			http.StatusInternalServerError,
-		)
-	}
-
-	return nil
-}
-
 // DeleteProject
 // 
 // @Summary delete project by id
@@ -349,7 +231,7 @@ func (s *service) UpdateProjects(
 // @Failure 401 {object} e.Message 
 // 
 // @Failure 403 {object} e.Message "if you are not admin"
-func (s *service) DeleteProject(
+func (s *ServiceImp) DeleteProject(
 	ctx context.Context, 
 	ID 	uint64,
 	// For mfs requester
@@ -445,124 +327,7 @@ func (s *service) DeleteProject(
 	return nil
 }
 
-func (s *service) resetUpdater() {
-	if s.upd != nil {
-		level.Debug(s.logger).Log("Reset update")
-		s.upd.Reset()
-	}
-}
 
-func (s *service) getAllFromGithub(
-	ctx context.Context,
-) ([]repo.Repo, []milestone.MilestoneInRepo, []realese.RealeseInRepo, []*landing.Landing, error) {
-	repos, err := s.requester.GetRepositories()
-	if err != nil {
-		return nil, nil, nil, nil, err
-	}
-
-	msChan := make(chan []milestone.MilestoneInRepo, 1)
-	rsChan := make(chan []realese.RealeseInRepo, 1)
-	lsChan := make(chan []*landing.Landing, 1)
-	errChan := make(chan error, 1)
-
-	ctx, cancel := context.WithCancel(
-		ctx,
-	)
-	defer cancel()
-	logger := log.With(s.logger, "method", "getAllFromGithub")
-
-	go func() {
-		ms, err := s.requester.GetAllMilestonesForRepoWithID(
-			ctx,
-			repo.ToRepo(repos),
-			func(err error) {
-				if err == githubreq.ErrForbiden || err == githubreq.ErrUnatorizared {
-					cancel()
-					errChan <- err
-				} else if errors.Unwrap(err) == githubreq.UnexpectedCode {
-					// Pass
-				} else {
-					level.Warn(logger).Log(err)
-				}
-			},
-		)
-		if err != nil {
-			return
-		}
-
-		msChan <- ms
-	}()
-
-	go func() {
-		rs, err := s.requester.GetLastsRealeseWithRepoID(
-			ctx,
-			repo.ToRepo(repos),
-			func(err error) {
-				if err == githubreq.ErrForbiden || err == githubreq.ErrUnatorizared {
-					cancel()
-					errChan <- err
-				} else if errors.Unwrap(err) == githubreq.UnexpectedCode {
-					// Pass
-				} else {
-					level.Warn(logger).Log(err)
-				}
-			},
-		)
-		if err != nil {
-			return
-		}
-		rsChan <- rs
-	}()
-
-	go func() {
-		ls, err := s.requester.GetAllLandingsForRepoWithID(
-			ctx,
-			repo.ToRepo(repos),
-			func(err error) {
-				if err == githubreq.ErrForbiden || err == githubreq.ErrUnatorizared {
-					cancel()
-					errChan <- err
-				} else if errors.Unwrap(err) == githubreq.UnexpectedCode {
-					// Pass
-				} else { 
-					level.Warn(logger).Log(err)
-				}
-			},
-		)
-		if err != nil {
-			return
-		}
-
-		lsChan <- ls
-	}()
-
-	var (
-		ms 	[]milestone.MilestoneInRepo = nil
-		rs 	[]realese.RealeseInRepo		= nil
-		ls	[]*landing.Landing			= nil
-	)
-
-
-	for i := 0; i < 3; i++ {
-		select {
-		case <- ctx.Done():
-			err := <- errChan
-			return nil, nil, nil, nil, err
-		case _ms := <- msChan:
-			ms = _ms
-		case _rs := <- rsChan:
-			rs = _rs
-		case _ls := <- lsChan:
-			ls = _ls
-		}
-	}
-
-	close(msChan)
-	close(rsChan)
-	close(lsChan)
-
-	return repo.ToRepo(repos) ,ms, rs, ls, nil
-}
 
 func getIssuesFromMilestone(
 	ms []milestone.MilestoneInRepo,
@@ -595,7 +360,7 @@ func getIssuesFromMilestone(
 	return is
 }
 
-func (s *service) buildFilterForGetProject(
+func (s *ServiceImp) buildFilterForGetProject(
 	ctx 		context.Context,
 	name, tag 	string,
 ) (interface{}, error) {
@@ -624,7 +389,7 @@ func (s *service) buildFilterForGetProject(
 	return filter, nil
 }
 
-func (s *service) buildTagFilterForGetProjects(
+func (s *ServiceImp) buildTagFilterForGetProjects(
 	ctx 	context.Context,
 	t 		string,
 	filter	*bson.M,
@@ -649,7 +414,7 @@ func (s *service) buildTagFilterForGetProjects(
 	return nil
 }
 
-func (s *service) buildNameFilterForGetProjects(
+func (s *ServiceImp) buildNameFilterForGetProjects(
 	_ context.Context,
 	name string,
 	filter *bson.M,
@@ -659,7 +424,7 @@ func (s *service) buildNameFilterForGetProjects(
 	return nil
 }
 
-func (s *service) GetCompatcProj(
+func (s *ServiceImp) GetCompatcProj(
 	ctx context.Context,
 	repos []*repo.Repo,
 ) ([]*repoasproj.RepoAsProjCompactPointers, error) {
@@ -728,7 +493,7 @@ func (s *service) GetCompatcProj(
 	return projs, nil
 }
 
-func (s *service) catchPanic() {
+func (s *ServiceImp) catchPanic() {
 	if r := recover(); r != nil {
 		level.Debug(s.logger).Log("CatchPanic", r)
 	}
@@ -751,7 +516,7 @@ func countCompleted(ms []*milestone.Milestone) float64 {
 	}
 }
 
-func (s *service) getProjects(
+func (s *ServiceImp) getProjects(
 	ctx context.Context,
 	rep *repo.Repo,
 ) (*repoasproj.RepoAsProjPointer, error) {
@@ -805,7 +570,7 @@ func (s *service) getProjects(
 	return proj, nil
 }
 
-func (s *service) getAssetsForMilestones(
+func (s *ServiceImp) getAssetsForMilestones(
 	ctx context.Context,
 	ms []*milestone.Milestone,
 ) error {
@@ -856,7 +621,7 @@ func (s *service) getAssetsForMilestones(
 	return nil
 }
 
-func (s *service) deleteMilestone(
+func (s *ServiceImp) deleteMilestone(
 	ctx 		context.Context,
 	RepoID		uint64,
 	f			beforedelete.BeforeDeleteFunc,
@@ -918,7 +683,7 @@ func (s *service) deleteMilestone(
 	return nil
 }
 
-func (s *service) deleteEstimates(
+func (s *ServiceImp) deleteEstimates(
 	ctx 			context.Context,
 	MilestonesID	[]uint64,
 	f				beforedelete.BeforeDeleteFunc,
@@ -945,7 +710,7 @@ func (s *service) deleteEstimates(
 	return nil
 }
 
-func (s *service) deleteFuncTask(
+func (s *ServiceImp) deleteFuncTask(
 	ctx 			context.Context,
 	MilestonesID 	[]uint64,
 	f				beforedelete.BeforeDeleteFunc,

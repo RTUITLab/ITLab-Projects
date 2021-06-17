@@ -55,14 +55,12 @@ func init() {
 	service = s.New(
 		RepoImp,
 		log.NewJSONLogger(os.Stdout),
-		Requester,
 		mfsreq.New(
 			&mfsreq.Config{
 				BaseURL:  "mfs_url",
 				TestMode: true,
 			},
 		),
-		nil,
 	)
 
 	Router = mux.NewRouter()

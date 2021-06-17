@@ -1,6 +1,7 @@
 package v1
 
 import (
+	updateS "github.com/ITLab-Projects/service/api/v1/updater"
 	"context"
 	"net/http"
 	"net/http/pprof"
@@ -50,6 +51,7 @@ type Api struct {
 	taskService		functask.Service
 	estService		estimate.Service
 	landingService	landing.Service
+	updaterService	updateS.Service
 }
 
 type Config struct {
@@ -65,6 +67,7 @@ type ServiceEndpoints struct {
 	Task		functask.Endpoints
 	Est			estimate.Endpoints
 	Landing		landing.Endpoints
+	Update		updateS.Endpoints
 }
 
 func New(
@@ -93,9 +96,7 @@ func New(
 	a.projectService = projects.New(
 		a.RepoImp,
 		logger,
-		Requester,
 		MFSRequester,
-		a.upd,
 	)
 
 	a.estService = estimate.New(
@@ -123,6 +124,13 @@ func New(
 	a.landingService = landing.New(
 		a.RepoImp,
 		logger,
+	)
+
+	a.updaterService = updateS.New(
+		a.RepoImp,
+		logger,
+		Requester,
+		a.upd,
 	)
 
 	return a
@@ -183,7 +191,7 @@ func (a *Api) update() {
 	}
 	log.Debug("put session")
 	ctx := updater.WithUpdateContext(sessctx)
-	if err := a.projectService.UpdateProjects(ctx); err != nil {
+	if err := a.updaterService.UpdateProjects(ctx); err != nil {
 		log.WithFields(
 			log.Fields{
 				"package": "api/v1",
@@ -247,6 +255,12 @@ func (a *Api) Build(r *mux.Router) {
 	landing.NewHTTPServer(
 		context.Background(),
 		endpoints.Landing,
+		projectsR,
+	)
+
+	updateS.NewHTTPServer(
+		context.Background(),
+		endpoints.Update,
 		projectsR,
 	)
 

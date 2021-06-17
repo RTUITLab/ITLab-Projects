@@ -100,36 +100,6 @@ func (r *GetProjectsResp) Headers(
 	w.Header().Add("Content-Type", "application/json")
 }
 
-type UpdateProjectsReq struct {
-
-}
-
-func decodeUpdateProjetcsReq(
-	ctx context.Context,
-	r	*http.Request,
-) (interface{}, error) {
-	return &UpdateProjectsReq{}, nil
-}
-
-type UpdateProjectsResp struct {
-
-}
-
-func (r *UpdateProjectsResp) Encode(w http.ResponseWriter) error {
-	return nil
-}
-
-func (r *UpdateProjectsResp) StatusCode() int {
-	return http.StatusOK
-}
-
-func (r *UpdateProjectsResp) Headers(
-	ctx 	context.Context,
-	w 		http.ResponseWriter,
-) {
-
-}
-
 type DeleteProjectReq struct {
 	ID		uint64
 	Req		*http.Request
