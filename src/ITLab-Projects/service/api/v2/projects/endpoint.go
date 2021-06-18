@@ -1,9 +1,9 @@
 package projects
 
 import (
-	"context"
-	"fmt"
+	"github.com/ITLab-Projects/pkg/chunkresp/linkbuilder"
 
+	"context"
 	"github.com/ITLab-Projects/pkg/conextvalue/chunck"
 
 	"github.com/ITLab-Projects/pkg/chunkresp"
@@ -16,7 +16,7 @@ type Endpoints struct {
 
 func MakeEndpoints(s Service) Endpoints {
 	return Endpoints{
-
+		GetProjects: makeGetProjectsEndpoint(s),
 	}
 }
 
@@ -52,14 +52,13 @@ func makeGetProjectsEndpoint(
 		resp.ChunkResp = c
 
 		resp.ChunkResp.WriteLinks(
-			chunkresp.NewLink().
-							AddSelf(
-								fmt.Sprintf(
-									"%s?%s",
-									req.HttpURL.Path,
-									req.HttpURL.Query().Encode(),
-								),
-							),
+			linkbuilder.New(
+				"start",
+				"count",
+			).Build(
+				resp.ChunkResp,
+				req.HttpURL,
+			),
 		)
 
 

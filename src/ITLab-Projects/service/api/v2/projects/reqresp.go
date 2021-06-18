@@ -55,7 +55,9 @@ type GetProjectsResp struct {
 }
 
 func (r *GetProjectsResp) Encode(w http.ResponseWriter) error {
-	return json.NewEncoder(w).Encode(r)
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	return enc.Encode(r)
 }
 
 func (r *GetProjectsResp) StatusCode() int {

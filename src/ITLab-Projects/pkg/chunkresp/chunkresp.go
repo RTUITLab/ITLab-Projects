@@ -1,5 +1,7 @@
 package chunkresp
 
+import "net/url"
+
 type Chuncker interface {
 	ChunckWriter
 	SetItems(
@@ -104,4 +106,32 @@ func (l *Links) add(
 func AddLink(l []*Link, link *Link) []*Link {
 	l = append(l, link)
 	return l
+}
+
+func ParseUrlQueryToHref(
+	values url.Values,
+) string {
+	var href string
+	var i int
+	for k, v := range values {
+		href += k
+		href += "="+massOfStringToString(v)
+		if !(i == len(values) - 1) {
+			href += "&"
+		}
+		i++
+	}
+
+	return href
+}
+
+func massOfStringToString(mass []string) string {
+	var str string
+	for i := 0; i < len(mass); i++ {
+		str += mass[i]
+		if !(i == len(mass) - 1) {
+			str += "+"
+		}
+	}
+	return str
 }
