@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/ITLab-Projects/service/api/v2"
 	"github.com/ITLab-Projects/service/api/v1"
 	"github.com/ITLab-Projects/pkg/config"
 	"github.com/ITLab-Projects/app"
@@ -29,6 +30,13 @@ func main() {
 			app.Repository,
 			app.Requester,
 			app.MFSRequester,
+		),
+		v2.New(
+			v2.Config{
+				Testmode: cfg.App.TestMode,
+				Config: *cfg.Auth,
+			},
+			app.Repository,
 		),
 	)
 
