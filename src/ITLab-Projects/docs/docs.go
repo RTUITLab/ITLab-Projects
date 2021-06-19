@@ -743,6 +743,69 @@ var doc = `{
                     }
                 }
             }
+        },
+        "/v2/projects": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "return a projects you can filter count of them\ntags, name",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "projects"
+                ],
+                "summary": "return projects according to query value",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "represents the number of skiped projects",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "represent a limit of projects, standart and max count equal 50",
+                        "name": "count",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "use to filter projects by tag",
+                        "name": "tag",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "use to filter by name",
+                        "name": "name",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/projects.GetProjectsResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get repositories",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -759,6 +822,17 @@ var doc = `{
                     "type": "integer"
                 },
                 "login": {
+                    "type": "string"
+                }
+            }
+        },
+        "chunkresp.Link": {
+            "type": "object",
+            "properties": {
+                "href": {
+                    "type": "string"
+                },
+                "rel": {
                     "type": "string"
                 }
             }
@@ -1105,6 +1179,38 @@ var doc = `{
                 }
             }
         },
+        "projects.GetProjectsResp": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "has_more": {
+                    "type": "boolean"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/repoasproj.RepoAsProjCompactPointers"
+                    }
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "links": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/chunkresp.Link"
+                    }
+                },
+                "start": {
+                    "type": "integer"
+                },
+                "total_result": {
+                    "type": "integer"
+                }
+            }
+        },
         "pullrequest.PullRequest": {
             "type": "object",
             "properties": {
@@ -1211,6 +1317,23 @@ var doc = `{
             }
         },
         "repoasproj.RepoAsProjCompact": {
+            "type": "object",
+            "properties": {
+                "completed": {
+                    "type": "number"
+                },
+                "repo": {
+                    "$ref": "#/definitions/repo.Repo"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/tag.Tag"
+                    }
+                }
+            }
+        },
+        "repoasproj.RepoAsProjCompactPointers": {
             "type": "object",
             "properties": {
                 "completed": {
