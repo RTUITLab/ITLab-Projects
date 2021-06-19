@@ -15,7 +15,7 @@ import (
 	"github.com/ITLab-Projects/service/api/v1/tags"
 )
 
-func (a *Api) buildEndpoints() ServiceEndpoints {
+func (a *Api) buildEndpoints() ApiEndpoints {
 	endpoints := a.endpoints()
 
 	// ---------- Estimate ----------
@@ -105,7 +105,7 @@ func (a *Api) buildEndpoints() ServiceEndpoints {
 	return endpoints
 }
 
-func (a *Api) _buildEndpoint() ServiceEndpoints {
+func (a *Api) _buildEndpoint() ApiEndpoints {
 	endpoints := a.endpoints()
 
 	// ---------- Estimate ----------
@@ -180,8 +180,8 @@ func (a *Api) _buildEndpoint() ServiceEndpoints {
 	return endpoints
 }
 
-func (a *Api) endpoints() ServiceEndpoints {
-	return ServiceEndpoints{
+func (a *Api) endpoints() ApiEndpoints {
+	return ApiEndpoints{
 		Projects: projects.MakeEndpoints(a.projectService),
 		Issues: issues.MakeEndPoints(a.issueService),
 		Tags: tags.MakeEndpoints(a.tagsService),
