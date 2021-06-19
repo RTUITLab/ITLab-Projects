@@ -72,8 +72,8 @@ func (l *LinkBuilder) BuildPrev(
 
 	values := URL.Query()
 	var prevStart int64
-	if Chunck.Start >= Chunck.Count {
-		prevStart = Chunck.Start - Chunck.Count
+	if Chunck.Start >= Chunck.Limit {
+		prevStart = Chunck.Start - Chunck.Limit
 	} else {
 		values.Set(l.LimitKey, fmt.Sprint(Chunck.Start))
 		prevStart = 0
