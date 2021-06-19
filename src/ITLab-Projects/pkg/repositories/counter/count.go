@@ -12,7 +12,7 @@ type Count struct {
 	CountOfDocuments int64
 }
 
-func New(collection *mongo.Collection) Counter {
+func New(collection *mongo.Collection) *Count {
 	return &Count{
 		collection: collection,
 	}

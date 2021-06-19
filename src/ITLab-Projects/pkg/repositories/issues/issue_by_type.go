@@ -1,8 +1,10 @@
 package issues
 
 import (
-	"github.com/ITLab-Projects/pkg/repositories/agregate"
 	"context"
+	"fmt"
+
+	"github.com/ITLab-Projects/pkg/repositories/agregate"
 
 	model "github.com/ITLab-Projects/pkg/models/milestone"
 	"github.com/ITLab-Projects/pkg/repositories/counter"
@@ -70,6 +72,21 @@ func (i *IssueByType) save(ctx context.Context, v interface{}) error {
 	}
 
 	return nil
+}
+
+func getPointer(v interface{}) *model.IssuesWithMilestoneID {
+	switch i := v.(type) {
+	case *model.IssuesWithMilestoneID:
+		return i
+	case model.IssuesWithMilestoneID:
+		return &i
+	}
+	panic(
+		fmt.Errorf(
+			"Invalid type expected %T or %T get: %T",
+			model.IssuesWithMilestoneID{}, &model.IssuesWithMilestoneID{}, v,
+		),
+	)
 }
 
 func (i *IssueByType) buildFilter(v interface{}) interface{} {

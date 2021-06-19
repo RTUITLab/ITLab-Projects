@@ -121,3 +121,13 @@ func (r *RepoByType) SaveAndUpdatenUnfind(
 
 	return nil
 }
+
+func pointFromInterface(v interface{}) *model.Repo {
+	rep, ok := v.(*model.Repo)
+	if !ok {
+		_repo, _ := v.(model.Repo)
+		rep = &_repo
+	}
+
+	return rep
+}
