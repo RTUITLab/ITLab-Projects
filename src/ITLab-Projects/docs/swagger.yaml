@@ -54,6 +54,27 @@ definitions:
       milestone_id:
         type: integer
     type: object
+  issues.GetIssuesResp:
+    properties:
+      count:
+        type: integer
+      has_more:
+        type: boolean
+      items:
+        items:
+          $ref: '#/definitions/milestone.IssuesWithMilestoneID'
+        type: array
+      limit:
+        type: integer
+      links:
+        items:
+          $ref: '#/definitions/chunkresp.Link'
+        type: array
+      start:
+        type: integer
+      total_result:
+        type: integer
+    type: object
   label.Label:
     properties:
       color:
@@ -844,6 +865,47 @@ paths:
       summary: add func task to milestone
       tags:
       - functask
+  /v2/issues:
+    get:
+      description: return issues according to query params
+      parameters:
+      - description: represent how mush skip first issues
+        in: query
+        name: start
+        type: integer
+      - description: set limit of getting issues standart and max 50
+        in: query
+        name: count
+        type: integer
+      - description: search to name of issues, title of milestones and repository
+          names
+        in: query
+        name: name
+        type: string
+      - description: search of label name of issues
+        in: query
+        name: tag
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/issues.GetIssuesResp'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/err.Message'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/err.Message'
+      security:
+      - ApiKeyAuth: []
+      summary: return issues
+      tags:
+      - issues
   /v2/projects:
     get:
       description: |-
