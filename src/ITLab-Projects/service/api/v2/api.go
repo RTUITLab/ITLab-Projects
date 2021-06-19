@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"github.com/ITLab-Projects/service/api/v2/issues"
 	"context"
 
 	"github.com/ITLab-Projects/pkg/config"
@@ -19,6 +20,7 @@ type Api struct {
 	Auth			endpoint.Middleware
 
 	projectService	projects.Service
+	issuesService	issues.Service
 }
 
 type Config struct {
@@ -28,6 +30,7 @@ type Config struct {
 
 type ApiEndpoints struct {
 	Projects	projects.Endpoints
+	Issues		issues.Endpoints
 }
 
 func New(
@@ -56,6 +59,10 @@ func (a *Api) CreateServices() {
 		RepoImp,
 		a.Logger,
 	)
+	a.issuesService = issues.New(
+		RepoImp,
+		a.Logger,
+	)
 }
 
 func (a *Api) Build(r *mux.Router) {
@@ -71,6 +78,12 @@ func (a *Api) Build(r *mux.Router) {
 	projects.NewHTTPServer(
 		context.Background(),
 		endpoints.Projects,
+		v2,
+	)
+
+	issues.NewHTTPServer(
+		context.Background(),
+		endpoints.Issues,
 		v2,
 	)
 }

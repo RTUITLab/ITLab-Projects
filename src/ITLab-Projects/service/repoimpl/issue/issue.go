@@ -190,3 +190,26 @@ func (i *IssueRepositoryImp) DeleteAllIssuesByMilestonesID(
 		options.Delete(),
 	)
 }
+
+func (i *IssueRepositoryImp) GetChunckedIssues(
+	ctx 	context.Context,
+	filter,
+	sort	interface{},
+	start,
+	count 	int64,
+) ([]*milestone.IssuesWithMilestoneID, error) {
+	var is []*milestone.IssuesWithMilestoneID
+	if err := utils.GetChuncked(
+		ctx,
+		i.Issue,
+		filter,
+		sort,
+		&is,
+		start,
+		count,
+	); err != nil {
+		return nil, err
+	}
+
+	return is, nil
+}
