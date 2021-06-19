@@ -110,7 +110,7 @@ func GetChuncked(
 
 	Chunck.WriteCount(int64(count))
 
-	total, err := GetChunck.UpdateCount()
+	total, err := GetChunck.CountByFilter(filter)
 	if err != nil {
 		return err
 	}
