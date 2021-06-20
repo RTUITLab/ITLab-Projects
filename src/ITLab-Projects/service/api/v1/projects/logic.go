@@ -161,7 +161,7 @@ func (s *ServiceImp) GetProjects(
 		count = 50
 	}
 	logger := log.With(s.logger, "method", "GetProjects")
-	filter, err := s.buildFilterForGetProject(
+	filter, err := s.BuildFilterForGetProject(
 		ctx,
 		name,
 		tag,
@@ -360,14 +360,14 @@ func getIssuesFromMilestone(
 	return is
 }
 
-func (s *ServiceImp) buildFilterForGetProject(
+func (s *ServiceImp) BuildFilterForGetProject(
 	ctx 		context.Context,
 	name, tag 	string,
 ) (interface{}, error) {
 	filter := bson.M{}
 
 	if name != "" {
-		if err := s.buildNameFilterForGetProjects(
+		if err := s.BuildNameFilterForGetProjects(
 			ctx,
 			name,
 			&filter,
@@ -377,7 +377,7 @@ func (s *ServiceImp) buildFilterForGetProject(
 	}
 
 	if tag != "" {
-		if err := s.buildTagFilterForGetProjects(
+		if err := s.BuildTagFilterForGetProjects(
 			ctx,
 			tag,
 			&filter,
@@ -389,7 +389,7 @@ func (s *ServiceImp) buildFilterForGetProject(
 	return filter, nil
 }
 
-func (s *ServiceImp) buildTagFilterForGetProjects(
+func (s *ServiceImp) BuildTagFilterForGetProjects(
 	ctx 	context.Context,
 	t 		string,
 	filter	*bson.M,
@@ -414,7 +414,7 @@ func (s *ServiceImp) buildTagFilterForGetProjects(
 	return nil
 }
 
-func (s *ServiceImp) buildNameFilterForGetProjects(
+func (s *ServiceImp) BuildNameFilterForGetProjects(
 	_ context.Context,
 	name string,
 	filter *bson.M,

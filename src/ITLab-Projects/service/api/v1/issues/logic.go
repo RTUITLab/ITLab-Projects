@@ -26,7 +26,7 @@ var (
 	ErrFailedToGetLabels	= errors.New("Failed to get issues labels")
 )
 
-type service struct {
+type ServiceImp struct {
 	repository 	Repository
 	logger		log.Logger
 }
@@ -34,8 +34,8 @@ type service struct {
 func New(
 	repository 	Repository,
 	logger		log.Logger,
-) *service {
-	return &service{
+) *ServiceImp {
+	return &ServiceImp{
 		repository: repository,
 		logger: logger,
 	}
@@ -68,13 +68,13 @@ func New(
 // @Failure 500 {object} e.Message
 //
 // @Failure 401 {object} e.Message
-func (s *service) GetIssues(
+func (s *ServiceImp) GetIssues(
 	ctx context.Context, 
 	start int64, count int64, 
 	name string, tag string,
 ) ([]*milestone.IssuesWithMilestoneID, error) {
 	logger := log.With(s.logger, "method", "GetIssues")
-	filter, err := s.buildFilterForGetIssues(
+	filter, err := s.BuildFilterForGetIssues(
 		ctx,
 		name,
 		tag,
@@ -129,7 +129,7 @@ func (s *service) GetIssues(
 // @Failure 500 {object} e.Message
 //
 // @Failure 401 {object} e.Message
-func (s *service) GetLabels(
+func (s *ServiceImp) GetLabels(
 	ctx context.Context,
 ) ([]interface{}, error) {
 	logger := log.With(s.logger, "method", "GetLabels")
@@ -149,7 +149,7 @@ func (s *service) GetLabels(
 	return labels, nil
 }
 
-func (s *service) buildFilterForGetIssues(
+func (s *ServiceImp) BuildFilterForGetIssues(
 	ctx 		context.Context,
 	name, tag 	string,
 ) (interface{}, error) {
@@ -158,7 +158,7 @@ func (s *service) buildFilterForGetIssues(
 	}
 
 	if tag != "" {
-		s.buildFilterByLabelTags(
+		s.BuildFilterByLabelTags(
 			ctx,
 			&filter,
 			tag,
@@ -166,7 +166,7 @@ func (s *service) buildFilterForGetIssues(
 	}
 
 	if name != "" {
-		if err := s.buildFilterByName(
+		if err := s.BuildFilterByName(
 			ctx,
 			&filter,
 			name,
@@ -178,7 +178,7 @@ func (s *service) buildFilterForGetIssues(
 	return filter, nil
 }
 
-func (s *service) buildFilterByLabelTags(
+func (s *ServiceImp) BuildFilterByLabelTags(
 	ctx 	context.Context,
 	filter 	*bson.M,
 	tag		string,
@@ -188,7 +188,7 @@ func (s *service) buildFilterByLabelTags(
 	(map[string]interface{})(*filter)["labels.name"] = bson.M{"$in": tags}
 }
 
-func(s *service) buildFilterByName(
+func(s *ServiceImp) BuildFilterByName(
 	ctx		context.Context,
 	filter	*bson.M,
 	name	string,
