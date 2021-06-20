@@ -2,6 +2,9 @@ package functask
 
 import (
 	"context"
+
+	"github.com/ITLab-Projects/pkg/models/functask"
+	"github.com/ITLab-Projects/pkg/models/milestonefile"
 	"github.com/go-kit/kit/endpoint"
 )
 
@@ -25,7 +28,12 @@ func makeAddFuncTaskEndPoint(s Service) endpoint.Endpoint {
 		req := request.(*AddFuncTaskReq)
 		err = s.AddFuncTask(
 			ctx,
-			req.FuncTaskFile,
+			&functask.FuncTaskFile{
+				MilestoneFile: milestonefile.MilestoneFile{
+					MilestoneID: req.MilestoneID,
+					FileID: req.FileID,
+				},
+			},
 		)
 		if err != nil {
 			return nil, err

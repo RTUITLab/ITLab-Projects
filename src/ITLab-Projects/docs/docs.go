@@ -24,8 +24,13 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/v1/estimate": {
+        "/v1/estimate/{milestone_id}": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "add estimate to milestone\nif estimate is exist for milesotne will replace it",
                 "consumes": [
                     "application/json"
@@ -44,8 +49,15 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/estimate.EstimateFile"
+                            "$ref": "#/definitions/estimate.AddEstimateReq"
                         }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "id of milestone",
+                        "name": "milestone_id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -83,10 +95,13 @@ var doc = `{
                         }
                     }
                 }
-            }
-        },
-        "/v1/estimate/{milestone_id}": {
+            },
             "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "delete estimate from database",
                 "produces": [
                     "application/json"
@@ -143,6 +158,11 @@ var doc = `{
         },
         "/v1/issues": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "return issues according to query params",
                 "produces": [
                     "application/json"
@@ -204,6 +224,11 @@ var doc = `{
         },
         "/v1/issues/labels": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "return all unique labels of issues",
                 "produces": [
                     "application/json"
@@ -237,103 +262,13 @@ var doc = `{
                 }
             }
         },
-        "/v1/landing": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "landing"
-                ],
-                "summary": "return all landings according to path params",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "represent how much landins need to skip",
-                        "name": "start",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "represent a max count of returing landing",
-                        "name": "count",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "return a landings with this tags",
-                        "name": "tag",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "return landing with this names",
-                        "name": "name",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/landing.LandingCompact"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/landing/{id}": {
-            "get": {
-                "description": "return a landing according to id",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "landing"
-                ],
-                "summary": "return a current landing",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "id of landing",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/landing.Landing"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/err.Message"
-                        }
-                    }
-                }
-            }
-        },
         "/v1/projects": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "return a projects you can filter count of them\ntags, name",
                 "produces": [
                     "application/json"
@@ -393,6 +328,11 @@ var doc = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "make all request to github to update repositories, milestones",
                 "tags": [
                     "projects"
@@ -429,8 +369,108 @@ var doc = `{
                 }
             }
         },
+        "/v1/projects/landing": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "projects"
+                ],
+                "summary": "return all landings according to path params",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "represent how much landins need to skip",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "represent a max count of returing landing",
+                        "name": "count",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "return a landings with this tags",
+                        "name": "tag",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "return landing with this names",
+                        "name": "name",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/landing.LandingCompact"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/projects/landing/{id}": {
+            "get": {
+                "description": "return a landing according to id",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "projects"
+                ],
+                "summary": "return a current landing",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "id of landing",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/landing.Landing"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/projects/{id}": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "return a project according to id value in path",
                 "produces": [
                     "application/json"
@@ -476,6 +516,11 @@ var doc = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "delete project by id and all milestones in it",
                 "tags": [
                     "projects"
@@ -529,6 +574,11 @@ var doc = `{
         },
         "/v1/tags": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "return all tags",
                 "produces": [
                     "application/json"
@@ -562,8 +612,13 @@ var doc = `{
                 }
             }
         },
-        "/v1/task": {
+        "/v1/task/{milestone_id}": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "add func task to milestone\nif func task is exist for milesotne will replace it",
                 "consumes": [
                     "application/json"
@@ -582,8 +637,15 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/functask.FuncTaskFile"
+                            "$ref": "#/definitions/functask.AddFuncTaskReq"
                         }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "id of milestone",
+                        "name": "milestone_id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -621,10 +683,13 @@ var doc = `{
                         }
                     }
                 }
-            }
-        },
-        "/v1/task/{milestone_id}": {
+            },
             "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "delete functask from database",
                 "produces": [
                     "application/json"
@@ -678,6 +743,132 @@ var doc = `{
                     }
                 }
             }
+        },
+        "/v2/issues": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "return issues according to query params",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "issues"
+                ],
+                "summary": "return issues",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "represent how mush skip first issues",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "set limit of getting issues standart and max 50",
+                        "name": "count",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "search to name of issues, title of milestones and repository names",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "search of label name of issues",
+                        "name": "tag",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/issues.GetIssuesResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/projects": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "return a projects you can filter count of them\ntags, name",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "projects"
+                ],
+                "summary": "return projects according to query value",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "represents the number of skiped projects",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "represent a limit of projects, standart and max count equal 50",
+                        "name": "count",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "use to filter projects by tag",
+                        "name": "tag",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "use to filter by name",
+                        "name": "name",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/projects.GetProjectsResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    },
+                    "500": {
+                        "description": "Failed to get repositories",
+                        "schema": {
+                            "$ref": "#/definitions/err.Message"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -694,6 +885,17 @@ var doc = `{
                     "type": "integer"
                 },
                 "login": {
+                    "type": "string"
+                }
+            }
+        },
+        "chunkresp.Link": {
+            "type": "object",
+            "properties": {
+                "href": {
+                    "type": "string"
+                },
+                "rel": {
                     "type": "string"
                 }
             }
@@ -717,6 +919,14 @@ var doc = `{
                 }
             }
         },
+        "estimate.AddEstimateReq": {
+            "type": "object",
+            "properties": {
+                "file_id": {
+                    "type": "string"
+                }
+            }
+        },
         "estimate.Estimate": {
             "type": "object",
             "properties": {
@@ -728,14 +938,11 @@ var doc = `{
                 }
             }
         },
-        "estimate.EstimateFile": {
+        "functask.AddFuncTaskReq": {
             "type": "object",
             "properties": {
-                "id": {
+                "file_id": {
                     "type": "string"
-                },
-                "milestone_id": {
-                    "type": "integer"
                 }
             }
         },
@@ -750,13 +957,34 @@ var doc = `{
                 }
             }
         },
-        "functask.FuncTaskFile": {
+        "issues.GetIssuesResp": {
             "type": "object",
             "properties": {
-                "id": {
-                    "type": "string"
+                "count": {
+                    "type": "integer"
                 },
-                "milestone_id": {
+                "has_more": {
+                    "type": "boolean"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/milestone.IssuesWithMilestoneID"
+                    }
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "links": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/chunkresp.Link"
+                    }
+                },
+                "start": {
+                    "type": "integer"
+                },
+                "total_result": {
                     "type": "integer"
                 }
             }
@@ -1046,6 +1274,38 @@ var doc = `{
                 }
             }
         },
+        "projects.GetProjectsResp": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "has_more": {
+                    "type": "boolean"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/repoasproj.RepoAsProjCompactPointers"
+                    }
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "links": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/chunkresp.Link"
+                    }
+                },
+                "start": {
+                    "type": "integer"
+                },
+                "total_result": {
+                    "type": "integer"
+                }
+            }
+        },
         "pullrequest.PullRequest": {
             "type": "object",
             "properties": {
@@ -1168,6 +1428,23 @@ var doc = `{
                 }
             }
         },
+        "repoasproj.RepoAsProjCompactPointers": {
+            "type": "object",
+            "properties": {
+                "completed": {
+                    "type": "number"
+                },
+                "repo": {
+                    "$ref": "#/definitions/repo.Repo"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/tag.Tag"
+                    }
+                }
+            }
+        },
         "tag.Tag": {
             "type": "object",
             "properties": {
@@ -1192,6 +1469,13 @@ var doc = `{
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`

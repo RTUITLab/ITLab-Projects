@@ -16,8 +16,9 @@ func NewHTTPServer(
 	endpoints	Endpoints,
 	r			*mux.Router,
 ) {
+	
 	r.Handle(
-		"/landing",
+		"/projects/landing",
 		httptransport.NewServer(
 			endpoints.GetAllLandings,
 			decodeGetAllLandingsReq,
@@ -32,7 +33,7 @@ func NewHTTPServer(
 	).Methods("GET")
 
 	r.Handle(
-		"/landing/{id:[0-9]+}",
+		"/projects/landing/{id:[0-9]+}",
 		httptransport.NewServer(
 			endpoints.GetLanding,
 			decodeGetLandingReq,

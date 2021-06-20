@@ -1,6 +1,7 @@
 package repoasproj
 
 import (
+	"github.com/ITLab-Projects/pkg/chunkresp"
 	"time"
 
 	"github.com/ITLab-Projects/pkg/models/milestone"
@@ -84,4 +85,9 @@ func (b ByCreateDatePointers) Less(i, j int) bool {
 
 func (b ByCreateDatePointers) Swap(i, j int) {
 	b[i], b[j] = b[j], b[i]
+}
+
+type RespoAsProjChuncked struct {
+	chunkresp.ChunkResp						`json:",inline"`
+	Items	[]*RepoAsProjCompactPointers	`json:"items"`
 }

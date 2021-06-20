@@ -66,7 +66,6 @@ func TestFunc_AddEstimate_ErrDontFindMilestone(t *testing.T) {
 	est := me.EstimateFile{
 		MilestoneFile: milestonefile.MilestoneFile{
 			FileID:      primitive.NewObjectID(),
-			MilestoneID: 12,
 		},
 	}
 	data, err := json.Marshal(est)
@@ -76,7 +75,7 @@ func TestFunc_AddEstimate_ErrDontFindMilestone(t *testing.T) {
 	}
 	t.Log(string(data))
 
-	req := httptest.NewRequest("POST", "/estimate", bytes.NewBuffer(data))
+	req := httptest.NewRequest("POST", "/estimate/12", bytes.NewBuffer(data))
 
 	w := httptest.NewRecorder()
 
@@ -114,7 +113,6 @@ func TestFunc_AddEstimate_(t *testing.T) {
 	est := me.EstimateFile{
 		MilestoneFile: milestonefile.MilestoneFile{
 			FileID:      primitive.NewObjectID(),
-			MilestoneID: 12,
 		},
 	}
 	data, err := json.Marshal(est)
@@ -124,7 +122,7 @@ func TestFunc_AddEstimate_(t *testing.T) {
 	}
 	t.Log(string(data))
 
-	req := httptest.NewRequest("POST", "/estimate", bytes.NewBuffer(data))
+	req := httptest.NewRequest("POST", "/estimate/12", bytes.NewBuffer(data))
 
 	w := httptest.NewRecorder()
 

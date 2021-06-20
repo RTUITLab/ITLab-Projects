@@ -25,12 +25,7 @@ type Repository interface {
 }
 
 type RepoRepository interface{
-	SaveReposAndSetDeletedUnfind(
-		ctx context.Context,
-		repos interface{},
-	) error
-
-	 GetFiltrSortFromToRepos(
+	GetFiltrSortFromToRepos(
 		ctx 	context.Context,
 		filter 	interface{},
 		sort 	interface{},
@@ -50,10 +45,6 @@ type RepoRepository interface{
 }
 
 type MilestoneRepository interface {
-	SaveMilestonesAndSetDeletedUnfind(
-		ctx context.Context,
-		ms interface{},
-	) error
 	
 	DeleteAllMilestonesByRepoID(
 		ctx 	context.Context,
@@ -68,10 +59,6 @@ type MilestoneRepository interface {
 }
 
 type IssueRepository interface {
-	SaveIssuesAndSetDeletedUnfind(
-		ctx context.Context,
-		is 	interface{},
-	) error
 
 	GetAllIssuesByMilestoneID(
 		ctx 		context.Context,
@@ -92,10 +79,6 @@ type IssueRepository interface {
 }
 
 type RealeseRepository interface {
-	SaveRealeses(
-		ctx context.Context,
-		rs interface{},
-	) error
 
 	GetRealeseByRepoID(
 		ctx 		context.Context,
@@ -143,10 +126,6 @@ type EstimeateRepository interface {
 }
 
 type LandingRepository interface {
-	SaveAndDeleteUnfindLanding(
-		ctx context.Context,
-		ls interface{},
-	) error
 
 	DeleteLandingsByRepoID(
 		ctx 	context.Context,

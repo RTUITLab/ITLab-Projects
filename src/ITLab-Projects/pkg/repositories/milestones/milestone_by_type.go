@@ -127,3 +127,12 @@ func (m *MilestoneByType) save(ctx context.Context, v interface{}) error {
 
 	return nil
 }
+
+func getPointer(v interface{}) *model.MilestoneInRepo {
+	m, ok := v.(*model.MilestoneInRepo)
+	if !ok {
+		_m, _ := v.(model.MilestoneInRepo)
+		m = &_m
+	}
+	return m
+}

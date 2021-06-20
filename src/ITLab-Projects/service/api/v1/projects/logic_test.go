@@ -20,7 +20,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"github.com/ITLab-Projects/pkg/githubreq"
 	"github.com/ITLab-Projects/pkg/mfsreq"
 
 	"github.com/ITLab-Projects/service/api/v1/projects"
@@ -40,31 +39,18 @@ func init() {
 		logrus.Warn("Don't find env")
 	}
 
-	token, find := os.LookupEnv("ITLAB_PROJECTS_ACCESSKEY")
-	if !find {
-		panic("Don't find token")
-	}
-
-	requster := githubreq.New(
-		&githubreq.Config{
-			AccessToken: token,
-		},
-	)
-
 	Repositories = test.GetTestRepository()
 	RepoImp = repoimpl.New(Repositories)
 
 	service = projects.New(
 		RepoImp,
 		log.NewJSONLogger(os.Stdout),
-		requster,
 		mfsreq.New(
 			&mfsreq.Config{
 				BaseURL:  "mfs_url",
 				TestMode: true,
 			},
 		),
-		nil,
 	)
 	mgm.Coll(&mgm.DefaultModel{}).Database().Drop(
 		context.Background(),
@@ -74,17 +60,6 @@ func init() {
 func TestFunc_Init(t *testing.T) {
 	t.Log("Init")
 	mgm.Coll(&me.EstimateFile{}).Database().Drop(context.Background())
-}
-
-func TestFunc_UpdateAllProjects(t *testing.T) {
-	t.Log("Deprecated")
-	t.SkipNow()
-	if err := service.UpdateProjects(
-		context.Background(),
-	); err != nil {
-		t.Log(err)
-		t.FailNow()
-	}
 }
 
 func TestFunc_GetProjects(t *testing.T) {

@@ -67,7 +67,6 @@ func TestFunc_AddFunctask_ErrDontFindMilestone(t *testing.T) {
 	est := mf.FuncTaskFile{
 		MilestoneFile: milestonefile.MilestoneFile{
 			FileID:      primitive.NewObjectID(),
-			MilestoneID: 12,
 		},
 	}
 	data, err := json.Marshal(est)
@@ -77,7 +76,7 @@ func TestFunc_AddFunctask_ErrDontFindMilestone(t *testing.T) {
 	}
 	t.Log(string(data))
 
-	req := httptest.NewRequest("POST", "/task", bytes.NewBuffer(data))
+	req := httptest.NewRequest("POST", "/task/12", bytes.NewBuffer(data))
 
 	w := httptest.NewRecorder()
 
@@ -114,7 +113,6 @@ func TestFunc_AddFuncTask_(t *testing.T) {
 	est := mf.FuncTaskFile{
 		MilestoneFile: milestonefile.MilestoneFile{
 			FileID:      primitive.NewObjectID(),
-			MilestoneID: 12,
 		},
 	}
 	data, err := json.Marshal(est)
@@ -124,7 +122,7 @@ func TestFunc_AddFuncTask_(t *testing.T) {
 	}
 	t.Log(string(data))
 
-	req := httptest.NewRequest("POST", "/task", bytes.NewBuffer(data))
+	req := httptest.NewRequest("POST", "/task/12", bytes.NewBuffer(data))
 
 	w := httptest.NewRecorder()
 
