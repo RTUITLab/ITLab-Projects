@@ -8,7 +8,6 @@ import (
 type Endpoints struct {
 	GetProject		endpoint.Endpoint
 	GetProjects		endpoint.Endpoint
-	UpdateProjects	endpoint.Endpoint
 	DeleteProject	endpoint.Endpoint
 }
 
@@ -16,7 +15,6 @@ func MakeEndpoints(s Service) Endpoints {
 	return Endpoints{
 		GetProject: makeGetProjectEndpoint(s),
 		GetProjects: makeGetProjectsEndpoint(s),
-		UpdateProjects: makeUpdateProjectsEndpoint(s),
 		DeleteProject: makeDeleteProjectEndpoint(s),
 	}
 }
@@ -61,21 +59,6 @@ func makeGetProjectsEndpoint(s Service) endpoint.Endpoint {
 		return &GetProjectsResp{
 			Projects: ps,
 		}, nil
-	}
-}
-
-func makeUpdateProjectsEndpoint(s Service) endpoint.Endpoint {
-	return func(
-		ctx context.Context, 
-		request interface{},
-	) (response interface{}, err error) {
-		_ = request.(*UpdateProjectsReq)
-		err = s.UpdateProjects(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		return &UpdateProjectsResp{}, nil
 	}
 }
 

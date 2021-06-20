@@ -19,10 +19,6 @@ type Service interface {
 		name, 	tag		string,
 	) ([]*repoasproj.RepoAsProjCompactPointers, error)
 
-	UpdateProjects(
-		ctx context.Context,
-	) error
-
 	DeleteProject(
 		ctx context.Context,
 		ID	uint64,

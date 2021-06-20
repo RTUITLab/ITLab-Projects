@@ -12,7 +12,6 @@ import (
 )
 
 const (
-	UpdateProjectName	string = "update_projects_admin"
 	GetProjectName		string = "get_project"
 	GetProjectsName		string = "get_projects"
 	DeleteProjectName	string = "delete_project_admin"
@@ -23,21 +22,6 @@ func NewHTTPServer(
 	endpoints	Endpoints,
 	r			*mux.Router,
 ) {
-	r.Handle(
-		"/projects",
-		httptransport.NewServer(
-			endpoints.UpdateProjects,
-			decodeUpdateProjetcsReq,
-			encoder.EncodeResponce,
-			httptransport.ServerErrorEncoder(
-				errorencoder.ErrorEncoder,
-			),
-			httptransport.ServerBefore(
-				serverbefore.TokenFromReq,
-			),
-		),
-	).Methods("POST").Name(UpdateProjectName)
-
 	r.Handle(
 		"/projects/{id:[0-9]+}",
 		httptransport.NewServer(

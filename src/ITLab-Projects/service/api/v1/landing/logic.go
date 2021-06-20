@@ -45,11 +45,11 @@ func New(
 // 
 // @Summary return all landings according to path params
 // 
-// @Tags landing
+// @Tags projects
 // 
 // @Produce json
 // 
-// @Router /v1/landing [get]
+// @Router /v1/projects/landing [get]
 // 
 // @Param start query integer false "represent how much landins need to skip"
 // 
@@ -171,7 +171,7 @@ func (s *service) buildNameFilterForGetLanding(
 
 // GetLanding
 // 
-// @Tags landing
+// @Tags projects
 // 
 // @Summary return a current landing
 // 
@@ -179,7 +179,7 @@ func (s *service) buildNameFilterForGetLanding(
 // 
 // @Produce json
 // 
-// @Router /v1/landing/{id} [get]
+// @Router /v1/projects/landing/{id} [get]
 // 
 // @Param id path integer true "id of landing"
 // 

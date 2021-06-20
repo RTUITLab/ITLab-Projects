@@ -95,3 +95,12 @@ func (er *EstimateRepoByType) DeleteEstimatesNotIn(ms []milestone.MilestoneInRep
 		options.Delete(),
 	)
 }
+
+func getPointer(v interface{}) *model.EstimateFile {
+	estimate, ok := v.(*model.EstimateFile)
+	if !ok {
+		_e, _ := v.(model.EstimateFile)
+		estimate = &_e
+	}
+	return estimate
+}

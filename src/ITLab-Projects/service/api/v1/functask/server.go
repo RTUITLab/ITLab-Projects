@@ -21,7 +21,7 @@ func NewHTTPServer(
 	r			*mux.Router,
 ) {
 	r.Handle(
-		"/task",
+		"/task/{milestone_id:[0-9]+}",
 		httptransport.NewServer(
 			endpoints.AddFuncTask,
 			decodeAddFuncTaskReq,

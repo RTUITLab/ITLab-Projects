@@ -97,3 +97,12 @@ func (ftr *FuncTaskByType) DeleteFuncTasksNotIn(ms []milestone.MilestoneInRepo) 
 		options.Delete(),
 	)
 }
+
+func getPointer(v interface{}) *model.FuncTaskFile {
+	functask, ok := v.(*model.FuncTaskFile)
+	if !ok {
+		_f, _ := v.(model.FuncTaskFile)
+		functask = &_f
+	}
+	return functask
+}

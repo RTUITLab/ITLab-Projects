@@ -1,11 +1,15 @@
 package app
 
 import (
+	klogrus "github.com/go-kit/kit/log/logrus"
+	kl "github.com/go-kit/kit/log"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/ITLab-Projects/pkg/mfsreq"
+	"github.com/ITLab-Projects/service/middleware/auth"
+	"github.com/go-kit/kit/endpoint"
 
 	"github.com/ITLab-Projects/pkg/apibuilder"
 	"github.com/ITLab-Projects/pkg/config"
@@ -22,6 +26,9 @@ type App struct {
 	Requester 		githubreq.Requester
 	MFSRequester	mfsreq.Requester
 	Port 			string
+	Logger			kl.Logger
+
+	auth			endpoint.Middleware
 }
 
 func New(cfg *config.Config) *App {
@@ -54,19 +61,24 @@ func New(cfg *config.Config) *App {
 		},
 	)
 
-	app.Router = mux.NewRouter()
-	
+	app.Router = mux.NewRouter().PathPrefix("/api/projects").Subrouter()
 	if !cfg.App.TestMode {
 		log.SetLevel(log.InfoLevel)
+		app.auth = auth.NewGoKitAuth(cfg.Auth)
 	} else {
 		log.SetLevel(log.DebugLevel)
 	}
+
+	app.Logger = klogrus.NewLogrusLogger(log.StandardLogger())
 
 	return app
 }
 
 func (a *App) AddApi(Builders ...apibuilder.ApiBulder) {
 	for _, Builder := range Builders {
+		Builder.AddLogger(a.Logger)
+		Builder.AddAuthMiddleware(a.auth)
+		Builder.CreateServices()
 		Builder.Build(a.Router)
 	}
 }

@@ -1,6 +1,7 @@
 package functask
 
 import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,13 +10,13 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ITLab-Projects/pkg/models/functask"
 	"github.com/ITLab-Projects/pkg/statuscode"
 	"github.com/ITLab-Projects/service/api/v1/encoder"
 )
 
 type AddFuncTaskReq struct {
-	*functask.FuncTaskFile
+	FileID 			primitive.ObjectID	`json:"file_id"`
+	MilestoneID		uint64				`json:"-" swaggerignore:"true"`
 }
 
 type AddFuncTaskResp struct {
@@ -66,6 +67,13 @@ func decodeAddFuncTaskReq(
 			http.StatusBadRequest,
 		)
 	}
+
+	vars := mux.Vars(r)
+
+	_mid := vars["milestone_id"]
+	milestoneID, _ := strconv.ParseUint(_mid, 10, 64)
+
+	req.MilestoneID = milestoneID
 
 	return req, nil
 }

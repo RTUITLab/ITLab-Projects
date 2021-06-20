@@ -1,6 +1,7 @@
 package v1
 
 import (
+	updateS "github.com/ITLab-Projects/service/api/v1/updater"
 	"context"
 	"net/http"
 	"net/http/pprof"
@@ -11,8 +12,7 @@ import (
 	"github.com/ITLab-Projects/service/api/v1/landing"
 
 	"github.com/go-kit/kit/endpoint"
-	kl "github.com/go-kit/kit/log/logrus"
-
+	kit_logger "github.com/go-kit/kit/log"
 	"github.com/ITLab-Projects/service/api/v1/estimate"
 	"github.com/ITLab-Projects/service/api/v1/functask"
 	"github.com/ITLab-Projects/service/repoimpl"
@@ -25,7 +25,6 @@ import (
 
 	_ "github.com/ITLab-Projects/docs"
 	"github.com/ITLab-Projects/pkg/config"
-	"github.com/ITLab-Projects/service/middleware/auth"
 	swag "github.com/swaggo/http-swagger"
 
 	"github.com/ITLab-Projects/pkg/githubreq"
@@ -37,7 +36,6 @@ import (
 
 type Api struct {
 	Repository 		*repositories.Repositories
-	RepoImp			*repoimpl.RepoImp
 	Requester 		githubreq.Requester
 	MFSRequester	mfsreq.Requester
 	Testmode		bool
@@ -50,6 +48,8 @@ type Api struct {
 	taskService		functask.Service
 	estService		estimate.Service
 	landingService	landing.Service
+	updaterService	updateS.Service
+	Logger			kit_logger.Logger
 }
 
 type Config struct {
@@ -58,13 +58,14 @@ type Config struct {
 	Config config.AuthConfig
 }
 
-type ServiceEndpoints struct {
+type ApiEndpoints struct {
 	Issues 		issues.Endpoints
 	Projects 	projects.Endpoints
 	Tags		tags.Endpoints
 	Task		functask.Endpoints
 	Est			estimate.Endpoints
 	Landing		landing.Endpoints
+	Update		updateS.Endpoints
 }
 
 func New(
@@ -80,52 +81,64 @@ func New(
 	}
 
 	a.Testmode = cfg.Testmode
-	a.NewAuth = auth.NewGoKitAuth(&cfg.Config)
 	if cfg.UpdateTime != "" {
 		log.Debug("WithUpdater")
 		a.WithUpdater(cfg.UpdateTime)
 	}
 	log.Debug(a.upd)
 
-	a.RepoImp = repoimpl.New(Repository)
+	return a
+}
 
-	logger := kl.NewLogrusLogger(log.StandardLogger())
+func (a *Api) AddLogger(logger kit_logger.Logger) {
+	a.Logger = logger
+}
+
+func (a *Api) AddAuthMiddleware(auth endpoint.Middleware) {
+	a.NewAuth = auth
+}
+
+func (a *Api) CreateServices() {
+	RepoImp := repoimpl.New(a.Repository)
 	a.projectService = projects.New(
-		a.RepoImp,
-		logger,
-		Requester,
-		MFSRequester,
-		a.upd,
+		RepoImp,
+		a.Logger,
+		a.MFSRequester,
 	)
 
 	a.estService = estimate.New(
-		a.RepoImp,
-		logger,
-		MFSRequester,
+		RepoImp,
+		a.Logger,
+		a.MFSRequester,
 	)
 
 	a.issueService = issues.New(
-		a.RepoImp,
-		logger,
+		RepoImp,
+		a.Logger,
 	)
 
 	a.tagsService = tags.New(
-		a.RepoImp,
-		logger,
+		RepoImp,
+		a.Logger,
 	)
 
 	a.taskService = functask.New(
-		a.RepoImp,
-		MFSRequester,
-		logger,
+		RepoImp,
+		a.MFSRequester,
+		a.Logger,
 	)
 
 	a.landingService = landing.New(
-		a.RepoImp,
-		logger,
+		RepoImp,
+		a.Logger,
 	)
 
-	return a
+	a.updaterService = updateS.New(
+		RepoImp,
+		a.Logger,
+		a.Requester,
+		a.upd,
+	)
 }
 
 func (a *Api) WithUpdater(Time string) *Api {
@@ -183,7 +196,7 @@ func (a *Api) update() {
 	}
 	log.Debug("put session")
 	ctx := updater.WithUpdateContext(sessctx)
-	if err := a.projectService.UpdateProjects(ctx); err != nil {
+	if err := a.updaterService.UpdateProjects(ctx); err != nil {
 		log.WithFields(
 			log.Fields{
 				"package": "api/v1",
@@ -197,17 +210,16 @@ func (a *Api) update() {
 
 
 func (a *Api) Build(r *mux.Router) {
-	base := r.PathPrefix("/api/projects").Subrouter()
-	docs := base.PathPrefix("/swagger")
-	// TODO refactor api path's
-	projectsR := base.PathPrefix("/v1").Subrouter()
+	docs := r.PathPrefix("/swagger")
+
+	projectsR := r.PathPrefix("/v1").Subrouter()
 
 	// Docs
 	docs.Handler(
 		swag.WrapHandler,
 	)
 
-	var endpoints ServiceEndpoints
+	var endpoints ApiEndpoints
 	if a.Testmode {
 		endpoints = a._buildEndpoint()
 	} else {
@@ -247,6 +259,12 @@ func (a *Api) Build(r *mux.Router) {
 	landing.NewHTTPServer(
 		context.Background(),
 		endpoints.Landing,
+		projectsR,
+	)
+
+	updateS.NewHTTPServer(
+		context.Background(),
+		endpoints.Update,
 		projectsR,
 	)
 

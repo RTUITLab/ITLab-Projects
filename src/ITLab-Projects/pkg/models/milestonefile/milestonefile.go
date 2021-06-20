@@ -8,5 +8,5 @@ import (
 type MilestoneFile struct {
 	mgm.DefaultModel				`json:"-" bson:",inline" swaggerignore:"true"`
 	MilestoneID	uint64				`json:"milestone_id" bson:"milestone_id"`
-	FileID		primitive.ObjectID	`json:"id" bson:"file_id"`
+	FileID		primitive.ObjectID	`json:"file_id" bson:"file_id"`
 }

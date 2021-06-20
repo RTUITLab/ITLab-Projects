@@ -74,3 +74,13 @@ func (r *RealeseByType) buildFilter(v interface{}) interface{} {
 
 	return bson.M{"id": bson.M{"$nin": ids}}
 }
+
+func getPointer(v interface{}) *model.RealeseInRepo {
+	r, ok := v.(*model.RealeseInRepo)
+	if !ok {
+		_r, _ := v.(model.RealeseInRepo)
+		r = &_r
+	}
+
+	return r
+}

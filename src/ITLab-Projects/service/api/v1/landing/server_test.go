@@ -55,7 +55,7 @@ func TestFunc_ServerTests(t *testing.T) {
 }
 
 func testfunc_GetAllLanding_HTTP_WithOutParams(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/landing", nil)
+	req := httptest.NewRequest(http.MethodGet, "/projects/landing", nil)
 	resp := httptest.NewRecorder()
 
 	Router.ServeHTTP(resp, req)
@@ -87,7 +87,7 @@ func testfunc_GetAllLanding_HTTP_WithOutParams(t *testing.T) {
 }
 
 func testfunc_GetAllLandings_HTTP_ByName(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/landing?name=mock_3", nil)
+	req := httptest.NewRequest(http.MethodGet, "/projects/landing?name=mock_3", nil)
 	resp := httptest.NewRecorder()
 
 	Router.ServeHTTP(resp, req)
@@ -119,7 +119,7 @@ func testfunc_GetAllLandings_HTTP_ByName(t *testing.T) {
 }
 
 func testfunc_GetAllLandings_HTTP_ByTag(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/landing?tag=Web", nil)
+	req := httptest.NewRequest(http.MethodGet, "/projects/landing?tag=Web", nil)
 	resp := httptest.NewRecorder()
 
 	Router.ServeHTTP(resp, req)
@@ -152,7 +152,7 @@ func testfunc_GetAllLandings_HTTP_ByTag(t *testing.T) {
 }
 
 func testfunc_HTTP_GetByID(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/landing/1", nil)
+	req := httptest.NewRequest(http.MethodGet, "/projects/landing/1", nil)
 	resp := httptest.NewRecorder()
 
 	Router.ServeHTTP(resp, req)
@@ -177,7 +177,7 @@ func testfunc_HTTP_GetByID(t *testing.T) {
 }
 
 func testfunc_HTTP_GetByID_NotFound(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/landing/123123", nil)
+	req := httptest.NewRequest(http.MethodGet, "/projects/landing/123123", nil)
 	resp := httptest.NewRecorder()
 
 	Router.ServeHTTP(resp, req)

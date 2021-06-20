@@ -47,3 +47,23 @@ func (c *CountByType) UpdateCount() (int64, error) {
 
 	return count, nil
 }
+
+func (c *CountByType) CountByFilter(
+	filter interface{},
+) (int64, error) {
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		10*time.Second,
+	)
+	defer cancel()
+	count, err := mgm.Coll(c._type).CountDocuments(
+		ctx,
+		filter,
+		options.Count(),
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
