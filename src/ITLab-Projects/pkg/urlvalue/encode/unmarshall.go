@@ -1,4 +1,4 @@
-package urlvalue
+package encode
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ITLab-Projects/pkg/urlvalue"
 	"github.com/pkg/errors"
 )
 
@@ -37,12 +38,6 @@ type UrlQueryUnmarshaler interface {
 	) error
 }
 
-type UrlValueQueryUnmarshaler interface {
-	UnmarshalUrlQueryToValuer(
-		values	url.Values,
-	) (UrlValuer, error)
-}
-
 func (d *UrlQueryDecoder) UrlQueryUnmarshall(
 	v		interface{},
 	values	url.Values,
@@ -62,7 +57,22 @@ func (d *UrlQueryDecoder) UrlQueryUnmarshall(
 	}
 	value = value.Elem()
 	for i := 0; i < t.NumField(); i++ {
-		opts, ok := t.Field(i).Tag.Lookup("query")
+		field := t.Field(i)
+		if fieldIsStruct(field) {
+			vField := value.Field(i)
+			if vField.Kind() != reflect.Ptr {
+				d.UrlQueryUnmarshall(
+					vField.Addr().Interface(),
+					values,
+				)
+			} else {
+				d.UrlQueryUnmarshall(
+					vField.Interface(),
+					values,
+				)
+			}
+		}
+		opts, ok := field.Tag.Lookup("query")
 		if !ok {
 			continue
 		}
@@ -159,7 +169,7 @@ func unmarshallFieldFromURL(
 	return unmarshallField(
 		field,
 		opts._type,
-		ParseMassOfStringsToString(
+		urlvalue.ParseMassOfStringsToString(
 			values[opts.key],
 		),
 	)
@@ -170,6 +180,14 @@ func unmarshallField(
 	_type 		queryTypes,
 	value		string,
 ) error {
+	if field.Kind() == reflect.Ptr {
+// TODO fix panic
+		return unmarshallField(
+			field.Elem(),
+			_type,
+			value,
+		)
+	}
 	switch _type {
 	case STRING:
 		field.SetString(value)
@@ -193,4 +211,16 @@ func unmarshallField(
 		field.SetInt(intValue)
 	}
 	return nil
+}
+
+func fieldIsStruct(
+	field reflect.StructField,
+) bool {
+	if field.Type.Kind() == reflect.Struct {
+		return true
+	} else if field.Type.Kind() == reflect.Ptr {
+		return field.Type.Elem().Kind() == reflect.Struct
+	}
+
+	return false
 }
