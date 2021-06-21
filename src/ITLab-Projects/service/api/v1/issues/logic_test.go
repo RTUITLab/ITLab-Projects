@@ -1,13 +1,14 @@
 package issues_test
 
 import (
-	"github.com/Kamva/mgm"
-	"github.com/ITLab-Projects/pkg/repositories/utils/test"
-	"github.com/sirupsen/logrus"
 	"context"
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/ITLab-Projects/pkg/repositories/utils/test"
+	"github.com/Kamva/mgm"
+	"github.com/sirupsen/logrus"
 
 	"github.com/ITLab-Projects/pkg/models/label"
 	mm "github.com/ITLab-Projects/pkg/models/milestone"
@@ -41,12 +42,18 @@ func init() {
 }
 
 func TestFunc_GetIssues(t *testing.T) {
+	// 0,
+	// 10000,
+	// "Orbital 360 Model",
+	// "",
 	is, err := service.GetIssues(
 		context.Background(),
-		0,
-		10000,
-		"Orbital 360 Model",
-		"",
+		s.GetIssuesQuery{
+			Start: 0,
+			Count: 10000,
+			Name: "Orbital 360 Model",
+			Tag: "",
+		},
 	)
 	if err != nil {
 		t.Log(err)
