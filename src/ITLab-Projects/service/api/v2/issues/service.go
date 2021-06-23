@@ -7,8 +7,7 @@ import (
 
 type Service interface {
 	GetIssues(
-		ctx context.Context,
-		start, 	count int64,
-		name, 	tag string,
+		ctx 	context.Context,
+		Query 	GetIssuesQuery,
 	) ([]*milestone.IssuesWithMilestoneID, error)
 }

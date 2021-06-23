@@ -63,17 +63,14 @@ func New(
 // 
 // @Failure 500 {object} e.Message
 func (s *service) GetAllLandings(
-	ctx context.Context, 
-	start int64, 
-	count int64, 
-	tag string, 
-	name string,
+	ctx 	context.Context, 
+	Query	GetAllLandingsQuery,
 ) ([]*landing.LandingCompact, error) {
 	logger := log.With(s.logger, "method", "GetAllLandings")
 	filter, err := s.buildFilterForGetLanding(
 		ctx,
-		name,
-		tag,
+		Query.Name,
+		Query.Tag,
 	)
 	if err == ErrTagNotFound {
 		return []*landing.LandingCompact{}, nil
@@ -89,8 +86,8 @@ func (s *service) GetAllLandings(
 		ctx,
 		filter,
 		bson.D{},
-		start,
-		count,
+		Query.Start,
+		Query.Count,
 	)
 	if err == mongo.ErrNoDocuments {
 		return []*landing.LandingCompact{}, nil

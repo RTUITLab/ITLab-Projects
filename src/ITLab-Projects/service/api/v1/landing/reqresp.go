@@ -7,44 +7,35 @@ import (
 	"strconv"
 
 	"github.com/ITLab-Projects/pkg/models/landing"
+	"github.com/ITLab-Projects/pkg/urlvalue/encode"
 	"github.com/gorilla/mux"
 )
 
 type GetAllLandingsReq struct {
-	Start 	int64
-	Count 	int64
-	Tag		string
-	Name	string
+	Query	GetAllLandingsQuery
+}
+
+type GetAllLandingsQuery struct {
+	Start 	int64	`query:"start,int"`
+	Count 	int64	`query:"count,int"`
+	Tag		string	`query:"tag,string"`
+	Name	string	`query:"name,string"`
 }
 
 func decodeGetAllLandingsReq(
 	ctx		context.Context,
 	r		*http.Request,
 ) (interface{}, error) {
-	values := r.URL.Query()
+	req := &GetAllLandingsReq{}
 
-	_start := values.Get("start")
-	_count := values.Get("count")
-
-	name := values.Get("name")
-	tag := values.Get("tag")
-
-	start, err := strconv.ParseInt(_start, 10, 64)
-	if err != nil {
-		start = 0
+	if err := encode.UrlQueryUnmarshall(
+		&req.Query,
+		r.URL.Query(),
+	); err != nil {
+		return nil, err
 	}
 
-	count, err := strconv.ParseInt(_count, 10, 64)
-	if err != nil {
-		count = 0
-	}
-
-	return &GetAllLandingsReq{
-		Start: start,
-		Count: count,
-		Tag: tag,
-		Name: name,
-	}, nil
+	return req, nil
 }
 
 type GetAllLandingResp struct {

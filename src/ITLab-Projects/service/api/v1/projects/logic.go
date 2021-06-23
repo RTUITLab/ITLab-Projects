@@ -154,17 +154,16 @@ func (s *ServiceImp) GetProject(
 // @Failure 401 {object} e.Message 
 func (s *ServiceImp) GetProjects(
 	ctx 			context.Context, 
-	start, 	count 	int64,
-	name, 	tag		string,
+	Query			GetProjectsQuery,
 ) ([]*repoasproj.RepoAsProjCompactPointers, error) {
-	if count == 0 || count > 50 {
-		count = 50
+	if Query.Count == 0 || Query.Count > 50 {
+		Query.Count = 50
 	}
 	logger := log.With(s.logger, "method", "GetProjects")
 	filter, err := s.BuildFilterForGetProject(
 		ctx,
-		name,
-		tag,
+		Query.Name,
+		Query.Tag,
 	)
 	if err == ErrTagNotFound {
 		return []*repoasproj.RepoAsProjCompactPointers{}, nil
@@ -179,8 +178,8 @@ func (s *ServiceImp) GetProjects(
 		ctx,
 		filter,
 		bson.D{ {"createdat", -1}, {"deleted", 1}},
-		start,
-		count,
+		int64(Query.Start),
+		int64(Query.Count),
 	)
 	switch {
 	case err == mongo.ErrNoDocuments:

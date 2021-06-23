@@ -8,8 +8,7 @@ import (
 type Service interface {
 	GetAllLandings(
 		ctx				context.Context,
-		start,	count	int64,
-		tag,	name	string,
+		Query			GetAllLandingsQuery,
 	) ([]*landing.LandingCompact, error)
 
 	GetLanding(
