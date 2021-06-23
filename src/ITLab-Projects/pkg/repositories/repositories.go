@@ -57,7 +57,7 @@ func New(cfg *Config) (*Repositories, error) {
 
 	ctx, _ = context.WithTimeout(context.Background(), 60*time.Second)
 	if err = client.Ping(ctx, nil); err != nil {
-		return nil, errors.New("Error on ping")
+		return nil, fmt.Errorf("Error on ping: %v", err)
 	}
 	constr, err := connstring.Parse(cfg.DBURI)
 	if err != nil {
