@@ -1,12 +1,15 @@
 package responce
 
 import (
+	log "github.com/sirupsen/logrus"
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	e "github.com/ITLab-Projects/pkg/err"
 	"github.com/ITLab-Projects/pkg/statuscode"
+
 	"gopkg.in/square/go-jose.v2/json"
 )
 
@@ -81,13 +84,29 @@ func (r *Responce) WriteMessage(w http.ResponseWriter) error {
 // Return err from responce
 // if err is nil return responce with nil err
 // and 200 status code
+// 
+// if err is not nil but not status err return 500 with msg internal status error
 func FromErr(err error) (*Responce) {
-	status, ok := err.(*statuscode.StatusCode)
-	if !ok {
+	if err == nil {
 		return &Responce{
 			Status: &statuscode.StatusCode{
 				Err: nil,
 				Status: http.StatusOK,
+			},
+		}
+	}
+	status, ok := err.(*statuscode.StatusCode)
+	if !ok {
+		log.WithFields(
+			log.Fields{
+				"pkg": "responce",
+				"err": err,
+			},
+		).Error("Unhandled error, err not implemetns responce")
+		return &Responce{
+			Status: &statuscode.StatusCode{
+				Err: fmt.Errorf("Unexpected err"),
+				Status: http.StatusInternalServerError,
 			},
 		}
 	}
