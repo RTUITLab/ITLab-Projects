@@ -180,14 +180,7 @@ func unmarshallField(
 	_type 		queryTypes,
 	value		string,
 ) error {
-	if field.Kind() == reflect.Ptr {
-// TODO fix panic
-		return unmarshallField(
-			field.Elem(),
-			_type,
-			value,
-		)
-	}
+	// TODO make avaliable to scan to pointer
 	switch _type {
 	case STRING:
 		field.SetString(value)
@@ -198,7 +191,6 @@ func unmarshallField(
 			64,
 		)
 		if err != nil {
-			field.SetInt(0)
 			return errors.Wrap(
 				TypeError,
 				fmt.Sprintf(

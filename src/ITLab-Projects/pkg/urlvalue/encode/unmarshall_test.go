@@ -12,7 +12,7 @@ func TestFunc_Unmarshall(t *testing.T) {
 		Number int `query:"number,int"`
 	}
 	type A struct {
-		Start *int   `query:"start,int" json:",inline"`
+		Start int  `query:"start,int" json:",inline"`
 		Count int    `query:"count,int"`
 		Name  string `query:"name,string"`
 		B
