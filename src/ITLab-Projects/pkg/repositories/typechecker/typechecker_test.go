@@ -16,13 +16,3 @@ func TestFunc_NewTypeChecker(t *testing.T) {
 		t.Log(err)
 	}
 }
-
-func TestFunc_Test(t *testing.T) {
-	repo := repo.Repo{ID: 10}
-
-	v := reflect.ValueOf(&repo)
-	field := v.FieldByName("ID")
-	u := field.Uint()
-
-	t.Log(u)
-}
