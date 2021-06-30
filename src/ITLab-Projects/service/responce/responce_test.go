@@ -49,12 +49,13 @@ func TestFunc_FromErr_Nil(t *testing.T) {
 func TestFunc_FromErr_OtherError(t *testing.T) {
 	resp := responce.FromErr(fmt.Errorf("some_err"))
 
-	if resp.StatusCode() != 200 {
+	if resp.StatusCode() != 500 {
 		t.Log("Assert error")
+		t.Log(resp.StatusCode())
 		t.FailNow()
 	}
 
-	if resp.Message() != nil {
+	if resp.Message() == nil {
 		t.Log("Assert error")
 		t.FailNow()
 	}
