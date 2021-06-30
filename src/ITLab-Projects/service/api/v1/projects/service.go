@@ -15,8 +15,7 @@ type Service interface {
 
 	GetProjects(
 		ctx 			context.Context,
-		start, 	count 	int64,
-		name, 	tag		string,
+		Query			GetProjectsQuery,
 	) ([]*repoasproj.RepoAsProjCompactPointers, error)
 
 	DeleteProject(

@@ -67,10 +67,12 @@ func TestFunc_GetProjects(t *testing.T) {
 	t.SkipNow()
 	projs, err := service.GetProjects(
 		context.Background(),
-		0,
-		1000,
-		"",
-		"Mobile",
+		projects.GetProjectsQuery{
+			0,
+			1000,
+			"",
+			"Mobile",
+		},
 	)
 	if err != nil {
 		t.Log(err)

@@ -99,10 +99,12 @@ func TestFunc_LandingTests(t *testing.T) {
 func testfunc_GetAllLandings_WithOutParams(t *testing.T) {
 	ls, err := service.GetAllLandings(
 		context.Background(),
-		0,
-		0,
-		"",
-		"",
+		landing.GetAllLandingsQuery{
+			0,
+			0,
+			"",
+			"",
+		},
 	)
 	if err != nil {
 		t.Log(err)
@@ -125,10 +127,12 @@ func testfunc_GetAllLandings_WithOutParams(t *testing.T) {
 func testfunc_GetAllLandings_ByName(t *testing.T) {
 	ls, err := service.GetAllLandings(
 		context.Background(),
-		0,
-		0,
-		"",
-		"mock_3",
+		landing.GetAllLandingsQuery{
+			0,
+			0,
+			"",
+			"mock_3",
+		},
 	)
 	if err != nil {
 		t.Log(err)
@@ -136,6 +140,7 @@ func testfunc_GetAllLandings_ByName(t *testing.T) {
 	}
 
 	if len(ls) != 1 {
+		t.Log(len(ls))
 		t.Log("Assert error")
 		t.FailNow()
 	}
@@ -151,10 +156,12 @@ func testfunc_GetAllLandings_ByName(t *testing.T) {
 func testfunc_GetAllLandings_ByTag(t *testing.T) {
 	ls, err := service.GetAllLandings(
 		context.Background(),
-		0,
-		0,
-		"Web",
-		"",
+		landing.GetAllLandingsQuery{
+			0,
+			0,
+			"Web",
+			"",
+		},
 	)
 
 	if err != nil {

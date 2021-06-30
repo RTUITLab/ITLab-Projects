@@ -25,10 +25,7 @@ func makeGetIssuesEndpoint(s Service) endpoint.Endpoint {
 		req := request.(*GetIssuesReq)
 		is, err := s.GetIssues(
 			ctx,
-			req.Start,
-			req.Count,
-			req.Name,
-			req.Tag,
+			req.Query,
 		)
 		if err != nil {
 			return nil, err

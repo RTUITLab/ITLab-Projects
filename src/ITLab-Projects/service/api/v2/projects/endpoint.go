@@ -37,10 +37,7 @@ func makeGetProjectsEndpoint(
 
 		projs, err := s.GetProjects(
 			ctx,
-			req.Start,
-			req.Count,
-			req.Name,
-			req.Tag,
+			req.Query,
 		)
 		if err != nil {
 			return nil, err

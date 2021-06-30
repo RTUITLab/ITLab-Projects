@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/ITLab-Projects/pkg/models/repoasproj"
+	"github.com/ITLab-Projects/pkg/urlvalue/encode"
 	"github.com/gorilla/mux"
 )
 
@@ -48,37 +49,32 @@ func (r *GetProjectResp) StatusCode() int {
 }
 
 type GetProjectsReq struct {
-	Start, 	Count 	int64
-	Name, 	Tag		string
+	Query	GetProjectsQuery
+}
+
+type GetProjectsQuery struct {
+	Start	int 	`query:"start,int"`	
+	Count 	int		`query:"count,int"`
+	Name	string	`query:"name,string"`
+	Tag		string	`query:"tag,string"`
 }
 
 func decodeGetProjectsReq(
 	ctx context.Context,
 	r	*http.Request,
 ) (interface{}, error) {
-	values := r.URL.Query()
 
-	_start := values.Get("start")
-	_count := values.Get("count")
-	name := values.Get("name")
-	tag := values.Get("tag")
-
-	start, err := strconv.ParseInt(_start, 10, 64)
-	if err != nil {
-		start = 0
+	req := &GetProjectsReq{
 	}
 
-	count, err := strconv.ParseInt(_count, 10, 64)
-	if err != nil {
-		count = 0
+	if err := encode.UrlQueryUnmarshall(
+		&req.Query,
+		r.URL.Query(),
+	); err != nil {
+		return nil, err
 	}
 
-	return &GetProjectsReq{
-		Start: start,
-		Count: count,
-		Name: name,
-		Tag: tag,
-	}, nil
+	return req, nil
 }
 
 type GetProjectsResp struct {

@@ -1,51 +1,38 @@
 package issues
 
 import (
-	"encoding/json"
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/url"
-	"strconv"
 
 	"github.com/ITLab-Projects/pkg/chunkresp"
 	"github.com/ITLab-Projects/pkg/models/milestone"
+	"github.com/ITLab-Projects/pkg/urlvalue/encode"
 	"github.com/ITLab-Projects/service/api/v1/issues"
 )
 
 type GetIssuesReq struct {
-	*issues.GetIssuesReq
+	Query GetIssuesQuery
 	HttpURL	*url.URL
+}
+
+type GetIssuesQuery struct {
+	issues.GetIssuesQuery
 }
 
 func decodeGetIssuesReq(
 	ctx		context.Context,
 	r		*http.Request,
 ) (interface{}, error) {
-	values := r.URL.Query()
-
-	_start 	:= values.Get("start")
-	_count 	:= values.Get("count")
-	name 	:= values.Get("name")
-	tag		:= values.Get("tag")
-
-	start, err := strconv.ParseInt(_start, 10, 64)
-	if err != nil {
-		start = 0
-	}
-
-	count, err := strconv.ParseInt(_count, 10, 64)
-	if err != nil {
-		count = 0
-	}
-
 	req := &GetIssuesReq{
-		GetIssuesReq: &issues.GetIssuesReq{
-			Start: start,
-			Count: count,
-			Name: name,
-			Tag: tag,
-		},
 		HttpURL: r.URL,
+	}
+	if err := encode.UrlQueryUnmarshall(
+		&req.Query,
+		r.URL.Query(),
+	); err != nil {
+		return nil, err
 	}
 
 	return req, nil

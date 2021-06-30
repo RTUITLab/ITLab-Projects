@@ -46,10 +46,7 @@ func makeGetLandingsEndpoint(s Service) endpoint.Endpoint {
 
 		ls, err := s.GetAllLandings(
 			ctx,
-			req.Start,
-			req.Count,
-			req.Tag,
-			req.Name,
+			req.Query,
 		)
 		if err != nil {
 			return nil, err

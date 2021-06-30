@@ -69,15 +69,14 @@ func New(
 //
 // @Failure 401 {object} e.Message
 func (s *ServiceImp) GetIssues(
-	ctx context.Context, 
-	start int64, count int64, 
-	name string, tag string,
+	ctx 		context.Context, 
+	Query		GetIssuesQuery,
 ) ([]*milestone.IssuesWithMilestoneID, error) {
 	logger := log.With(s.logger, "method", "GetIssues")
 	filter, err := s.buildFilterForGetIssues(
 		ctx,
-		name,
-		tag,
+		Query.Name,
+		Query.Tag,
 	)
 	if err != nil {
 		level.Error(logger).Log("Failed to get issues: err", err)
@@ -86,16 +85,16 @@ func (s *ServiceImp) GetIssues(
 			http.StatusInternalServerError,
 		)
 	}
-	if count == 0 || count > 50 {
-		count = 50
+	if Query.Count == 0 || Query.Count > 50 {
+		Query.Count = 50
 	}
 
 	is, err := s.repository.GetChunckedIssues(
 		ctx,
 		filter,
 		bson.D{ {"createdat", -1}, {"deleted", 1}},
-		start,
-		count,
+		int64(Query.Start),
+		int64(Query.Count),
 	)
 	if err == mongo.ErrNoDocuments {
 		is = []*milestone.IssuesWithMilestoneID{}
